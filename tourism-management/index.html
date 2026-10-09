@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ceylon Explore | Tourism Management System - Sri Lanka</title>
+    <meta name="description" content="Discover breathtaking destinations, curated tour packages, and luxury hotels across Sri Lanka with Ceylon Explore Tourism Management System.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg fixed-top" id="mainNavbar">
+        <div class="container">
+            <!-- Brand Logo -->
+            <a class="navbar-brand d-flex align-items-center" href="#home">
+                <div class="brand-icon me-2">
+                    <i class="bi bi-compass-fill"></i>
+                </div>
+                <span class="brand-text">Ceylon <span class="text-gold">Explore</span></span>
+            </a>
+            
+            <!-- Mobile Toggle Button -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <!-- Navigation Links -->
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#home">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#destinations">Destinations</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#packages">Tour Packages</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#hotels">Hotels</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#about">About Us</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#contact">Contact</a>
+                    </li>
+                </ul>
+                
+                <!-- Admin Login Button -->
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-admin-login" data-bs-toggle="modal" data-bs-target="#adminLoginModal">
+                        <i class="bi bi-shield-lock me-1"></i> Admin Login
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header id="home" class="hero-section position-relative d-flex align-items-center justify-content-center">
+        <div class="hero-overlay"></div>
+        <div class="container text-center hero-content position-relative z-2">
+            <span class="badge bg-gold-subtle text-gold px-3 py-2 rounded-pill mb-3 fw-semibold">
+                <i class="bi bi-geo-alt-fill me-1"></i> Welcome to Paradise
+            </span>
+            <h1 class="hero-title text-white fw-bold mb-3 display-4">
+                Discover the Beauty of Sri Lanka
+            </h1>
+            <p class="hero-subtitle text-white-80 mx-auto mb-4 lead">
+                Explore breathtaking destinations, unforgettable experiences, and carefully curated tour packages across the Pearl of the Indian Ocean.
+            </p>
+            
+            <div class="hero-buttons d-flex justify-content-center gap-3 mb-5">
+                <a href="#destinations" class="btn btn-gold btn-lg px-4 py-3 fw-bold rounded-pill">
+                    Explore Destinations <i class="bi bi-arrow-right ms-2"></i>
+                </a>
+                <a href="#packages" class="btn btn-outline-light btn-lg px-4 py-3 fw-bold rounded-pill">
+                    Discover Tour Packages
+                </a>
+            </div>
+            
+            <!-- Modern Search Panel -->
+            <div class="search-panel-wrapper mx-auto">
+                <div class="search-panel p-4 rounded-4 shadow-lg text-start">
+                    <form id="heroSearchForm" class="row g-3 align-items-end">
+                        <div class="col-lg-3 col-md-6">
+                            <label for="searchDestination" class="form-label fw-semibold text-muted small mb-1">
+                                <i class="bi bi-geo-alt text-success me-1"></i> Destination
+                            </label>
+                            <select class="form-select border-0 bg-light py-2" id="searchDestination" required>
+                                <option value="" selected disabled>Where to go?</option>
+                                <option value="sigiriya">Sigiriya Rock Fortress</option>
+                                <option value="ella">Ella & Nine Arch</option>
+                                <option value="galle">Galle Fort & Coast</option>
+                                <option value="nuwara-eliya">Nuwara Eliya Tea Hills</option>
+                                <option value="trincomalee">Trincomalee Beaches</option>
+                                <option value="yala">Yala Safari Park</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-lg-3 col-md-6">
+                            <label for="searchDate" class="form-label fw-semibold text-muted small mb-1">
+                                <i class="bi bi-calendar-event text-success me-1"></i> Travel Date
+                            </label>
+                            <input type="date" class="form-control border-0 bg-light py-2" id="searchDate" required>
+                        </div>
+                        
+                        <div class="col-lg-3 col-md-6">
+                            <label for="searchTravelers" class="form-label fw-semibold text-muted small mb-1">
+                                <i class="bi bi-people text-success me-1"></i> Travelers
+                            </label>
+                            <select class="form-select border-0 bg-light py-2" id="searchTravelers" required>
+                                <option value="1">1 Person</option>
+                                <option value="2" selected>2 Persons</option>
+                                <option value="3-5">3 - 5 Persons</option>
+                                <option value="6+">6+ Group Tour</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-lg-3 col-md-6">
+                            <button type="submit" class="btn btn-emerald w-100 py-2 fw-semibold d-flex align-items-center justify-content-center">
+                                <i class="bi bi-search me-2"></i> Search Tours
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Popular Destinations Section -->
+    <section id="destinations" class="py-6 bg-light">
+        <div class="container">
+            <div class="section-header text-center mx-auto mb-5">
+                <span class="section-badge text-uppercase fw-bold text-success">Top Destinations</span>
+                <h2 class="section-title fw-bold display-6 mt-1 mb-2">Explore Popular Destinations</h2>
+                <p class="section-subtitle text-muted">Discover the places that make Sri Lanka extraordinary.</p>
+                <div class="title-divider mx-auto mt-3"></div>
+            </div>
+            
+            <div class="row g-4">
+                <!-- Card 1: Sigiriya -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="destination-card rounded-4 overflow-hidden shadow-sm h-100 bg-white border-0 position-relative">
+                        <div class="card-img-wrapper position-relative overflow-hidden">
+                            <img src="assets/images/sigiriya.jpg" class="card-img-top destination-img" alt="Sigiriya Rock Fortress">
+                            <span class="badge-tag bg-emerald">Cultural Heritage</span>
+                        </div>
+                        <div class="card-body p-4 d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h3 class="card-title h5 fw-bold mb-0">Sigiriya</h3>
+                                <span class="rating small text-gold"><i class="bi bi-star-fill me-1"></i>4.9</span>
+                            </div>
+                            <p class="card-text text-muted small flex-grow-1">
+                                Ancient heritage and iconic rock fortress featuring world-famous frescoes, mirror wall, and royal water gardens.
+                            </p>
+                            <div class="pt-3 border-top d-flex justify-content-between align-items-center">
+                                <span class="text-emerald fw-semibold small"><i class="bi bi-clock me-1"></i>Full Day Tour</span>
+                                <button class="btn btn-outline-emerald btn-sm rounded-pill px-3 btn-explore" data-destination="Sigiriya">
+                                    Explore More <i class="bi bi-arrow-right ms-1"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Card 2: Ella -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="destination-card rounded-4 overflow-hidden shadow-sm h-100 bg-white border-0 position-relative">
+                        <div class="card-img-wrapper position-relative overflow-hidden">
+                            <img src="assets/images/ella.jpg" class="card-img-top destination-img" alt="Ella Nine Arch Bridge">
+                            <span class="badge-tag bg-emerald">Mountain & Mist</span>
+                        </div>
+                        <div class="card-body p-4 d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h3 class="card-title h5 fw-bold mb-0">Ella</h3>
+                                <span class="rating small text-gold"><i class="bi bi-star-fill me-1"></i>4.9</span>
+                            </div>
+                            <p class="card-text text-muted small flex-grow-1">
+                                Scenic mountains, iconic Nine Arch Bridge, hiking Little Adam's Peak, breathtaking waterfalls, and tea plantations.
+                            </p>
+                            <div class="pt-3 border-top d-flex justify-content-between align-items-center">
+                                <span class="text-emerald fw-semibold small"><i class="bi bi-clock me-1"></i>2 Days Recommended</span>
+                                <button class="btn btn-outline-emerald btn-sm rounded-pill px-3 btn-explore" data-destination="Ella">
+                                    Explore More <i class="bi bi-arrow-right ms-1"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Card 3: Galle -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="destination-card rounded-4 overflow-hidden shadow-sm h-100 bg-white border-0 position-relative">
+                        <div class="card-img-wrapper position-relative overflow-hidden">
+                            <img src="assets/images/galle.jpg" class="card-img-top destination-img" alt="Galle Fort Lighthouse">
+                            <span class="badge-tag bg-emerald">Coastal History</span>
+                        </div>
+                        <div class="card-body p-4 d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h3 class="card-title h5 fw-bold mb-0">Galle</h3>
+                                <span class="rating small text-gold"><i class="bi bi-star-fill me-1"></i>4.8</span>
+                            </div>
+                            <p class="card-text text-muted small flex-grow-1">
+                                Colonial Dutch architecture, iconic seaside lighthouse, cobblestone rampart streets, boutiques, and coastal charm.
+                            </p>
+                            <div class="pt-3 border-top d-flex justify-content-between align-items-center">
+                                <span class="text-emerald fw-semibold small"><i class="bi bi-clock me-1"></i>Full Day / Weekend</span>
+                                <button class="btn btn-outline-emerald btn-sm rounded-pill px-3 btn-explore" data-destination="Galle">
+                                    Explore More <i class="bi bi-arrow-right ms-1"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Card 4: Nuwara Eliya -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="destination-card rounded-4 overflow-hidden shadow-sm h-100 bg-white border-0 position-relative">
+                        <div class="card-img-wrapper position-relative overflow-hidden">
+                            <img src="assets/images/nuwara-eliya.jpg" class="card-img-top destination-img" alt="Nuwara Eliya Tea Gardens">
+                            <span class="badge-tag bg-emerald">Little England</span>
+                        </div>
+                        <div class="card-body p-4 d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h3 class="card-title h5 fw-bold mb-0">Nuwara Eliya</h3>
+                                <span class="rating small text-gold"><i class="bi bi-star-fill me-1"></i>4.7</span>
+                            </div>
+                            <p class="card-text text-muted small flex-grow-1">
+                                Cool climate, colonial country homes, lush Ceylon tea estates, Gregory Lake, and vibrant flower gardens.
+                            </p>
+                            <div class="pt-3 border-top d-flex justify-content-between align-items-center">
+                                <span class="text-emerald fw-semibold small"><i class="bi bi-clock me-1"></i>2 Days Tour</span>
+                                <button class="btn btn-outline-emerald btn-sm rounded-pill px-3 btn-explore" data-destination="Nuwara Eliya">
+                                    Explore More <i class="bi bi-arrow-right ms-1"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Card 5: Trincomalee -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="destination-card rounded-4 overflow-hidden shadow-sm h-100 bg-white border-0 position-relative">
+                        <div class="card-img-wrapper position-relative overflow-hidden">
+                            <img src="assets/images/trincomalee.jpg" class="card-img-top destination-img" alt="Trincomalee Nilaveli Beach">
+                            <span class="badge-tag bg-emerald">Tropical Beach</span>
+                        </div>
+                        <div class="card-body p-4 d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h3 class="card-title h5 fw-bold mb-0">Trincomalee</h3>
+                                <span class="rating small text-gold"><i class="bi bi-star-fill me-1"></i>4.9</span>
+                            </div>
+                            <p class="card-text text-muted small flex-grow-1">
+                                Crystal-clear Nilaveli beaches, Pigeon Island coral reef snorkeling, whale watching, and ancient Koneswaram temple.
+                            </p>
+                            <div class="pt-3 border-top d-flex justify-content-between align-items-center">
+                                <span class="text-emerald fw-semibold small"><i class="bi bi-clock me-1"></i>3 Days Resort Stay</span>
+                                <button class="btn btn-outline-emerald btn-sm rounded-pill px-3 btn-explore" data-destination="Trincomalee">
+                                    Explore More <i class="bi bi-arrow-right ms-1"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Card 6: Yala -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="destination-card rounded-4 overflow-hidden shadow-sm h-100 bg-white border-0 position-relative">
+                        <div class="card-img-wrapper position-relative overflow-hidden">
+                            <img src="assets/images/yala.jpg" class="card-img-top destination-img" alt="Yala Safari Leopard">
+                            <span class="badge-tag bg-emerald">Wild Safari</span>
+                        </div>
+                        <div class="card-body p-4 d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h3 class="card-title h5 fw-bold mb-0">Yala</h3>
+                                <span class="rating small text-gold"><i class="bi bi-star-fill me-1"></i>4.8</span>
+                            </div>
+                            <p class="card-text text-muted small flex-grow-1">
+                                High-density Sri Lankan leopard safaris, wild elephant encounters, exotic birdlife, and untouched coastal wilderness.
+                            </p>
+                            <div class="pt-3 border-top d-flex justify-content-between align-items-center">
+                                <span class="text-emerald fw-semibold small"><i class="bi bi-clock me-1"></i>1 - 2 Days Safari</span>
+                                <button class="btn btn-outline-emerald btn-sm rounded-pill px-3 btn-explore" data-destination="Yala">
+                                    Explore More <i class="bi bi-arrow-right ms-1"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Tour Packages Section -->
+    <section id="packages" class="py-6 bg-white">
+        <div class="container">
+            <div class="section-header text-center mx-auto mb-5">
+                <span class="section-badge text-uppercase fw-bold text-success">Curated Experiences</span>
+                <h2 class="section-title fw-bold display-6 mt-1 mb-2">Our Featured Tour Packages</h2>
+                <p class="section-subtitle text-muted">Select from our highest rated Sri Lankan travel itineraries.</p>
+                <div class="title-divider mx-auto mt-3"></div>
+            </div>
+            
+            <div class="row g-4">
+                <!-- Package 1 -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="package-card rounded-4 border-0 shadow-sm overflow-hidden h-100 d-flex flex-column bg-white">
+                        <div class="package-img-container position-relative">
+                            <img src="assets/images/cultural-tour.jpg" class="w-100 package-img" alt="Cultural Heritage Tour">
+                            <span class="package-badge bg-gold">Best Seller</span>
+                        </div>
+                        <div class="p-4 d-flex flex-column flex-grow-1">
+                            <h3 class="h5 fw-bold mb-2">Cultural Heritage Tour</h3>
+                            <div class="package-meta small text-muted mb-2">
+                                <div><i class="bi bi-geo-alt-fill text-emerald me-1"></i> Sigiriya and Kandy</div>
+                                <div><i class="bi bi-clock-fill text-emerald me-1"></i> 3 Days / 2 Nights</div>
+                            </div>
+                            <hr class="my-3 text-muted opacity-25">
+                            <div class="mb-4">
+                                <span class="small text-muted d-block">Starting From</span>
+                                <span class="h4 fw-bold text-emerald mb-0">LKR 35,000</span>
+                                <span class="small text-muted">/ person</span>
+                            </div>
+                            <div class="mt-auto d-grid gap-2">
+                                <button class="btn btn-outline-emerald rounded-pill btn-sm fw-semibold btn-view-details" data-package="Cultural Heritage Tour" data-price="LKR 35,000" data-duration="3 Days / 2 Nights" data-dest="Sigiriya & Kandy">View Details</button>
+                                <button class="btn btn-emerald rounded-pill btn-sm fw-semibold btn-book-now" data-package="Cultural Heritage Tour" data-price="LKR 35,000">Book Now</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Package 2 -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="package-card rounded-4 border-0 shadow-sm overflow-hidden h-100 d-flex flex-column bg-white">
+                        <div class="package-img-container position-relative">
+                            <img src="assets/images/ella.jpg" class="w-100 package-img" alt="Hill Country Escape">
+                            <span class="package-badge bg-emerald">Scenic Highlands</span>
+                        </div>
+                        <div class="p-4 d-flex flex-column flex-grow-1">
+                            <h3 class="h5 fw-bold mb-2">Hill Country Escape</h3>
+                            <div class="package-meta small text-muted mb-2">
+                                <div><i class="bi bi-geo-alt-fill text-emerald me-1"></i> Ella and Nuwara Eliya</div>
+                                <div><i class="bi bi-clock-fill text-emerald me-1"></i> 4 Days / 3 Nights</div>
+                            </div>
+                            <hr class="my-3 text-muted opacity-25">
+                            <div class="mb-4">
+                                <span class="small text-muted d-block">Starting From</span>
+                                <span class="h4 fw-bold text-emerald mb-0">LKR 48,000</span>
+                                <span class="small text-muted">/ person</span>
+                            </div>
+                            <div class="mt-auto d-grid gap-2">
+                                <button class="btn btn-outline-emerald rounded-pill btn-sm fw-semibold btn-view-details" data-package="Hill Country Escape" data-price="LKR 48,000" data-duration="4 Days / 3 Nights" data-dest="Ella & Nuwara Eliya">View Details</button>
+                                <button class="btn btn-emerald rounded-pill btn-sm fw-semibold btn-book-now" data-package="Hill Country Escape" data-price="LKR 48,000">Book Now</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Package 3 -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="package-card rounded-4 border-0 shadow-sm overflow-hidden h-100 d-flex flex-column bg-white">
+                        <div class="package-img-container position-relative">
+                            <img src="assets/images/trincomalee.jpg" class="w-100 package-img" alt="Tropical Beach Holiday">
+                            <span class="package-badge bg-gold">Popular Beach</span>
+                        </div>
+                        <div class="p-4 d-flex flex-column flex-grow-1">
+                            <h3 class="h5 fw-bold mb-2">Tropical Beach Holiday</h3>
+                            <div class="package-meta small text-muted mb-2">
+                                <div><i class="bi bi-geo-alt-fill text-emerald me-1"></i> Trincomalee & Nilaveli</div>
+                                <div><i class="bi bi-clock-fill text-emerald me-1"></i> 3 Days / 2 Nights</div>
+                            </div>
+                            <hr class="my-3 text-muted opacity-25">
+                            <div class="mb-4">
+                                <span class="small text-muted d-block">Starting From</span>
+                                <span class="h4 fw-bold text-emerald mb-0">LKR 32,000</span>
+                                <span class="small text-muted">/ person</span>
+                            </div>
+                            <div class="mt-auto d-grid gap-2">
+                                <button class="btn btn-outline-emerald rounded-pill btn-sm fw-semibold btn-view-details" data-package="Tropical Beach Holiday" data-price="LKR 32,000" data-duration="3 Days / 2 Nights" data-dest="Trincomalee & Nilaveli">View Details</button>
+                                <button class="btn btn-emerald rounded-pill btn-sm fw-semibold btn-book-now" data-package="Tropical Beach Holiday" data-price="LKR 32,000">Book Now</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Package 4 -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="package-card rounded-4 border-0 shadow-sm overflow-hidden h-100 d-flex flex-column bg-white">
+                        <div class="package-img-container position-relative">
+                            <img src="assets/images/yala.jpg" class="w-100 package-img" alt="Wildlife Adventure">
+                            <span class="package-badge bg-emerald">Wild Safari</span>
+                        </div>
+                        <div class="p-4 d-flex flex-column flex-grow-1">
+                            <h3 class="h5 fw-bold mb-2">Wildlife Adventure</h3>
+                            <div class="package-meta small text-muted mb-2">
+                                <div><i class="bi bi-geo-alt-fill text-emerald me-1"></i> Yala National Park</div>
+                                <div><i class="bi bi-clock-fill text-emerald me-1"></i> 2 Days / 1 Night</div>
+                            </div>
+                            <hr class="my-3 text-muted opacity-25">
+                            <div class="mb-4">
+                                <span class="small text-muted d-block">Starting From</span>
+                                <span class="h4 fw-bold text-emerald mb-0">LKR 28,000</span>
+                                <span class="small text-muted">/ person</span>
+                            </div>
+                            <div class="mt-auto d-grid gap-2">
+                                <button class="btn btn-outline-emerald rounded-pill btn-sm fw-semibold btn-view-details" data-package="Wildlife Adventure" data-price="LKR 28,000" data-duration="2 Days / 1 Night" data-dest="Yala National Park">View Details</button>
+                                <button class="btn btn-emerald rounded-pill btn-sm fw-semibold btn-book-now" data-package="Wildlife Adventure" data-price="LKR 28,000">Book Now</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Choose Us Section -->
+    <section id="why-us" class="py-6 bg-light">
+        <div class="container">
+            <div class="section-header text-center mx-auto mb-5">
+                <span class="section-badge text-uppercase fw-bold text-success">Why Ceylon Explore</span>
+                <h2 class="section-title fw-bold display-6 mt-1 mb-2">Your Journey, Our Priority</h2>
+                <p class="section-subtitle text-muted">Providing world-class travel services tailored to your island adventures.</p>
+                <div class="title-divider mx-auto mt-3"></div>
+            </div>
+            
+            <div class="row g-4">
+                <!-- Feature 1 -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="feature-card p-4 rounded-4 bg-white shadow-sm text-center h-100 transition-all">
+                        <div class="feature-icon-wrapper mb-3 mx-auto rounded-circle d-flex align-items-center justify-content-center bg-emerald-subtle text-emerald">
+                            <i class="bi bi-geo-alt-fill fs-3"></i>
+                        </div>
+                        <h4 class="h5 fw-bold mb-2">Carefully Selected Destinations</h4>
+                        <p class="text-muted small mb-0">
+                            Handpicked locations ensuring authentic Sri Lankan cultural and natural experiences.
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Feature 2 -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="feature-card p-4 rounded-4 bg-white shadow-sm text-center h-100 transition-all">
+                        <div class="feature-icon-wrapper mb-3 mx-auto rounded-circle d-flex align-items-center justify-content-center bg-gold-subtle text-gold">
+                            <i class="bi bi-calendar-check-fill fs-3"></i>
+                        </div>
+                        <h4 class="h5 fw-bold mb-2">Flexible Tour Packages</h4>
+                        <p class="text-muted small mb-0">
+                            Customizable itineraries designed for solo travelers, couples, families, and groups.
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Feature 3 -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="feature-card p-4 rounded-4 bg-white shadow-sm text-center h-100 transition-all">
+                        <div class="feature-icon-wrapper mb-3 mx-auto rounded-circle d-flex align-items-center justify-content-center bg-emerald-subtle text-emerald">
+                            <i class="bi bi-house-heart-fill fs-3"></i>
+                        </div>
+                        <h4 class="h5 fw-bold mb-2">Trusted Accommodation</h4>
+                        <p class="text-muted small mb-0">
+                            Partnerships with certified eco-resorts, heritage hotels, and luxury beach villas.
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Feature 4 -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="feature-card p-4 rounded-4 bg-white shadow-sm text-center h-100 transition-all">
+                        <div class="feature-icon-wrapper mb-3 mx-auto rounded-circle d-flex align-items-center justify-content-center bg-gold-subtle text-gold">
+                            <i class="bi bi-stars fs-3"></i>
+                        </div>
+                        <h4 class="h5 fw-bold mb-2">Memorable Experiences</h4>
+                        <p class="text-muted small mb-0">
+                            Professional local tour guides dedicated to creating safe, rich, unforgettable memories.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Hotels & Accommodation Section -->
+    <section id="hotels" class="py-6 bg-white">
+        <div class="container">
+            <div class="section-header text-center mx-auto mb-5">
+                <span class="section-badge text-uppercase fw-bold text-success">Luxury Stays</span>
+                <h2 class="section-title fw-bold display-6 mt-1 mb-2">Trusted Hotel Partners</h2>
+                <p class="section-subtitle text-muted">Stay at verified eco-lodges, beachfront resorts, and mountain retreats.</p>
+                <div class="title-divider mx-auto mt-3"></div>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-lg-4 col-md-6">
+                    <div class="hotel-card rounded-4 border-0 shadow-sm overflow-hidden bg-light h-100">
+                        <img src="assets/images/galle.jpg" class="w-100 hotel-img" alt="Coastal Resort">
+                        <div class="p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h4 class="h6 fw-bold mb-0">Cinnamon Coast Villa</h4>
+                                <span class="badge bg-emerald-subtle text-emerald">5 Star</span>
+                            </div>
+                            <p class="small text-muted mb-2"><i class="bi bi-geo-alt me-1"></i> Galle Fort, Southern Coast</p>
+                            <p class="small text-muted mb-3">Luxury ocean-view suites with private infinity pool and spa services.</p>
+                            <button class="btn btn-sm btn-outline-emerald rounded-pill w-100 btn-hotel-info" data-hotel="Cinnamon Coast Villa">View Availability</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6">
+                    <div class="hotel-card rounded-4 border-0 shadow-sm overflow-hidden bg-light h-100">
+                        <img src="assets/images/nuwara-eliya.jpg" class="w-100 hotel-img" alt="Mountain Resort">
+                        <div class="p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h4 class="h6 fw-bold mb-0">Grand Tea Hills Heritage</h4>
+                                <span class="badge bg-emerald-subtle text-emerald">4.9 Star</span>
+                            </div>
+                            <p class="small text-muted mb-2"><i class="bi bi-geo-alt me-1"></i> Nuwara Eliya</p>
+                            <p class="small text-muted mb-3">Colonial charm surrounded by organic tea gardens and cozy fireplaces.</p>
+                            <button class="btn btn-sm btn-outline-emerald rounded-pill w-100 btn-hotel-info" data-hotel="Grand Tea Hills Heritage">View Availability</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6">
+                    <div class="hotel-card rounded-4 border-0 shadow-sm overflow-hidden bg-light h-100">
+                        <img src="assets/images/trincomalee.jpg" class="w-100 hotel-img" alt="Beachfront Resort">
+                        <div class="p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h4 class="h6 fw-bold mb-0">Nilaveli Bay Beach Resort</h4>
+                                <span class="badge bg-emerald-subtle text-emerald">4.8 Star</span>
+                            </div>
+                            <p class="small text-muted mb-2"><i class="bi bi-geo-alt me-1"></i> Trincomalee</p>
+                            <p class="small text-muted mb-3">Pristine white sand beach access, reef diving center, and sea-view bungalows.</p>
+                            <button class="btn btn-sm btn-outline-emerald rounded-pill w-100 btn-hotel-info" data-hotel="Nilaveli Bay Beach Resort">View Availability</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Us Section -->
+    <section id="about" class="py-6 bg-light">
+        <div class="container">
+            <div class="row align-items-center g-5">
+                <div class="col-lg-6">
+                    <div class="about-img-wrapper position-relative">
+                        <img src="assets/images/about-sri-lanka.jpg" alt="Experience Sri Lanka" class="img-fluid rounded-4 shadow-lg w-100">
+                        <div class="about-experience-badge rounded-4 p-3 shadow-lg bg-white position-absolute d-none d-sm-flex align-items-center">
+                            <div class="badge-icon bg-emerald text-white rounded-circle p-3 me-3">
+                                <i class="bi bi-award-fill fs-3"></i>
+                            </div>
+                            <div>
+                                <h4 class="h5 fw-bold mb-0 text-dark">10,000+</h4>
+                                <span class="small text-muted">Happy International Tourists</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6">
+                    <span class="section-badge text-uppercase fw-bold text-success">About Ceylon Explore</span>
+                    <h2 class="section-title fw-bold display-6 mt-1 mb-3">Experience the Wonders of Sri Lanka</h2>
+                    <p class="text-muted leading-relaxed mb-4">
+                        Ceylon Explore is a comprehensive Tourism Management System engineered to connect global travelers with Sri Lanka's richest cultural landmarks, scenic highlands, pristine beaches, and safari national parks.
+                    </p>
+                    <p class="text-muted leading-relaxed mb-4">
+                        Designed with simplicity, security, and elegance in mind, our platform provides tourists and travel managers with complete control over destinations, tour packages, verified guide allocations, and hotel bookings.
+                    </p>
+                    
+                    <div class="row g-3 mb-4">
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-check-circle-fill text-gold fs-5 me-2"></i>
+                                <span class="fw-semibold text-dark small">Verified Local Guides</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-check-circle-fill text-gold fs-5 me-2"></i>
+                                <span class="fw-semibold text-dark small">24/7 Travel Assistance</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-check-circle-fill text-gold fs-5 me-2"></i>
+                                <span class="fw-semibold text-dark small">Eco-Tourism Focus</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-check-circle-fill text-gold fs-5 me-2"></i>
+                                <span class="fw-semibold text-dark small">Custom Itinerary Building</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-emerald btn-lg px-4 rounded-pill fw-semibold" id="btnLearnMore">
+                        Learn More <i class="bi bi-arrow-right ms-2"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action Banner -->
+    <section class="cta-section py-6 text-white text-center position-relative overflow-hidden">
+        <div class="cta-overlay"></div>
+        <div class="container position-relative z-2">
+            <h2 class="display-5 fw-bold mb-3">Your Next Adventure Starts Here</h2>
+            <p class="lead max-w-700 mx-auto mb-4 text-white-80">
+                Discover your perfect Sri Lankan getaway and start planning your journey today with customized packages and expert local guides.
+            </p>
+            <a href="#packages" class="btn btn-gold btn-lg px-5 py-3 rounded-pill fw-bold shadow-lg">
+                Explore Tour Packages <i class="bi bi-compass ms-2"></i>
+            </a>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="py-6 bg-light">
+        <div class="container">
+            <div class="section-header text-center mx-auto mb-5">
+                <span class="section-badge text-uppercase fw-bold text-success">Real Feedback</span>
+                <h2 class="section-title fw-bold display-6 mt-1 mb-2">What Travelers Say</h2>
+                <p class="section-subtitle text-muted">Read genuine stories from visitors who discovered Sri Lanka with us.</p>
+                <div class="title-divider mx-auto mt-3"></div>
+            </div>
+            
+            <div class="row g-4">
+                <!-- Testimonial 1 -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="testimonial-card p-4 rounded-4 bg-white shadow-sm h-100 d-flex flex-column border-0">
+                        <div class="rating-stars text-gold mb-3">
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                        </div>
+                        <p class="testimonial-text text-muted small flex-grow-1 fst-italic">
+                            "Ceylon Explore made our Sri Lanka trip completely stress-free! Sigiriya and Nine Arch Bridge in Ella were absolute highlights. Our tour guide was so knowledgeable."
+                        </p>
+                        <div class="d-flex align-items-center pt-3 border-top mt-3">
+                            <img src="assets/images/avatar1.jpg" alt="Sarah Jenkins" class="rounded-circle avatar-img me-3">
+                            <div>
+                                <h4 class="h6 fw-bold mb-0 text-dark">Sarah Jenkins</h4>
+                                <span class="small text-muted">United Kingdom</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Testimonial 2 -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="testimonial-card p-4 rounded-4 bg-white shadow-sm h-100 d-flex flex-column border-0">
+                        <div class="rating-stars text-gold mb-3">
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                        </div>
+                        <p class="testimonial-text text-muted small flex-grow-1 fst-italic">
+                            "The Hill Country Escape package exceeded every expectation. Tea plantation stays, cool mountain air in Nuwara Eliya, and flawless transportation!"
+                        </p>
+                        <div class="d-flex align-items-center pt-3 border-top mt-3">
+                            <img src="assets/images/avatar2.jpg" alt="David Miller" class="rounded-circle avatar-img me-3">
+                            <div>
+                                <h4 class="h6 fw-bold mb-0 text-dark">David Miller</h4>
+                                <span class="small text-muted">Australia</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Testimonial 3 -->
+                <div class="col-lg-4 col-md-6 mx-auto">
+                    <div class="testimonial-card p-4 rounded-4 bg-white shadow-sm h-100 d-flex flex-column border-0">
+                        <div class="rating-stars text-gold mb-3">
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                        </div>
+                        <p class="testimonial-text text-muted small flex-grow-1 fst-italic">
+                            "Seeing leopards in Yala National Park and relaxing on Nilaveli beach in Trincomalee was pure magic. The booking experience was smooth and transparent."
+                        </p>
+                        <div class="d-flex align-items-center pt-3 border-top mt-3">
+                            <img src="assets/images/avatar3.jpg" alt="Elena Rostova" class="rounded-circle avatar-img me-3">
+                            <div>
+                                <h4 class="h6 fw-bold mb-0 text-dark">Elena Rostova</h4>
+                                <span class="small text-muted">Germany</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="py-6 bg-white">
+        <div class="container">
+            <div class="row g-5">
+                <div class="col-lg-5">
+                    <span class="section-badge text-uppercase fw-bold text-success">Get In Touch</span>
+                    <h2 class="section-title fw-bold display-6 mt-1 mb-3">Plan Your Journey With Us</h2>
+                    <p class="text-muted small mb-4">
+                        Have questions about customized itineraries, hotel bookings, or tour guides? Send us a message and our team will get back to you promptly.
+                    </p>
+                    
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="contact-icon bg-emerald-subtle text-emerald rounded-circle p-3 me-3">
+                            <i class="bi bi-envelope-fill fs-5"></i>
+                        </div>
+                        <div>
+                            <span class="small text-muted d-block">Email Support</span>
+                            <a href="mailto:info@example.com" class="fw-semibold text-dark text-decoration-none">info@example.com</a>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="contact-icon bg-gold-subtle text-gold rounded-circle p-3 me-3">
+                            <i class="bi bi-telephone-fill fs-5"></i>
+                        </div>
+                        <div>
+                            <span class="small text-muted d-block">Phone / WhatsApp</span>
+                            <span class="fw-semibold text-dark">+94 11 234 5678</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="contact-icon bg-emerald-subtle text-emerald rounded-circle p-3 me-3">
+                            <i class="bi bi-geo-alt-fill fs-5"></i>
+                        </div>
+                        <div>
+                            <span class="small text-muted d-block">Headquarters</span>
+                            <span class="fw-semibold text-dark">Colombo 03, Sri Lanka</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-7">
+                    <div class="contact-form-card p-4 p-md-5 rounded-4 bg-light shadow-sm">
+                        <form id="contactForm">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="contactName" class="form-label fw-semibold small text-muted">Your Name</label>
+                                    <input type="text" class="form-control py-2" id="contactName" placeholder="John Doe" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="contactEmail" class="form-label fw-semibold small text-muted">Your Email</label>
+                                    <input type="email" class="form-control py-2" id="contactEmail" placeholder="john@example.com" required>
+                                </div>
+                                <div class="col-12">
+                                    <label for="contactSubject" class="form-label fw-semibold small text-muted">Subject</label>
+                                    <input type="text" class="form-control py-2" id="contactSubject" placeholder="Inquiry about Custom Tour Package" required>
+                                </div>
+                                <div class="col-12">
+                                    <label for="contactMessage" class="form-label fw-semibold small text-muted">Message</label>
+                                    <textarea class="form-control" id="contactMessage" rows="4" placeholder="Tell us about your travel dates and requirements..." required></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-emerald w-100 py-3 fw-bold rounded-pill">
+                                        Send Message <i class="bi bi-send-fill ms-2"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer bg-dark-emerald text-white-70 pt-6 pb-4">
+        <div class="container">
+            <div class="row g-4 mb-5">
+                <!-- Column 1 -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="footer-brand d-flex align-items-center mb-3">
+                        <div class="brand-icon text-gold me-2">
+                            <i class="bi bi-compass-fill fs-3"></i>
+                        </div>
+                        <span class="brand-text text-white h4 mb-0 fw-bold">Ceylon <span class="text-gold">Explore</span></span>
+                    </div>
+                    <p class="small text-white-60 mb-4">
+                        Ceylon Explore is a university software development project designed to streamline Sri Lankan tourism management, tour packages, hotel reservations, and guide allocations.
+                    </p>
+                    <div class="social-links d-flex gap-2">
+                        <a href="#" class="social-btn"><i class="bi bi-facebook"></i></a>
+                        <a href="#" class="social-btn"><i class="bi bi-instagram"></i></a>
+                        <a href="#" class="social-btn"><i class="bi bi-twitter-x"></i></a>
+                        <a href="#" class="social-btn"><i class="bi bi-youtube"></i></a>
+                    </div>
+                </div>
+                
+                <!-- Column 2 -->
+                <div class="col-lg-2 col-md-6">
+                    <h4 class="h6 fw-bold text-white text-uppercase mb-3 tracking-wider">Quick Links</h4>
+                    <ul class="list-unstyled footer-links small">
+                        <li class="mb-2"><a href="#home">Home</a></li>
+                        <li class="mb-2"><a href="#destinations">Destinations</a></li>
+                        <li class="mb-2"><a href="#packages">Tour Packages</a></li>
+                        <li class="mb-2"><a href="#hotels">Hotels</a></li>
+                        <li class="mb-2"><a href="#about">About Us</a></li>
+                        <li class="mb-2"><a href="#contact">Contact Us</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Column 3 -->
+                <div class="col-lg-3 col-md-6">
+                    <h4 class="h6 fw-bold text-white text-uppercase mb-3 tracking-wider">System Modules</h4>
+                    <ul class="list-unstyled footer-links small">
+                        <li class="mb-2"><a href="#" class="module-link" data-module="Tourist Management"><i class="bi bi-people me-1"></i> Tourist Management</a></li>
+                        <li class="mb-2"><a href="#" class="module-link" data-module="Package Management"><i class="bi bi-box-seam me-1"></i> Tour Package Management</a></li>
+                        <li class="mb-2"><a href="#" class="module-link" data-module="Destination Management"><i class="bi bi-geo-alt me-1"></i> Destination Management</a></li>
+                        <li class="mb-2"><a href="#" class="module-link" data-module="Booking Management"><i class="bi bi-journal-check me-1"></i> Booking Management</a></li>
+                        <li class="mb-2"><a href="#" class="module-link" data-module="Hotel Management"><i class="bi bi-building me-1"></i> Hotel Management</a></li>
+                        <li class="mb-2"><a href="#" class="module-link" data-module="Tour Guide Management"><i class="bi bi-person-badge me-1"></i> Tour Guide Management</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Column 4 -->
+                <div class="col-lg-3 col-md-6">
+                    <h4 class="h6 fw-bold text-white text-uppercase mb-3 tracking-wider">Contact Info</h4>
+                    <ul class="list-unstyled footer-contact small text-white-70">
+                        <li class="mb-2 d-flex align-items-center">
+                            <i class="bi bi-envelope me-2 text-gold"></i>
+                            <span>info@example.com</span>
+                        </li>
+                        <li class="mb-2 d-flex align-items-center">
+                            <i class="bi bi-telephone me-2 text-gold"></i>
+                            <span>+94 XX XXX XXXX</span>
+                        </li>
+                        <li class="mb-2 d-flex align-items-center">
+                            <i class="bi bi-geo-alt me-2 text-gold"></i>
+                            <span>Colombo, Sri Lanka</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <hr class="border-secondary opacity-25 my-4">
+            
+            <div class="row align-items-center small text-white-50">
+                <div class="col-md-6 text-center text-md-start mb-2 mb-md-0">
+                    © 2026 Ceylon Explore. All Rights Reserved.
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <span>Designed for University Software Engineering Project (Java Spring Boot Integration Ready)</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Back to Top Button -->
+    <button type="button" class="btn btn-emerald rounded-circle back-to-top shadow-lg" id="backToTopBtn" aria-label="Back to top">
+        <i class="bi bi-arrow-up-short fs-4"></i>
+    </button>
+
+    <!-- Admin Login Modal -->
+    <div class="modal fade" id="adminLoginModal" tabindex="-1" aria-labelledby="adminLoginModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
+                <div class="modal-header bg-emerald text-white p-4">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-shield-lock-fill fs-3 text-gold me-2"></i>
+                        <div>
+                            <h5 class="modal-title fw-bold" id="adminLoginModalLabel">Admin Portal</h5>
+                            <span class="small text-white-70">Ceylon Explore Management System</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert alert-success-subtle text-emerald small mb-3 border-0 rounded-3">
+                        <i class="bi bi-info-circle me-1"></i> Spring Boot REST API authentication endpoint ready: <code>/api/v1/auth/login</code>
+                    </div>
+                    <form id="adminLoginForm">
+                        <div class="mb-3">
+                            <label for="adminUsername" class="form-label small fw-semibold">Username / Email</label>
+                            <input type="text" class="form-control py-2" id="adminUsername" value="admin@ceylonexplore.lk" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="adminPassword" class="form-label small fw-semibold">Password</label>
+                            <input type="password" class="form-control py-2" id="adminPassword" value="••••••••" required>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="rememberMe">
+                            <label class="form-check-label small" for="rememberMe">Remember Session</label>
+                        </div>
+                        <button type="submit" class="btn btn-emerald w-100 py-2 fw-bold rounded-3">Login to Dashboard</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generic Interactive Demo Modal -->
+    <div class="modal fade" id="demoModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-header bg-emerald text-white p-4">
+                    <h5 class="modal-title fw-bold" id="demoModalTitle">System Notification</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4" id="demoModalBody">
+                    <!-- Dynamic Body Content -->
+                </div>
+                <div class="modal-footer border-0 p-3 bg-light rounded-bottom-4">
+                    <button type="button" class="btn btn-emerald px-4 rounded-pill" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="js/script.js"></script>
+</body>
+</html>

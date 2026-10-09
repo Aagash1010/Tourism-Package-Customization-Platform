@@ -1,0 +1,537 @@
+/* ==========================================================================
+   Ceylon Explore - Tourism Management System
+   Custom CSS Styling - Nature-Inspired Sri Lanka Theme
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Root Variables & Theme Tokens
+   -------------------------------------------------------------------------- */
+:root {
+    /* Color Palette */
+    --primary-emerald: #1b4332;
+    --emerald-hover: #143527;
+    --accent-green: #2d6a4f;
+    --leaf-green: #52b788;
+    --emerald-light-bg: #e8f5e9;
+    
+    --primary-gold: #d4af37;
+    --gold-hover: #b89428;
+    --gold-light-bg: #fff9e6;
+    
+    --bg-light: #f8f9fa;
+    --card-bg: #ffffff;
+    --dark-emerald: #0b1f17;
+    
+    --text-dark: #1e293b;
+    --text-body: #334155;
+    --text-muted: #64748b;
+    --text-white-80: rgba(255, 255, 255, 0.85);
+    --text-white-60: rgba(255, 255, 255, 0.65);
+    
+    /* Typography */
+    --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    
+    /* Transitions & Shadows */
+    --transition-smooth: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    --shadow-subtle: 0 4px 20px rgba(0, 0, 0, 0.05);
+    --shadow-hover: 0 12px 30px rgba(27, 67, 50, 0.12);
+    --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* --------------------------------------------------------------------------
+   2. Base Styles & Typography
+   -------------------------------------------------------------------------- */
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--font-body);
+    color: var(--text-body);
+    background-color: var(--bg-light);
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6, .brand-text {
+    font-family: var(--font-heading);
+    color: var(--text-dark);
+}
+
+.py-6 {
+    padding-top: 5rem;
+    padding-bottom: 5rem;
+}
+
+.text-gold {
+    color: var(--primary-gold) !important;
+}
+
+.text-emerald {
+    color: var(--primary-emerald) !important;
+}
+
+.bg-emerald {
+    background-color: var(--primary-emerald) !important;
+}
+
+.bg-gold {
+    background-color: var(--primary-gold) !important;
+}
+
+.bg-dark-emerald {
+    background-color: var(--dark-emerald) !important;
+}
+
+.bg-emerald-subtle {
+    background-color: var(--emerald-light-bg) !important;
+}
+
+.bg-gold-subtle {
+    background-color: var(--gold-light-bg) !important;
+}
+
+.max-w-700 {
+    max-width: 700px;
+}
+
+.title-divider {
+    height: 4px;
+    width: 60px;
+    background: linear-gradient(90deg, var(--primary-emerald), var(--primary-gold));
+    border-radius: 2px;
+}
+
+.section-badge {
+    font-size: 0.85rem;
+    letter-spacing: 1.5px;
+}
+
+/* --------------------------------------------------------------------------
+   3. Custom Buttons & Interactivity
+   -------------------------------------------------------------------------- */
+.btn-emerald {
+    background-color: var(--primary-emerald);
+    color: #ffffff;
+    border: none;
+    transition: var(--transition-smooth);
+}
+
+.btn-emerald:hover, .btn-emerald:focus {
+    background-color: var(--emerald-hover);
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(27, 67, 50, 0.25);
+}
+
+.btn-gold {
+    background-color: var(--primary-gold);
+    color: #ffffff;
+    border: none;
+    transition: var(--transition-smooth);
+}
+
+.btn-gold:hover, .btn-gold:focus {
+    background-color: var(--gold-hover);
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(212, 175, 55, 0.3);
+}
+
+.btn-outline-emerald {
+    border: 1.5px solid var(--primary-emerald);
+    color: var(--primary-emerald);
+    background-color: transparent;
+    transition: var(--transition-smooth);
+}
+
+.btn-outline-emerald:hover, .btn-outline-emerald:focus {
+    background-color: var(--primary-emerald);
+    color: #ffffff;
+    transform: translateY(-2px);
+}
+
+.btn-admin-login {
+    border: 1.5px solid var(--primary-gold);
+    color: var(--primary-gold);
+    background-color: rgba(212, 175, 55, 0.08);
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.5rem 1.25rem;
+    border-radius: 50px;
+    transition: var(--transition-smooth);
+}
+
+.btn-admin-login:hover {
+    background-color: var(--primary-gold);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+    transform: translateY(-1px);
+}
+
+/* --------------------------------------------------------------------------
+   4. Navigation Bar
+   -------------------------------------------------------------------------- */
+.navbar {
+    padding: 1.2rem 0;
+    transition: var(--transition-smooth);
+    background: transparent;
+}
+
+.navbar.navbar-scrolled {
+    background: rgba(11, 31, 23, 0.92) !important;
+    backdrop-filter: blur(12px);
+    padding: 0.75rem 0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.brand-icon {
+    width: 38px;
+    height: 38px;
+    background: rgba(212, 175, 55, 0.15);
+    color: var(--primary-gold);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.brand-text {
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: #ffffff;
+}
+
+.navbar-nav .nav-link {
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: 0.5rem 1rem !important;
+    transition: var(--transition-smooth);
+    position: relative;
+}
+
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link.active {
+    color: var(--primary-gold) !important;
+}
+
+.navbar-nav .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 1rem;
+    right: 1rem;
+    height: 2px;
+    background-color: var(--primary-gold);
+    border-radius: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   5. Hero Section & Search Panel
+   -------------------------------------------------------------------------- */
+.hero-section {
+    min-height: 100vh;
+    background: url('../assets/images/hero-bg.jpg') no-repeat center center / cover;
+    padding-top: 140px;
+    padding-bottom: 80px;
+}
+
+.hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, rgba(11, 31, 23, 0.75) 0%, rgba(11, 31, 23, 0.6) 50%, rgba(11, 31, 23, 0.85) 100%);
+    z-index: 1;
+}
+
+.hero-title {
+    font-size: 3.5rem;
+    letter-spacing: -1px;
+    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.hero-subtitle {
+    max-width: 760px;
+    font-size: 1.2rem;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.search-panel-wrapper {
+    max-width: 950px;
+    width: 100%;
+}
+
+.search-panel {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.search-panel .form-select,
+.search-panel .form-control {
+    border-radius: 12px;
+    font-size: 0.95rem;
+}
+
+.search-panel .form-select:focus,
+.search-panel .form-control:focus {
+    box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.2);
+    border-color: var(--accent-green);
+}
+
+/* --------------------------------------------------------------------------
+   6. Popular Destination Cards
+   -------------------------------------------------------------------------- */
+.destination-card {
+    transition: var(--transition-smooth);
+}
+
+.destination-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-hover) !important;
+}
+
+.card-img-wrapper {
+    height: 230px;
+}
+
+.destination-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+}
+
+.destination-card:hover .destination-img {
+    transform: scale(1.08);
+}
+
+.badge-tag {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 50px;
+    letter-spacing: 0.5px;
+}
+
+/* --------------------------------------------------------------------------
+   7. Tour Packages Section
+   -------------------------------------------------------------------------- */
+.package-card {
+    transition: var(--transition-smooth);
+}
+
+.package-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-hover) !important;
+}
+
+.package-img-container {
+    height: 190px;
+    overflow: hidden;
+}
+
+.package-img {
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+}
+
+.package-card:hover .package-img {
+    transform: scale(1.08);
+}
+
+.package-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 50px;
+}
+
+/* --------------------------------------------------------------------------
+   8. Feature Cards & Hotel Section
+   -------------------------------------------------------------------------- */
+.feature-card {
+    border: 1px solid rgba(0, 0, 0, 0.03);
+    transition: var(--transition-smooth);
+}
+
+.feature-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-hover) !important;
+    border-color: rgba(45, 106, 79, 0.15);
+}
+
+.feature-icon-wrapper {
+    width: 70px;
+    height: 70px;
+}
+
+.hotel-card {
+    transition: var(--transition-smooth);
+}
+
+.hotel-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-hover) !important;
+}
+
+.hotel-img {
+    height: 200px;
+    object-fit: cover;
+}
+
+/* --------------------------------------------------------------------------
+   9. About Us Section
+   -------------------------------------------------------------------------- */
+.about-experience-badge {
+    bottom: -20px;
+    right: -20px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* --------------------------------------------------------------------------
+   10. CTA Section
+   -------------------------------------------------------------------------- */
+.cta-section {
+    background: url('../assets/images/cta-bg.jpg') no-repeat center center / cover;
+}
+
+.cta-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(27, 67, 50, 0.9) 0%, rgba(11, 31, 23, 0.85) 100%);
+    z-index: 1;
+}
+
+/* --------------------------------------------------------------------------
+   11. Testimonials & Avatar
+   -------------------------------------------------------------------------- */
+.testimonial-card {
+    border: 1px solid rgba(0, 0, 0, 0.03);
+    transition: var(--transition-smooth);
+}
+
+.testimonial-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-hover) !important;
+}
+
+.avatar-img {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+    border: 2px solid var(--primary-gold);
+}
+
+/* --------------------------------------------------------------------------
+   12. Footer & Links
+   -------------------------------------------------------------------------- */
+.footer-links a {
+    color: var(--text-white-60);
+    text-decoration: none;
+    transition: var(--transition-smooth);
+}
+
+.footer-links a:hover {
+    color: var(--primary-gold);
+    padding-left: 5px;
+}
+
+.social-btn {
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: var(--transition-smooth);
+}
+
+.social-btn:hover {
+    background: var(--primary-gold);
+    color: #ffffff;
+    transform: translateY(-3px);
+}
+
+/* --------------------------------------------------------------------------
+   13. Back to Top Button
+   -------------------------------------------------------------------------- */
+.back-to-top {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--transition-smooth);
+}
+
+.back-to-top.show-back-to-top {
+    opacity: 1;
+    visibility: visible;
+}
+
+.back-to-top:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(27, 67, 50, 0.35);
+}
+
+/* --------------------------------------------------------------------------
+   14. Responsive Layout Adjustments
+   -------------------------------------------------------------------------- */
+@media (max-width: 991.98px) {
+    .hero-title {
+        font-size: 2.5rem;
+    }
+    .navbar {
+        background: rgba(11, 31, 23, 0.95) !important;
+    }
+    .navbar-collapse {
+        padding: 1.5rem 0;
+    }
+    .navbar-nav .nav-link.active::after {
+        display: none;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .hero-title {
+        font-size: 2rem;
+    }
+    .hero-subtitle {
+        font-size: 1rem;
+    }
+    .hero-buttons {
+        flex-direction: column;
+    }
+    .py-6 {
+        padding-top: 3.5rem;
+        padding-bottom: 3.5rem;
+    }
+}
