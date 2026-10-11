@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Ceylon Explore</title>
+    <meta name="description" content="Ceylon Explore administrator dashboard frontend demonstration with sample tourism management data.">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <!-- Shared and Page CSS -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin-dashboard.css">
+</head>
+<body class="admin-dashboard-body">
+    <div class="dashboard-shell">
+        <aside class="admin-sidebar" id="adminSidebar" aria-label="Admin dashboard navigation">
+            <div class="sidebar-header">
+                <a class="admin-brand d-flex align-items-center text-decoration-none" href="index.html" aria-label="Ceylon Explore home">
+                    <span class="brand-icon me-2">
+                        <i class="bi bi-compass-fill"></i>
+                    </span>
+                    <span class="brand-text">Ceylon <span class="text-gold">Explore</span></span>
+                </a>
+                <span class="sidebar-label">Admin Console</span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a class="sidebar-link active" href="#dashboardOverview" data-module="Dashboard">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a class="sidebar-link module-placeholder" href="#" data-module="Tourist Management">
+                    <i class="bi bi-people"></i>
+                    <span>Tourist Management</span>
+                </a>
+                <a class="sidebar-link module-placeholder" href="#" data-module="Tour Package Management">
+                    <i class="bi bi-map"></i>
+                    <span>Tour Package Management</span>
+                </a>
+                <a class="sidebar-link module-placeholder" href="#" data-module="Destination Management">
+                    <i class="bi bi-geo-alt"></i>
+                    <span>Destination Management</span>
+                </a>
+                <a class="sidebar-link module-placeholder" href="#" data-module="Booking Management">
+                    <i class="bi bi-calendar-check"></i>
+                    <span>Booking Management</span>
+                </a>
+                <a class="sidebar-link module-placeholder" href="#" data-module="Hotel Management">
+                    <i class="bi bi-building"></i>
+                    <span>Hotel Management</span>
+                </a>
+                <a class="sidebar-link module-placeholder" href="#" data-module="Tour Guide Management">
+                    <i class="bi bi-person-badge"></i>
+                    <span>Tour Guide Management</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a class="sidebar-link logout-link" href="admin-login.html">
+                    <i class="bi bi-box-arrow-left"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
+
+        <main class="dashboard-main" id="dashboardOverview">
+            <header class="admin-topbar">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="icon-button sidebar-toggle" type="button" id="sidebarToggle" aria-label="Toggle sidebar" aria-controls="adminSidebar" aria-expanded="false">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <div>
+                        <span class="section-badge text-uppercase fw-bold text-success">Sample Dashboard</span>
+                        <h1 class="page-title mb-0">Admin Dashboard</h1>
+                    </div>
+                </div>
+
+                <div class="topbar-actions">
+                    <label class="search-box" for="dashboardSearch">
+                        <i class="bi bi-search"></i>
+                        <input type="search" id="dashboardSearch" placeholder="Search demo data">
+                    </label>
+                    <button class="icon-button notification-button" type="button" id="notificationButton" aria-label="View notifications">
+                        <i class="bi bi-bell"></i>
+                        <span class="notification-dot" aria-hidden="true"></span>
+                    </button>
+                    <div class="admin-profile" aria-label="Administrator profile">
+                        <span class="profile-avatar">A</span>
+                        <div>
+                            <span class="profile-name">Administrator</span>
+                            <span class="profile-role">Frontend Demo</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="demo-note alert alert-success-subtle text-emerald border-0 rounded-3 small mb-4" role="note">
+                <i class="bi bi-info-circle me-1"></i>
+                All dashboard metrics, bookings, activities, and module links are sample demonstration data for future Spring Boot CRUD integration.
+            </div>
+
+            <section class="stats-grid" aria-label="Sample dashboard statistics">
+                <article class="stat-card">
+                    <div class="stat-icon emerald"><i class="bi bi-people-fill"></i></div>
+                    <div>
+                        <span class="stat-label">Total Tourists</span>
+                        <strong class="stat-value">1,284</strong>
+                        <span class="stat-trend positive"><i class="bi bi-arrow-up-short"></i> Sample +12%</span>
+                    </div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon gold"><i class="bi bi-map-fill"></i></div>
+                    <div>
+                        <span class="stat-label">Available Tour Packages</span>
+                        <strong class="stat-value">48</strong>
+                        <span class="stat-trend positive"><i class="bi bi-arrow-up-short"></i> Sample +5</span>
+                    </div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon blue"><i class="bi bi-calendar2-check-fill"></i></div>
+                    <div>
+                        <span class="stat-label">Total Bookings</span>
+                        <strong class="stat-value">376</strong>
+                        <span class="stat-trend neutral"><i class="bi bi-dash"></i> Sample data</span>
+                    </div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon rose"><i class="bi bi-buildings-fill"></i></div>
+                    <div>
+                        <span class="stat-label">Registered Hotels</span>
+                        <strong class="stat-value">86</strong>
+                        <span class="stat-trend positive"><i class="bi bi-arrow-up-short"></i> Sample +8%</span>
+                    </div>
+                </article>
+            </section>
+
+            <div class="dashboard-content-grid">
+                <section class="dashboard-panel bookings-panel">
+                    <div class="panel-header">
+                        <div>
+                            <span class="panel-eyebrow">Sample Records</span>
+                            <h2>Recent Bookings</h2>
+                        </div>
+                        <button class="btn btn-outline-emerald btn-sm rounded-pill demo-action" type="button" data-action="Export bookings">
+                            <i class="bi bi-download me-1"></i>Export
+                        </button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table align-middle admin-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Booking ID</th>
+                                    <th scope="col">Tourist Name</th>
+                                    <th scope="col">Tour Package</th>
+                                    <th scope="col">Travel Date</th>
+                                    <th scope="col">Travelers</th>
+                                    <th scope="col">Booking Status</th>
+                                    <th scope="col">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>#CE-1042</td>
+                                    <td>Amelia Perera</td>
+                                    <td>Sigiriya Heritage Trail</td>
+                                    <td>2026-11-18</td>
+                                    <td>3</td>
+                                    <td><span class="status-badge confirmed">Confirmed</span></td>
+                                    <td>
+                                        <button class="table-action demo-action" type="button" data-action="View booking #CE-1042" aria-label="View booking CE-1042"><i class="bi bi-eye"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>#CE-1041</td>
+                                    <td>Noah Silva</td>
+                                    <td>Ella Scenic Escape</td>
+                                    <td>2026-11-22</td>
+                                    <td>2</td>
+                                    <td><span class="status-badge pending">Pending</span></td>
+                                    <td>
+                                        <button class="table-action demo-action" type="button" data-action="View booking #CE-1041" aria-label="View booking CE-1041"><i class="bi bi-eye"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>#CE-1040</td>
+                                    <td>Maya Fernando</td>
+                                    <td>Galle Coastal Weekend</td>
+                                    <td>2026-12-03</td>
+                                    <td>4</td>
+                                    <td><span class="status-badge confirmed">Confirmed</span></td>
+                                    <td>
+                                        <button class="table-action demo-action" type="button" data-action="View booking #CE-1040" aria-label="View booking CE-1040"><i class="bi bi-eye"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>#CE-1039</td>
+                                    <td>Daniel Jayawardena</td>
+                                    <td>Nuwara Eliya Tea Country</td>
+                                    <td>2026-12-10</td>
+                                    <td>1</td>
+                                    <td><span class="status-badge cancelled">Cancelled</span></td>
+                                    <td>
+                                        <button class="table-action demo-action" type="button" data-action="View booking #CE-1039" aria-label="View booking CE-1039"><i class="bi bi-eye"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="dashboard-panel quick-actions-panel">
+                    <div class="panel-header">
+                        <div>
+                            <span class="panel-eyebrow">Demo Shortcuts</span>
+                            <h2>Quick Actions</h2>
+                        </div>
+                    </div>
+                    <div class="quick-actions-list">
+                        <button class="quick-action demo-action" type="button" data-action="Add Tourist">
+                            <i class="bi bi-person-plus"></i>
+                            <span>Add Tourist</span>
+                        </button>
+                        <button class="quick-action demo-action" type="button" data-action="Add Tour Package">
+                            <i class="bi bi-map"></i>
+                            <span>Add Tour Package</span>
+                        </button>
+                        <button class="quick-action demo-action" type="button" data-action="Add Destination">
+                            <i class="bi bi-geo-alt"></i>
+                            <span>Add Destination</span>
+                        </button>
+                        <button class="quick-action demo-action" type="button" data-action="Create Booking">
+                            <i class="bi bi-calendar-plus"></i>
+                            <span>Create Booking</span>
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <div class="dashboard-content-grid lower-grid">
+                <section class="dashboard-panel destinations-panel">
+                    <div class="panel-header">
+                        <div>
+                            <span class="panel-eyebrow">Sample Insights</span>
+                            <h2>Popular Destinations</h2>
+                        </div>
+                    </div>
+                    <div class="destination-mini-grid">
+                        <article class="destination-mini-card">
+                            <img src="assets/images/sigiriya.jpg" alt="Sigiriya Rock Fortress">
+                            <div>
+                                <h3>Sigiriya</h3>
+                                <span>Heritage Favorite</span>
+                            </div>
+                        </article>
+                        <article class="destination-mini-card">
+                            <img src="assets/images/ella.jpg" alt="Ella mountains and bridge">
+                            <div>
+                                <h3>Ella</h3>
+                                <span>Scenic Escape</span>
+                            </div>
+                        </article>
+                        <article class="destination-mini-card">
+                            <img src="assets/images/galle.jpg" alt="Galle Fort coastline">
+                            <div>
+                                <h3>Galle</h3>
+                                <span>Coastal History</span>
+                            </div>
+                        </article>
+                        <article class="destination-mini-card">
+                            <img src="assets/images/nuwara-eliya.jpg" alt="Nuwara Eliya tea hills">
+                            <div>
+                                <h3>Nuwara Eliya</h3>
+                                <span>Tea Country</span>
+                            </div>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="dashboard-panel activities-panel">
+                    <div class="panel-header">
+                        <div>
+                            <span class="panel-eyebrow">Sample Feed</span>
+                            <h2>Recent Activities</h2>
+                        </div>
+                    </div>
+                    <ul class="activity-list">
+                        <li>
+                            <span class="activity-icon"><i class="bi bi-person-check"></i></span>
+                            <div>
+                                <strong>Tourist registration demonstration</strong>
+                                <span>Sample profile prepared for future CRUD module.</span>
+                            </div>
+                        </li>
+                        <li>
+                            <span class="activity-icon"><i class="bi bi-map"></i></span>
+                            <div>
+                                <strong>Sample tour package addition</strong>
+                                <span>Ella Scenic Escape marked as demo package data.</span>
+                            </div>
+                        </li>
+                        <li>
+                            <span class="activity-icon"><i class="bi bi-calendar-check"></i></span>
+                            <div>
+                                <strong>Sample booking update</strong>
+                                <span>Booking #CE-1041 moved to pending in demo table.</span>
+                            </div>
+                        </li>
+                    </ul>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="demoToast" class="toast border-0 shadow-lg" role="status" aria-live="polite" aria-atomic="true">
+            <div class="toast-header bg-emerald text-white">
+                <i class="bi bi-info-circle me-2 text-gold"></i>
+                <strong class="me-auto">Ceylon Explore Demo</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="demoToastBody"></div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Page JS -->
+    <script src="js/admin-dashboard.js"></script>
+</body>
+</html>

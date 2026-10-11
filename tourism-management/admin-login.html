@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login | Ceylon Explore</title>
+    <meta name="description" content="Administrator login page for the Ceylon Explore Tourism Management System frontend demo.">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <!-- Shared and Page CSS -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin-login.css">
+</head>
+<body class="admin-login-body">
+    <main class="admin-login-page">
+        <section class="login-visual-panel" aria-label="Sri Lankan tourism preview">
+            <div class="login-visual-overlay"></div>
+            <div class="login-brand-wrap">
+                <a class="admin-brand d-inline-flex align-items-center text-decoration-none" href="index.html" aria-label="Ceylon Explore home">
+                    <span class="brand-icon me-2">
+                        <i class="bi bi-compass-fill"></i>
+                    </span>
+                    <span class="brand-text">Ceylon <span class="text-gold">Explore</span></span>
+                </a>
+            </div>
+            <div class="login-visual-content">
+                <span class="section-badge text-uppercase fw-bold text-gold">Administration Portal</span>
+                <h1 class="text-white fw-bold mt-2 mb-3">Welcome Back, Administrator</h1>
+                <p class="text-white-80 mb-0">Manage your tourism platform in one place.</p>
+            </div>
+        </section>
+
+        <section class="login-form-panel">
+            <div class="login-card" aria-labelledby="adminLoginTitle">
+                <div class="mb-4">
+                    <span class="login-kicker">
+                        <i class="bi bi-shield-lock-fill me-2"></i> Demo Login
+                    </span>
+                    <h2 class="fw-bold mt-3 mb-2" id="adminLoginTitle">Admin Login</h2>
+                    <p class="text-muted mb-0">Frontend demonstration only. Spring Boot authentication can be connected later.</p>
+                </div>
+
+                <div class="alert alert-success-subtle text-emerald border-0 rounded-3 small" role="note">
+                    <i class="bi bi-info-circle me-1"></i>
+                    This page validates form input only. No real credentials are verified or stored.
+                </div>
+
+                <form id="adminLoginPageForm" novalidate>
+                    <div class="mb-3">
+                        <label for="adminUsername" class="form-label fw-semibold">Username</label>
+                        <div class="input-group admin-input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            <input type="text" class="form-control" id="adminUsername" name="username" autocomplete="username" placeholder="Enter administrator username" aria-describedby="usernameFeedback" required>
+                        </div>
+                        <div class="invalid-message" id="usernameFeedback"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="adminPassword" class="form-label fw-semibold">Password</label>
+                        <div class="input-group admin-input-group">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            <input type="password" class="form-control" id="adminPassword" name="password" autocomplete="current-password" placeholder="Enter administrator password" aria-describedby="passwordFeedback" required>
+                            <button class="btn btn-outline-emerald password-toggle" type="button" id="togglePassword" aria-label="Show password">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <div class="invalid-message" id="passwordFeedback"></div>
+                    </div>
+
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="" id="rememberAdmin">
+                            <label class="form-check-label small" for="rememberAdmin">Remember Me</label>
+                        </div>
+                        <span class="small text-muted">Ready for <code>/api/v1/auth/login</code></span>
+                    </div>
+
+                    <div class="alert d-none rounded-3 small mb-3" id="loginStatus" role="status" aria-live="polite"></div>
+
+                    <button type="submit" class="btn btn-emerald w-100 py-3 fw-bold rounded-3" id="loginButton">
+                        <span class="button-label"><i class="bi bi-box-arrow-in-right me-2"></i>Login</span>
+                        <span class="button-loading d-none">
+                            <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                            Preparing dashboard preview
+                        </span>
+                    </button>
+                </form>
+
+                <div class="login-footer">
+                    <a href="index.html" class="back-home-link">
+                        <i class="bi bi-arrow-left me-2"></i>Back to Homepage
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Page JS -->
+    <script src="js/admin-login.js"></script>
+</body>
+</html>

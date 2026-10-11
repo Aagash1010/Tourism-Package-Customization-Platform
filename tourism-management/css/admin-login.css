@@ -1,0 +1,199 @@
+/* ==========================================================================
+   Ceylon Explore - Admin Login Page
+   ========================================================================== */
+
+.admin-login-body {
+    min-height: 100vh;
+    background: var(--bg-light);
+}
+
+.admin-login-page {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(420px, 0.95fr);
+}
+
+.admin-login-page .text-white-80 {
+    color: var(--text-white-80) !important;
+}
+
+.login-visual-panel {
+    position: relative;
+    min-height: 100vh;
+    background: url('../assets/images/hero-bg.jpg') center / cover no-repeat;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 2rem clamp(1.5rem, 4vw, 4.5rem);
+    overflow: hidden;
+}
+
+.login-visual-overlay {
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(180deg, rgba(11, 31, 23, 0.42), rgba(11, 31, 23, 0.82)),
+        linear-gradient(110deg, rgba(27, 67, 50, 0.78), rgba(27, 67, 50, 0.22));
+    z-index: 1;
+}
+
+.login-brand-wrap,
+.login-visual-content {
+    position: relative;
+    z-index: 2;
+}
+
+.admin-brand .brand-text {
+    color: #ffffff;
+}
+
+.login-visual-content {
+    max-width: 620px;
+    padding-bottom: clamp(2rem, 8vh, 5rem);
+}
+
+.login-visual-content h1 {
+    font-size: clamp(2.3rem, 5vw, 4.6rem);
+    letter-spacing: 0;
+    line-height: 1.03;
+}
+
+.login-visual-content p {
+    font-size: 1.12rem;
+    max-width: 520px;
+}
+
+.login-form-panel {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(1.25rem, 4vw, 4rem);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 249, 250, 0.96)),
+        url('../assets/images/about-sri-lanka.jpg') center / cover no-repeat;
+}
+
+.login-card {
+    width: min(100%, 470px);
+    background: rgba(255, 255, 255, 0.94);
+    border: 1px solid rgba(27, 67, 50, 0.1);
+    border-radius: 24px;
+    box-shadow: 0 24px 70px rgba(11, 31, 23, 0.18);
+    padding: clamp(1.5rem, 4vw, 2.5rem);
+    backdrop-filter: blur(16px);
+}
+
+.login-kicker {
+    display: inline-flex;
+    align-items: center;
+    color: var(--primary-emerald);
+    background: var(--emerald-light-bg);
+    border-radius: 999px;
+    padding: 0.45rem 0.85rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.admin-input-group {
+    border: 1px solid rgba(27, 67, 50, 0.12);
+    border-radius: 14px;
+    overflow: hidden;
+    background: #ffffff;
+    transition: var(--transition-smooth);
+}
+
+.admin-input-group:focus-within {
+    border-color: var(--accent-green);
+    box-shadow: 0 0 0 4px rgba(45, 106, 79, 0.15);
+}
+
+.admin-input-group .input-group-text,
+.admin-input-group .form-control,
+.admin-input-group .btn {
+    border: 0;
+    min-height: 52px;
+}
+
+.admin-input-group .input-group-text {
+    color: var(--primary-emerald);
+    background: #ffffff;
+    padding-left: 1rem;
+}
+
+.admin-input-group .form-control {
+    box-shadow: none;
+}
+
+.password-toggle {
+    border-left: 1px solid rgba(27, 67, 50, 0.1) !important;
+    border-radius: 0;
+    min-width: 52px;
+}
+
+.invalid-message {
+    min-height: 1.25rem;
+    margin-top: 0.35rem;
+    color: #b42318;
+    font-size: 0.84rem;
+    font-weight: 600;
+}
+
+.admin-input-group.has-error {
+    border-color: #d92d20;
+}
+
+.login-footer {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(27, 67, 50, 0.1);
+    text-align: center;
+}
+
+.back-home-link {
+    color: var(--primary-emerald);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.back-home-link:hover,
+.back-home-link:focus {
+    color: var(--gold-hover);
+}
+
+.btn:focus-visible,
+.form-control:focus-visible,
+.form-check-input:focus-visible,
+.back-home-link:focus-visible {
+    outline: 3px solid rgba(212, 175, 55, 0.45);
+    outline-offset: 3px;
+}
+
+@media (max-width: 991.98px) {
+    .admin-login-page {
+        grid-template-columns: 1fr;
+    }
+
+    .login-visual-panel {
+        min-height: 42vh;
+    }
+
+    .login-form-panel {
+        min-height: auto;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .login-visual-panel {
+        min-height: 36vh;
+        padding: 1.25rem;
+    }
+
+    .login-card {
+        border-radius: 18px;
+    }
+
+    .login-form-panel {
+        padding: 1rem;
+    }
+}
