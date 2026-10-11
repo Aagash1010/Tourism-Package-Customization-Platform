@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tourist Management | Ceylon Explore</title>
+    <meta name="description" content="Tourist Management frontend CRUD demonstration for the Ceylon Explore Tourism Management System.">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <!-- Shared and Page CSS -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin-dashboard.css">
+    <link rel="stylesheet" href="css/tourist-management.css">
+</head>
+<body class="admin-dashboard-body">
+    <div class="dashboard-shell">
+        <aside class="admin-sidebar" id="adminSidebar" aria-label="Admin dashboard navigation">
+            <div class="sidebar-header">
+                <a class="admin-brand d-flex align-items-center text-decoration-none" href="index.html" aria-label="Ceylon Explore home">
+                    <span class="brand-icon me-2">
+                        <i class="bi bi-compass-fill"></i>
+                    </span>
+                    <span class="brand-text">Ceylon <span class="text-gold">Explore</span></span>
+                </a>
+                <span class="sidebar-label">Admin Console</span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a class="sidebar-link" href="admin-dashboard.html" data-module="Dashboard">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a class="sidebar-link active" href="tourist-management.html" data-module="Tourist Management" aria-current="page">
+                    <i class="bi bi-people"></i>
+                    <span>Tourist Management</span>
+                </a>
+                <a class="sidebar-link module-placeholder" href="#" data-module="Tour Package Management">
+                    <i class="bi bi-map"></i>
+                    <span>Tour Package Management</span>
+                </a>
+                <a class="sidebar-link module-placeholder" href="#" data-module="Destination Management">
+                    <i class="bi bi-geo-alt"></i>
+                    <span>Destination Management</span>
+                </a>
+                <a class="sidebar-link module-placeholder" href="#" data-module="Booking Management">
+                    <i class="bi bi-calendar-check"></i>
+                    <span>Booking Management</span>
+                </a>
+                <a class="sidebar-link module-placeholder" href="#" data-module="Hotel Management">
+                    <i class="bi bi-building"></i>
+                    <span>Hotel Management</span>
+                </a>
+                <a class="sidebar-link module-placeholder" href="#" data-module="Tour Guide Management">
+                    <i class="bi bi-person-badge"></i>
+                    <span>Tour Guide Management</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a class="sidebar-link logout-link" href="admin-login.html">
+                    <i class="bi bi-box-arrow-left"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
+
+        <main class="dashboard-main">
+            <header class="admin-topbar">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="icon-button sidebar-toggle" type="button" id="sidebarToggle" aria-label="Toggle sidebar" aria-controls="adminSidebar" aria-expanded="false">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <div>
+                        <nav class="admin-breadcrumb" aria-label="Breadcrumb">
+                            <a href="admin-dashboard.html">Dashboard</a>
+                            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                            <span>Tourist Management</span>
+                        </nav>
+                        <h1 class="page-title mb-0">Tourist Management</h1>
+                        <p class="page-subtitle mb-0">Manage tourist registrations and maintain traveler information.</p>
+                    </div>
+                </div>
+
+                <div class="topbar-actions">
+                    <label class="search-box" for="touristSearch">
+                        <i class="bi bi-search"></i>
+                        <input type="search" id="touristSearch" placeholder="Search tourists">
+                    </label>
+                    <button class="icon-button notification-button" type="button" id="notificationButton" aria-label="View notifications">
+                        <i class="bi bi-bell"></i>
+                        <span class="notification-dot" aria-hidden="true"></span>
+                    </button>
+                    <div class="admin-profile" aria-label="Administrator profile">
+                        <span class="profile-avatar">A</span>
+                        <div>
+                            <span class="profile-name">Administrator</span>
+                            <span class="profile-role">Frontend Demo</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="demo-note alert alert-success-subtle text-emerald border-0 rounded-3 small mb-4" role="note">
+                <i class="bi bi-info-circle me-1"></i>
+                Tourist records use a JavaScript array and localStorage for this frontend demonstration only. Future persistence can be connected to Spring Boot endpoints.
+            </div>
+
+            <section class="stats-grid tourist-stats-grid" aria-label="Tourist statistics">
+                <article class="stat-card">
+                    <div class="stat-icon emerald"><i class="bi bi-people-fill"></i></div>
+                    <div>
+                        <span class="stat-label">Total Tourists</span>
+                        <strong class="stat-value" id="totalTouristsStat">0</strong>
+                        <span class="stat-trend neutral">Current demo records</span>
+                    </div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon blue"><i class="bi bi-person-check-fill"></i></div>
+                    <div>
+                        <span class="stat-label">Active Tourists</span>
+                        <strong class="stat-value" id="activeTouristsStat">0</strong>
+                        <span class="stat-trend positive">Profiles with required data</span>
+                    </div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon gold"><i class="bi bi-person-plus-fill"></i></div>
+                    <div>
+                        <span class="stat-label">New Registrations</span>
+                        <strong class="stat-value" id="newRegistrationsStat">0</strong>
+                        <span class="stat-trend neutral">Last 30 days</span>
+                    </div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon rose"><i class="bi bi-globe-asia-australia"></i></div>
+                    <div>
+                        <span class="stat-label">Countries Represented</span>
+                        <strong class="stat-value" id="countriesStat">0</strong>
+                        <span class="stat-trend neutral">Unique nationalities</span>
+                    </div>
+                </article>
+            </section>
+
+            <section class="dashboard-panel tourist-panel">
+                <div class="panel-header tourist-panel-header">
+                    <div>
+                        <span class="panel-eyebrow">Frontend CRUD Demo</span>
+                        <h2>Tourist Records</h2>
+                    </div>
+                    <button class="btn btn-emerald rounded-pill fw-bold" type="button" id="addTouristButton">
+                        <i class="bi bi-person-plus me-2"></i>Add New Tourist
+                    </button>
+                </div>
+
+                <div class="tourist-toolbar" aria-label="Tourist table filters">
+                    <div class="filter-field">
+                        <label for="nationalityFilter">Nationality</label>
+                        <select class="form-select" id="nationalityFilter">
+                            <option value="">All nationalities</option>
+                        </select>
+                    </div>
+                    <div class="filter-field">
+                        <label for="sortSelect">Sort Records</label>
+                        <select class="form-select" id="sortSelect">
+                            <option value="registrationDateDesc">Registration date: newest first</option>
+                            <option value="registrationDateAsc">Registration date: oldest first</option>
+                            <option value="nameAsc">Name: A to Z</option>
+                            <option value="nameDesc">Name: Z to A</option>
+                        </select>
+                    </div>
+                    <div class="filter-field compact">
+                        <label for="pageSizeSelect">Rows</label>
+                        <select class="form-select" id="pageSizeSelect">
+                            <option value="5">5</option>
+                            <option value="10" selected>10</option>
+                            <option value="25">25</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-outline-emerald rounded-pill fw-bold" type="button" id="resetFiltersButton">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i>Reset Filters
+                    </button>
+                </div>
+
+                <div class="active-filter-strip d-none" id="activeFilterStrip" aria-live="polite"></div>
+
+                <div class="table-responsive tourist-table-wrap">
+                    <table class="table align-middle admin-table tourist-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Tourist ID</th>
+                                <th scope="col">Full Name</th>
+                                <th scope="col">Email</th>
+                                <th scope="col">Phone Number</th>
+                                <th scope="col">Nationality</th>
+                                <th scope="col">Passport Number</th>
+                                <th scope="col">Registration Date</th>
+                                <th scope="col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="touristTableBody"></tbody>
+                    </table>
+                </div>
+
+                <div class="empty-state d-none" id="emptyState">
+                    <i class="bi bi-search"></i>
+                    <h3>No tourist records found</h3>
+                    <p>Try adjusting your search or filters, or add a new demonstration tourist record.</p>
+                </div>
+
+                <div class="table-footer">
+                    <span id="tableSummary">Showing 0 records</span>
+                    <div class="pagination-controls" aria-label="Tourist table pagination">
+                        <button class="btn btn-outline-emerald btn-sm rounded-pill" type="button" id="prevPageButton">
+                            <i class="bi bi-chevron-left me-1"></i>Previous
+                        </button>
+                        <span id="pageIndicator">Page 1 of 1</span>
+                        <button class="btn btn-outline-emerald btn-sm rounded-pill" type="button" id="nextPageButton">
+                            Next<i class="bi bi-chevron-right ms-1"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div class="modal fade" id="touristFormModal" tabindex="-1" aria-labelledby="touristFormTitle" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-header bg-emerald text-white p-4">
+                    <div>
+                        <h2 class="modal-title h5 fw-bold" id="touristFormTitle">Add New Tourist</h2>
+                        <span class="small text-white-80">Frontend-only tourist registration form</span>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="touristForm" novalidate>
+                    <div class="modal-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="touristId" class="form-label fw-semibold">Tourist ID</label>
+                                <input type="text" class="form-control" id="touristId" name="touristId" readonly>
+                                <div class="form-text">Generated automatically in the TOUR-0001 format.</div>
+                                <div class="invalid-feedback" id="touristIdError"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="fullName" class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="fullName" name="fullName" autocomplete="name" required>
+                                <div class="invalid-feedback" id="fullNameError"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="email" class="form-label fw-semibold">Email Address <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="email" name="email" autocomplete="email" required>
+                                <div class="invalid-feedback" id="emailError"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="phone" class="form-label fw-semibold">Phone Number <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" id="phone" name="phone" autocomplete="tel" required>
+                                <div class="invalid-feedback" id="phoneError"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="nationality" class="form-label fw-semibold">Nationality <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="nationality" name="nationality" required>
+                                <div class="invalid-feedback" id="nationalityError"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="passportNumber" class="form-label fw-semibold">Passport Number <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="passportNumber" name="passportNumber" required>
+                                <div class="invalid-feedback" id="passportNumberError"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="gender" class="form-label fw-semibold">Gender</label>
+                                <select class="form-select" id="gender" name="gender">
+                                    <option value="">Prefer not to specify</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="dateOfBirth" class="form-label fw-semibold">Date of Birth</label>
+                                <input type="date" class="form-control" id="dateOfBirth" name="dateOfBirth">
+                            </div>
+                            <div class="col-12">
+                                <label for="address" class="form-label fw-semibold">Address</label>
+                                <textarea class="form-control" id="address" name="address" rows="3" placeholder="Optional traveler address"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light border-0 p-4">
+                        <button type="button" class="btn btn-outline-emerald rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-emerald rounded-pill px-4 fw-bold" id="saveTouristButton">
+                            <span class="save-label"><i class="bi bi-check2-circle me-1"></i>Save Tourist</span>
+                            <span class="save-loading d-none">
+                                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Saving
+                            </span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-header delete-modal-header p-4">
+                    <div>
+                        <h2 class="modal-title h5 fw-bold" id="deleteConfirmTitle">Delete Tourist</h2>
+                        <span class="small">This action only removes the frontend demo record.</span>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="mb-3">Are you sure you want to delete this tourist record?</p>
+                    <div class="delete-target-box">
+                        <strong id="deleteTouristName">Tourist Name</strong>
+                        <span id="deleteTouristId">TOUR-0000</span>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-0 p-4">
+                    <button type="button" class="btn btn-outline-emerald rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger rounded-pill px-4 fw-bold" id="confirmDeleteButton">
+                        <i class="bi bi-trash3 me-1"></i>Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="touristToast" class="toast border-0 shadow-lg" role="status" aria-live="polite" aria-atomic="true">
+            <div class="toast-header bg-emerald text-white">
+                <i class="bi bi-info-circle me-2 text-gold"></i>
+                <strong class="me-auto">Tourist Management</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="touristToastBody"></div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Page JS -->
+    <script src="js/tourist-management.js"></script>
+</body>
+</html>

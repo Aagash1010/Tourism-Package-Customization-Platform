@@ -1,0 +1,243 @@
+/* ==========================================================================
+   Ceylon Explore - Tourist Management Module
+   ========================================================================== */
+
+.page-subtitle {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.admin-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.25rem;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.admin-breadcrumb a {
+    color: var(--primary-emerald);
+    text-decoration: none;
+}
+
+.admin-breadcrumb a:hover,
+.admin-breadcrumb a:focus {
+    color: var(--gold-hover);
+}
+
+.tourist-stats-grid {
+    margin-bottom: 1.25rem;
+}
+
+.tourist-panel {
+    margin-bottom: 2rem;
+}
+
+.tourist-panel-header {
+    align-items: center;
+}
+
+.tourist-toolbar {
+    display: grid;
+    grid-template-columns: minmax(210px, 1fr) minmax(240px, 1fr) minmax(110px, 0.4fr) auto;
+    align-items: end;
+    gap: 0.85rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: #fbfdfc;
+    border: 1px solid rgba(27, 67, 50, 0.08);
+    border-radius: 16px;
+}
+
+.filter-field label {
+    display: block;
+    margin-bottom: 0.35rem;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.filter-field.compact {
+    max-width: 130px;
+}
+
+.active-filter-strip {
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    color: var(--primary-emerald);
+    background: var(--emerald-light-bg);
+    border-radius: 14px;
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.tourist-table-wrap {
+    border: 1px solid rgba(27, 67, 50, 0.08);
+    border-radius: 16px;
+}
+
+.tourist-table {
+    min-width: 1040px;
+}
+
+.tourist-table tbody tr {
+    transition: var(--transition-smooth);
+}
+
+.tourist-table tbody tr:hover {
+    background: #fbfdfc;
+}
+
+.tourist-actions {
+    display: inline-flex;
+    gap: 0.4rem;
+}
+
+.table-action.edit-action {
+    color: #175cd3;
+}
+
+.table-action.delete-action {
+    color: #b42318;
+}
+
+.empty-state {
+    padding: 3rem 1rem;
+    text-align: center;
+    border: 1px dashed rgba(27, 67, 50, 0.18);
+    border-radius: 16px;
+    background: #fbfdfc;
+}
+
+.empty-state i {
+    color: var(--primary-gold);
+    font-size: 2.5rem;
+}
+
+.empty-state h3 {
+    margin: 0.8rem 0 0.35rem;
+    font-size: 1.2rem;
+}
+
+.empty-state p {
+    max-width: 460px;
+    margin: 0 auto;
+    color: var(--text-muted);
+}
+
+.table-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1rem;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.modal .text-white-80 {
+    color: var(--text-white-80) !important;
+}
+
+.modal .form-control,
+.modal .form-select {
+    min-height: 46px;
+    border-color: rgba(27, 67, 50, 0.16);
+    border-radius: 12px;
+}
+
+.modal textarea.form-control {
+    min-height: 92px;
+}
+
+.modal .form-control:focus,
+.modal .form-select:focus,
+.tourist-toolbar .form-select:focus,
+.search-box:focus-within {
+    border-color: var(--accent-green);
+    box-shadow: 0 0 0 4px rgba(45, 106, 79, 0.14);
+}
+
+.delete-modal-header {
+    background: #fff0ee;
+    color: #7a271a;
+}
+
+.delete-target-box {
+    padding: 1rem;
+    border: 1px solid #ffd5d2;
+    border-radius: 14px;
+    background: #fff8f7;
+}
+
+.delete-target-box strong,
+.delete-target-box span {
+    display: block;
+}
+
+.delete-target-box span {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.btn:focus-visible,
+.form-control:focus-visible,
+.form-select:focus-visible,
+.admin-breadcrumb a:focus-visible {
+    outline: 3px solid rgba(212, 175, 55, 0.45);
+    outline-offset: 3px;
+}
+
+@media (max-width: 1199.98px) {
+    .tourist-toolbar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .filter-field.compact {
+        max-width: none;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .tourist-toolbar {
+        grid-template-columns: 1fr;
+    }
+
+    .tourist-panel-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .table-footer {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .pagination-controls {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .page-subtitle {
+        font-size: 0.86rem;
+    }
+
+    .pagination-controls {
+        align-items: stretch;
+        flex-direction: column;
+    }
+}
