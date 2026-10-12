@@ -25,6 +25,14 @@ public class ApiExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(ApiExceptionHandler.class);
 
+    @ExceptionHandler(DestinationNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleDestinationNotFound(
+            DestinationNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage(), request, null);
+    }
+
     @ExceptionHandler(TouristNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleTouristNotFound(
             TouristNotFoundException exception,
