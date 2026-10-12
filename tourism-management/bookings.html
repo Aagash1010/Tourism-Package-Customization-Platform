@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Management | Ceylon Explore</title>
+    <meta name="description" content="Manage tourist bookings, tour packages, and payments in the Ceylon Explore admin dashboard.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin-dashboard.css">
+    <link rel="stylesheet" href="css/bookings.css">
+</head>
+<body class="admin-dashboard-body">
+    <div class="dashboard-shell">
+        <aside class="admin-sidebar" id="adminSidebar" aria-label="Admin dashboard navigation">
+            <div class="sidebar-header">
+                <a class="admin-brand d-flex align-items-center text-decoration-none" href="index.html" aria-label="Ceylon Explore home">
+                    <span class="brand-icon me-2"><i class="bi bi-compass-fill"></i></span>
+                    <span class="brand-text">Ceylon <span class="text-gold">Explore</span></span>
+                </a>
+                <span class="sidebar-label">Admin Console</span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a class="sidebar-link" href="admin-dashboard.html" data-module="Dashboard">
+                    <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+                </a>
+                <a class="sidebar-link module-placeholder" href="#" data-module="Tourist Management">
+                    <i class="bi bi-people"></i><span>Tourist Management</span>
+                </a>
+                <a class="sidebar-link" href="tour-packages.html" data-module="Tour Package Management">
+                    <i class="bi bi-map"></i><span>Tour Package Management</span>
+                </a>
+                <a class="sidebar-link" href="destinations.html" data-module="Destination Management">
+                    <i class="bi bi-geo-alt"></i><span>Destination Management</span>
+                </a>
+                <a class="sidebar-link active" href="bookings.html" data-module="Booking Management" aria-current="page">
+                    <i class="bi bi-calendar-check"></i><span>Booking Management</span>
+                </a>
+                <a class="sidebar-link" href="hotels.html" data-module="Hotel Management">
+                    <i class="bi bi-building"></i><span>Hotel Management</span>
+                </a>
+                <a class="sidebar-link" href="tour-guides.html" data-module="Tour Guide Management">
+                    <i class="bi bi-person-badge"></i><span>Tour Guide Management</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a class="sidebar-link logout-link" href="admin-login.html">
+                    <i class="bi bi-box-arrow-left"></i><span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
+
+        <main class="dashboard-main">
+            <header class="admin-topbar">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="icon-button sidebar-toggle" type="button" id="sidebarToggle" aria-label="Toggle sidebar" aria-controls="adminSidebar" aria-expanded="false">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <div>
+                        <nav class="admin-breadcrumb" aria-label="Breadcrumb">
+                            <a href="admin-dashboard.html">Dashboard</a>
+                            <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                            <span aria-current="page">Booking Management</span>
+                        </nav>
+                        <h1 class="page-title mb-0">Booking Management</h1>
+                        <p class="page-subtitle mb-0">Manage tourist bookings, tour packages, and payments.</p>
+                    </div>
+                </div>
+
+                <div class="topbar-actions">
+                    <label class="search-box booking-top-search" for="bookingSearch">
+                        <i class="bi bi-search"></i>
+                        <input type="search" id="bookingSearch" placeholder="Search bookings" autocomplete="off">
+                    </label>
+                    <button class="icon-button notification-button" type="button" id="notificationButton" aria-label="View notifications">
+                        <i class="bi bi-bell"></i>
+                        <span class="notification-dot" aria-hidden="true"></span>
+                    </button>
+                    <div class="admin-profile" aria-label="Administrator profile">
+                        <span class="profile-avatar">A</span>
+                        <div>
+                            <span class="profile-name">Administrator</span>
+                            <span class="profile-role">Frontend Demo</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="demo-note alert alert-success-subtle text-emerald border-0 rounded-3 small mb-4" role="note">
+                <i class="bi bi-info-circle me-1"></i>
+                Booking records are saved in this browser's localStorage for demonstration only. No Java file handling or database persistence is connected.
+            </div>
+
+            <section class="stats-grid booking-stats-grid" aria-label="Booking statistics overview">
+                <article class="stat-card">
+                    <div class="stat-icon emerald"><i class="bi bi-calendar-check-fill"></i></div>
+                    <div>
+                        <span class="stat-label">Total Bookings</span>
+                        <strong class="stat-value" id="totalBookingsStat">0</strong>
+                        <span class="stat-trend neutral">All saved records</span>
+                    </div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon blue"><i class="bi bi-check-circle-fill"></i></div>
+                    <div>
+                        <span class="stat-label">Confirmed Bookings</span>
+                        <strong class="stat-value" id="confirmedBookingsStat">0</strong>
+                        <span class="stat-trend positive">Confirmed reservations</span>
+                    </div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon gold"><i class="bi bi-hourglass-split"></i></div>
+                    <div>
+                        <span class="stat-label">Pending Bookings</span>
+                        <strong class="stat-value" id="pendingBookingsStat">0</strong>
+                        <span class="stat-trend neutral">Awaiting confirmation</span>
+                    </div>
+                </article>
+                <article class="stat-card">
+                    <div class="stat-icon rose"><i class="bi bi-cash-stack"></i></div>
+                    <div>
+                        <span class="stat-label">Total Booking Revenue</span>
+                        <strong class="stat-value" id="totalRevenueStat">LKR 0</strong>
+                        <span class="stat-trend neutral">Gross value of non-cancelled bookings</span>
+                    </div>
+                </article>
+            </section>
+
+            <section class="dashboard-panel booking-panel" aria-labelledby="bookingListingTitle">
+                <div class="panel-header booking-panel-header">
+                    <div>
+                        <span class="panel-eyebrow">Frontend CRUD Demo</span>
+                        <h2 id="bookingListingTitle">Bookings</h2>
+                        <p class="mb-0 booking-panel-description">Review reservation details, payment progress, and travel activity.</p>
+                    </div>
+                    <button class="btn btn-emerald rounded-pill fw-bold" type="button" id="addBookingButton">
+                        <i class="bi bi-plus-lg me-2"></i>Add New Booking
+                    </button>
+                </div>
+
+                <div class="booking-toolbar" aria-label="Booking filters">
+                    <div class="filter-field">
+                        <label for="bookingStatusFilter">Booking Status</label>
+                        <select class="form-select" id="bookingStatusFilter">
+                            <option value="">All statuses</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Confirmed">Confirmed</option>
+                            <option value="Cancelled">Cancelled</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                    </div>
+                    <div class="filter-field">
+                        <label for="paymentStatusFilter">Payment Status</label>
+                        <select class="form-select" id="paymentStatusFilter">
+                            <option value="">All payment statuses</option>
+                            <option value="Unpaid">Unpaid</option>
+                            <option value="Partially Paid">Partially Paid</option>
+                            <option value="Paid">Paid</option>
+                        </select>
+                    </div>
+                    <div class="filter-field">
+                        <label for="packageFilter">Tour Package</label>
+                        <select class="form-select" id="packageFilter">
+                            <option value="">All packages</option>
+                        </select>
+                    </div>
+                    <div class="filter-field">
+                        <label for="travelDateFilter">Travel Date</label>
+                        <input type="date" class="form-control" id="travelDateFilter">
+                    </div>
+                    <div class="filter-field">
+                        <label for="bookingDateFilter">Booking Date</label>
+                        <input type="date" class="form-control" id="bookingDateFilter">
+                    </div>
+                    <div class="filter-field">
+                        <label for="touristFilter">Tourist</label>
+                        <select class="form-select" id="touristFilter">
+                            <option value="">All tourists</option>
+                        </select>
+                    </div>
+                    <div class="filter-field sort-field">
+                        <label for="sortSelect">Sort Bookings</label>
+                        <select class="form-select" id="sortSelect">
+                            <option value="bookingDateDesc">Booking Date: newest</option>
+                            <option value="bookingDateAsc">Booking Date: oldest</option>
+                            <option value="travelDateAsc">Travel Date: earliest</option>
+                            <option value="travelDateDesc">Travel Date: latest</option>
+                            <option value="finalTotalDesc">Final Total: highest</option>
+                            <option value="finalTotalAsc">Final Total: lowest</option>
+                            <option value="statusAsc">Booking Status: A-Z</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-outline-emerald rounded-pill fw-bold reset-filters-button" type="button" id="resetFiltersButton">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i>Reset Filters
+                    </button>
+                </div>
+
+                <div class="booking-results-line">
+                    <span id="bookingResultsSummary" aria-live="polite">Showing 0 bookings</span>
+                    <span class="booking-storage-hint"><i class="bi bi-hdd me-1"></i>Browser demo storage</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table align-middle admin-table" aria-live="polite">
+                        <thead>
+                            <tr>
+                                <th scope="col">Booking ID</th>
+                                <th scope="col">Tourist Name</th>
+                                <th scope="col">Tour Package</th>
+                                <th scope="col">Booking Date</th>
+                                <th scope="col">Travel Date</th>
+                                <th scope="col">Travelers</th>
+                                <th scope="col">Total Price (LKR)</th>
+                                <th scope="col">Payment Status</th>
+                                <th scope="col">Booking Status</th>
+                                <th scope="col" class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bookingTableBody"></tbody>
+                    </table>
+                </div>
+
+                <div class="empty-state d-none" id="bookingEmptyState">
+                    <i class="bi bi-calendar-x"></i>
+                    <h3>No bookings found</h3>
+                    <p>There are no booking records that match the current search or filters.</p>
+                    <button class="btn btn-outline-emerald rounded-pill mt-3" type="button" id="emptyResetButton">Reset filters</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div class="modal fade" id="bookingFormModal" tabindex="-1" aria-labelledby="bookingFormTitle" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-header bg-emerald text-white p-4">
+                    <div>
+                        <h2 class="modal-title h5 fw-bold" id="bookingFormTitle">Add New Booking</h2>
+                        <span class="small text-white-80">Capture the booking, package, and payment details.</span>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <form id="bookingForm" novalidate>
+                    <div class="modal-body p-4">
+                        <div class="alert alert-warning d-none" id="touristDataAlert" role="alert"></div>
+                        <div class="alert alert-warning d-none" id="packageDataAlert" role="alert"></div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6 col-lg-4">
+                                <label for="bookingId" class="form-label fw-semibold">Booking ID</label>
+                                <input type="text" class="form-control" id="bookingId" readonly>
+                                <div class="form-text">Generated automatically, for example BOOK-0001.</div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <label for="touristSelect" class="form-label fw-semibold">Tourist <span class="text-danger">*</span></label>
+                                <select class="form-select" id="touristSelect" required>
+                                    <option value="">Select a tourist</option>
+                                </select>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <label for="packageSelect" class="form-label fw-semibold">Tour Package <span class="text-danger">*</span></label>
+                                <select class="form-select" id="packageSelect" required>
+                                    <option value="">Select a package</option>
+                                </select>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <label for="bookingDate" class="form-label fw-semibold">Booking Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="bookingDate" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <label for="travelDate" class="form-label fw-semibold">Travel Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="travelDate" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <label for="numberOfTravelers" class="form-label fw-semibold">Number of Travelers <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="numberOfTravelers" min="1" step="1" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <label for="specialRequests" class="form-label fw-semibold">Special Requests</label>
+                                <textarea class="form-control" id="specialRequests" rows="2" placeholder="Optional notes"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="pricing-section border rounded-4 p-3 mb-4">
+                            <h3 class="section-title mb-3">Pricing Information</h3>
+                            <div class="row g-3">
+                                <div class="col-md-6 col-lg-3">
+                                    <label for="pricePerPerson" class="form-label fw-semibold">Price Per Person (LKR)</label>
+                                    <input type="number" class="form-control" id="pricePerPerson" min="0" step="0.01" readonly>
+                                </div>
+                                <div class="col-md-6 col-lg-3">
+                                    <label for="subtotal" class="form-label fw-semibold">Subtotal (LKR)</label>
+                                    <input type="number" class="form-control" id="subtotal" min="0" step="0.01" readonly>
+                                </div>
+                                <div class="col-md-6 col-lg-3">
+                                    <label for="discount" class="form-label fw-semibold">Discount (LKR)</label>
+                                    <input type="number" class="form-control" id="discount" min="0" step="0.01" value="0">
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6 col-lg-3">
+                                    <label for="finalTotal" class="form-label fw-semibold">Final Total (LKR)</label>
+                                    <input type="number" class="form-control" id="finalTotal" min="0" step="0.01" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="paymentStatus" class="form-label fw-semibold">Payment Status</label>
+                                <select class="form-select" id="paymentStatus">
+                                    <option value="Unpaid">Unpaid</option>
+                                    <option value="Partially Paid">Partially Paid</option>
+                                    <option value="Paid">Paid</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="amountPaid" class="form-label fw-semibold">Amount Paid (LKR)</label>
+                                <input type="number" class="form-control" id="amountPaid" min="0" step="0.01" value="0">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="balanceDue" class="form-label fw-semibold">Balance Due (LKR)</label>
+                                <input type="number" class="form-control" id="balanceDue" min="0" step="0.01" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="bookingStatus" class="form-label fw-semibold">Booking Status</label>
+                                <select class="form-select" id="bookingStatus">
+                                    <option value="Pending">Pending</option>
+                                    <option value="Confirmed">Confirmed</option>
+                                    <option value="Cancelled">Cancelled</option>
+                                    <option value="Completed">Completed</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer p-4 pt-0">
+                        <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-emerald rounded-pill fw-bold" id="saveBookingButton">Save Booking</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="bookingDetailsModal" tabindex="-1" aria-labelledby="bookingDetailsTitle" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-header bg-emerald text-white p-4">
+                    <div>
+                        <h2 class="modal-title h5 fw-bold" id="bookingDetailsTitle">Booking Details</h2>
+                        <span class="small text-white-80" id="bookingDetailsSummary">Booking summary</span>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div id="bookingDetailContent" class="booking-detail-grid"></div>
+                </div>
+                <div class="modal-footer p-4 pt-0">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-emerald rounded-pill fw-bold" id="editFromDetailsButton">Edit Booking</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="deleteBookingModal" tabindex="-1" aria-labelledby="deleteBookingTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-header border-0 p-4 pb-2">
+                    <h2 class="modal-title h5 fw-bold" id="deleteBookingTitle">Delete Booking</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body px-4">
+                    <p class="mb-2">Are you sure you want to delete the selected booking?</p>
+                    <p class="mb-0 text-muted">Booking: <strong id="deleteBookingIdText">BOOK-0000</strong><br>Tourist: <strong id="deleteBookingTouristText">Tourist Name</strong></p>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4 pt-2">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger rounded-pill fw-bold" id="confirmDeleteBookingButton">Delete Booking</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="bookingToast" class="toast align-items-center text-bg-dark border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body" id="bookingToastBody"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/bookings.js"></script>
+</body>
+</html>
