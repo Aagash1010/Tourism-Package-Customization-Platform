@@ -120,10 +120,16 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/auth/csrf").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/test", "/api/test/database").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/destinations", "/api/destinations/**").permitAll()
                         .requestMatchers("/api/auth/me").authenticated()
                         .requestMatchers("/api/auth/logout").authenticated()
                         .requestMatchers("/api/user/dashboard").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers("/api/admin/dashboard", "/api/tourists/**").hasRole("ADMIN")
+                        .requestMatchers(
+                                "/api/admin/dashboard",
+                                "/api/tourists/**",
+                                "/api/destinations",
+                                "/api/destinations/**"
+                        ).hasRole("ADMIN")
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll()
                 )
