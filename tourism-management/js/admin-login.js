@@ -1,13 +1,14 @@
 /**
- * Ceylon Explore - Admin Login Page
- * Frontend-only validation prepared for future Spring Boot authentication.
+ * Ceylon Explore - Session-based account login.
  */
 
 document.addEventListener('DOMContentLoaded', function () {
+    const API_BASE_URL = 'http://' + window.location.hostname + ':8080';
+    const isFilePage = window.location.protocol === 'file:';
     const loginForm = document.getElementById('adminLoginPageForm');
-    const usernameInput = document.getElementById('adminUsername');
+    const emailInput = document.getElementById('adminEmail');
     const passwordInput = document.getElementById('adminPassword');
-    const usernameFeedback = document.getElementById('usernameFeedback');
+    const emailFeedback = document.getElementById('emailFeedback');
     const passwordFeedback = document.getElementById('passwordFeedback');
     const togglePassword = document.getElementById('togglePassword');
     const loginButton = document.getElementById('loginButton');
@@ -20,50 +21,89 @@ document.addEventListener('DOMContentLoaded', function () {
         togglePassword.innerHTML = isPassword ? '<i class="bi bi-eye-slash"></i>' : '<i class="bi bi-eye"></i>';
     });
 
-    loginForm.addEventListener('submit', function (event) {
+    loginForm.addEventListener('submit', async function (event) {
         event.preventDefault();
         clearValidation();
 
-        const username = usernameInput.value.trim();
-        const password = passwordInput.value.trim();
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
         let isValid = true;
 
-        if (!username) {
-            showFieldError(usernameInput, usernameFeedback, 'Please enter your administrator username.');
+        if (!email || !emailInput.validity.valid) {
+            showFieldError(emailInput, emailFeedback, 'Enter a valid email address.');
             isValid = false;
         }
-
         if (!password) {
             showFieldError(passwordInput, passwordFeedback, 'Please enter your password.');
             isValid = false;
         }
-
         if (!isValid) {
-            showStatus('Please complete the highlighted fields before continuing.', 'danger');
+            showStatus('Please correct the highlighted fields.', 'danger');
+            return;
+        }
+        if (isFilePage) {
+            showStatus(
+                'Serve this page with VS Code Live Server (for example, http://localhost:5500) instead of opening it as a file.',
+                'danger'
+            );
             return;
         }
 
         setLoadingState(true);
-        showStatus('Demo-only login flow. No real authentication is being performed.', 'success');
+        try {
+            const csrfResponse = await fetch(API_BASE_URL + '/api/auth/csrf', {
+                method: 'GET',
+                credentials: 'include'
+            });
+            const csrfBody = await readJsonResponse(csrfResponse);
+            if (!csrfResponse.ok || !csrfBody.csrfToken) {
+                throw new Error('Unable to initialize secure sign-in. Please try again.');
+            }
 
-        window.setTimeout(function () {
-            window.location.href = 'admin-dashboard.html';
-        }, 1100);
+            const loginResponse = await fetch(API_BASE_URL + '/api/auth/login', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfBody.csrfToken
+                },
+                body: JSON.stringify({ email: email, password: password })
+            });
+            const loginBody = await readJsonResponse(loginResponse);
+            if (!loginResponse.ok) {
+                throw new Error(loginBody.message || 'Invalid email or password.');
+            }
+            if (!loginBody.user || (loginBody.user.role !== 'ADMIN' && loginBody.user.role !== 'USER')) {
+                throw new Error('The server returned an invalid account response.');
+            }
+
+            window.location.href = loginBody.user.role === 'ADMIN'
+                ? 'admin-dashboard.html'
+                : 'user-dashboard.html';
+        } catch (error) {
+            const message = error instanceof TypeError
+                ? 'Cannot connect to the backend at ' + API_BASE_URL + '. Start Spring Boot and confirm it is listening on port 8080.'
+                : error.message || 'Unable to reach the authentication service.';
+            showStatus(message, 'danger');
+            setLoadingState(false);
+        }
     });
 
-    [usernameInput, passwordInput].forEach(function (input) {
+    [emailInput, passwordInput].forEach(function (input) {
         input.addEventListener('input', function () {
-            const group = input.closest('.admin-input-group');
-            group.classList.remove('has-error');
+            input.closest('.admin-input-group').classList.remove('has-error');
             input.setAttribute('aria-invalid', 'false');
-
-            if (input === usernameInput) {
-                usernameFeedback.textContent = '';
-            } else {
-                passwordFeedback.textContent = '';
-            }
+            (input === emailInput ? emailFeedback : passwordFeedback).textContent = '';
         });
     });
+
+    async function readJsonResponse(response) {
+        try {
+            return await response.json();
+        } catch (error) {
+            throw new Error('The authentication service returned an unreadable response.');
+        }
+    }
 
     function showFieldError(input, feedbackElement, message) {
         input.setAttribute('aria-invalid', 'true');
@@ -72,12 +112,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function clearValidation() {
-        usernameFeedback.textContent = '';
+        emailFeedback.textContent = '';
         passwordFeedback.textContent = '';
         document.querySelectorAll('.admin-input-group').forEach(function (group) {
             group.classList.remove('has-error');
         });
-        [usernameInput, passwordInput].forEach(function (input) {
+        [emailInput, passwordInput].forEach(function (input) {
             input.setAttribute('aria-invalid', 'false');
         });
         loginStatus.className = 'alert d-none rounded-3 small mb-3';

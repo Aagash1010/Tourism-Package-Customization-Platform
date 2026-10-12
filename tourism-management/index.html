@@ -893,16 +893,16 @@
                 </div>
                 <div class="modal-body p-4">
                     <div class="alert alert-success-subtle text-emerald small mb-3 border-0 rounded-3">
-                        <i class="bi bi-info-circle me-1"></i> Spring Boot REST API authentication endpoint ready: <code>/api/v1/auth/login</code>
+                        <i class="bi bi-info-circle me-1"></i> Spring Boot session authentication: <code>POST /api/auth/login</code>
                     </div>
                     <form id="adminLoginForm">
                         <div class="mb-3">
                             <label for="adminUsername" class="form-label small fw-semibold">Username / Email</label>
-                            <input type="text" class="form-control py-2" id="adminUsername" value="admin@ceylonexplore.lk" required>
+                            <input type="email" class="form-control py-2" id="adminUsername" autocomplete="username" placeholder="Enter administrator email" required>
                         </div>
                         <div class="mb-3">
                             <label for="adminPassword" class="form-label small fw-semibold">Password</label>
-                            <input type="password" class="form-control py-2" id="adminPassword" value="••••••••" required>
+                            <input type="password" class="form-control py-2" id="adminPassword" autocomplete="current-password" placeholder="Enter administrator password" required>
                         </div>
                         <div class="mb-3 form-check">
                             <input type="checkbox" class="form-check-input" id="rememberMe">

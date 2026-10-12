@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Login | Ceylon Explore</title>
-    <meta name="description" content="Administrator login page for the Ceylon Explore Tourism Management System frontend demo.">
+    <title>Account Login | Ceylon Explore</title>
+    <meta name="description" content="Secure account login for the Ceylon Explore Tourism Management System.">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -34,9 +34,9 @@
                 </a>
             </div>
             <div class="login-visual-content">
-                <span class="section-badge text-uppercase fw-bold text-gold">Administration Portal</span>
-                <h1 class="text-white fw-bold mt-2 mb-3">Welcome Back, Administrator</h1>
-                <p class="text-white-80 mb-0">Manage your tourism platform in one place.</p>
+                <span class="section-badge text-uppercase fw-bold text-gold">Ceylon Explore Portal</span>
+                <h1 class="text-white fw-bold mt-2 mb-3">Welcome Back</h1>
+                <p class="text-white-80 mb-0">Sign in to continue to your tourism platform account.</p>
             </div>
         </section>
 
@@ -44,32 +44,32 @@
             <div class="login-card" aria-labelledby="adminLoginTitle">
                 <div class="mb-4">
                     <span class="login-kicker">
-                        <i class="bi bi-shield-lock-fill me-2"></i> Demo Login
+                        <i class="bi bi-shield-lock-fill me-2"></i> Secure Sign In
                     </span>
-                    <h2 class="fw-bold mt-3 mb-2" id="adminLoginTitle">Admin Login</h2>
-                    <p class="text-muted mb-0">Frontend demonstration only. Spring Boot authentication can be connected later.</p>
+                    <h2 class="fw-bold mt-3 mb-2" id="adminLoginTitle">Account Login</h2>
+                    <p class="text-muted mb-0">Sign in with the account registered with Ceylon Explore.</p>
                 </div>
 
                 <div class="alert alert-success-subtle text-emerald border-0 rounded-3 small" role="note">
                     <i class="bi bi-info-circle me-1"></i>
-                    This page validates form input only. No real credentials are verified or stored.
+                    Your password is sent securely to the backend for verification and is never saved in this browser.
                 </div>
 
                 <form id="adminLoginPageForm" novalidate>
                     <div class="mb-3">
-                        <label for="adminUsername" class="form-label fw-semibold">Username</label>
+                        <label for="adminEmail" class="form-label fw-semibold">Email</label>
                         <div class="input-group admin-input-group">
                             <span class="input-group-text"><i class="bi bi-person"></i></span>
-                            <input type="text" class="form-control" id="adminUsername" name="username" autocomplete="username" placeholder="Enter administrator username" aria-describedby="usernameFeedback" required>
+                            <input type="email" class="form-control" id="adminEmail" name="email" autocomplete="username" placeholder="Enter your email" aria-describedby="emailFeedback" required>
                         </div>
-                        <div class="invalid-message" id="usernameFeedback"></div>
+                        <div class="invalid-message" id="emailFeedback"></div>
                     </div>
 
                     <div class="mb-3">
                         <label for="adminPassword" class="form-label fw-semibold">Password</label>
                         <div class="input-group admin-input-group">
                             <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                            <input type="password" class="form-control" id="adminPassword" name="password" autocomplete="current-password" placeholder="Enter administrator password" aria-describedby="passwordFeedback" required>
+                            <input type="password" class="form-control" id="adminPassword" name="password" autocomplete="current-password" placeholder="Enter your password" aria-describedby="passwordFeedback" required>
                             <button class="btn btn-outline-emerald password-toggle" type="button" id="togglePassword" aria-label="Show password">
                                 <i class="bi bi-eye"></i>
                             </button>
@@ -77,12 +77,8 @@
                         <div class="invalid-message" id="passwordFeedback"></div>
                     </div>
 
-                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="" id="rememberAdmin">
-                            <label class="form-check-label small" for="rememberAdmin">Remember Me</label>
-                        </div>
-                        <span class="small text-muted">Ready for <code>/api/v1/auth/login</code></span>
+                    <div class="d-flex justify-content-end mb-4">
+                        <span class="small text-muted">Server-side session authentication</span>
                     </div>
 
                     <div class="alert d-none rounded-3 small mb-3" id="loginStatus" role="status" aria-live="polite"></div>
@@ -91,7 +87,7 @@
                         <span class="button-label"><i class="bi bi-box-arrow-in-right me-2"></i>Login</span>
                         <span class="button-loading d-none">
                             <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
-                            Preparing dashboard preview
+                            Signing in securely
                         </span>
                     </button>
                 </form>

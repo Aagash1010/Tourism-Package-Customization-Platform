@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard | Ceylon Explore</title>
+    <meta name="description" content="Ceylon Explore account dashboard.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="admin-dashboard-body">
+    <main class="container py-5">
+        <header class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-5">
+            <a class="admin-brand d-flex align-items-center text-decoration-none" href="index.html">
+                <span class="brand-icon me-2"><i class="bi bi-compass-fill"></i></span>
+                <span class="brand-text">Ceylon <span class="text-gold">Explore</span></span>
+            </a>
+            <button class="btn btn-outline-emerald rounded-pill" type="button" id="logoutButton">
+                <i class="bi bi-box-arrow-left me-1"></i>Log out
+            </button>
+        </header>
+        <section class="dashboard-panel rounded-4 p-4 p-md-5" aria-labelledby="userDashboardTitle">
+            <span class="section-badge text-uppercase fw-bold text-success">Tourist Account</span>
+            <h1 class="page-title mt-2" id="userDashboardTitle">Your Dashboard</h1>
+            <p class="page-subtitle">You are signed in to Ceylon Explore.</p>
+            <div class="alert alert-danger d-none" id="userDashboardError" role="alert"></div>
+            <div id="userDashboardContent" class="d-none">
+                <h2 class="h4 fw-bold" id="userName"></h2>
+                <p class="text-muted mb-1" id="userEmail"></p>
+                <span class="badge text-bg-success" id="userRole"></span>
+            </div>
+            <a href="index.html" class="btn btn-emerald rounded-pill mt-4">Explore Ceylon Explore</a>
+        </section>
+    </main>
+    <script src="js/user-dashboard.js"></script>
+</body>
+</html>

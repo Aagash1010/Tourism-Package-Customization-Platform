@@ -339,39 +339,50 @@ document.addEventListener('DOMContentLoaded', function () {
     // 9. Admin Login Form Interactivity
     // ----------------------------------------------------------------------
     if (adminLoginForm) {
-        adminLoginForm.addEventListener('submit', function (e) {
+        adminLoginForm.addEventListener('submit', async function (e) {
             e.preventDefault();
-            const adminModalEl = document.getElementById('adminLoginModal');
-            const adminBsModal = bootstrap.Modal.getInstance(adminModalEl);
-            if (adminBsModal) {
-                adminBsModal.hide();
-            }
+            const email = document.getElementById('adminUsername').value.trim();
+            const password = document.getElementById('adminPassword').value;
+            const apiBaseUrl = 'http://' + window.location.hostname + ':8080';
 
-            setTimeout(() => {
-                showModal(
-                    'Admin Authentication',
-                    `<div class="text-center py-3">
-                        <div class="text-emerald mb-3"><i class="bi bi-shield-check display-3"></i></div>
-                        <h5 class="fw-bold mb-2">Authentication Successful</h5>
-                        <p class="text-muted small mb-3">
-                            Welcome to the Ceylon Explore Administrative Portal.
-                        </p>
-                        <div class="p-3 bg-light text-start small border rounded-3 mb-3">
-                            <h6 class="fw-bold mb-2 text-dark">Active Administrative Modules:</h6>
-                            <ul class="mb-0 ps-3">
-                                <li>Tourist Management</li>
-                                <li>Tour Package Management</li>
-                                <li>Destination Management</li>
-                                <li>Booking & Hotel Management</li>
-                                <li>Tour Guide Allocation</li>
-                            </ul>
-                        </div>
-                        <div class="alert alert-success-subtle border-0 small text-start mb-0">
-                            <i class="bi bi-gear-fill me-1"></i> Backend Target: Spring Boot Controller <code>@RestController /api/v1/admin</code>
-                        </div>
-                    </div>`
-                );
-            }, 300);
+            try {
+                const csrfResponse = await fetch(apiBaseUrl + '/api/auth/csrf', { credentials: 'include' });
+                const csrfBody = await csrfResponse.json();
+                if (!csrfResponse.ok || !csrfBody.csrfToken) {
+                    throw new Error('Unable to initialize secure sign-in.');
+                }
+                const loginResponse = await fetch(apiBaseUrl + '/api/auth/login', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfBody.csrfToken
+                    },
+                    body: JSON.stringify({ email: email, password: password })
+                });
+                const loginBody = await loginResponse.json();
+                if (!loginResponse.ok) {
+                    throw new Error(loginBody.message || 'Invalid email or password.');
+                }
+                if (!loginBody.user || (loginBody.user.role !== 'ADMIN' && loginBody.user.role !== 'USER')) {
+                    throw new Error('The server returned an invalid account response.');
+                }
+                window.location.href = loginBody.user.role === 'ADMIN'
+                    ? 'admin-dashboard.html'
+                    : 'user-dashboard.html';
+            } catch (error) {
+                const safeMessage = String(error.message || 'Unable to reach the authentication service.')
+                    .replace(/[&<>"']/g, function (character) {
+                        return {
+                            '&': '&amp;',
+                            '<': '&lt;',
+                            '>': '&gt;',
+                            '"': '&quot;',
+                            "'": '&#39;'
+                        }[character];
+                    });
+                showModal('Login failed', '<p class="text-danger mb-0">' + safeMessage + '</p>');
+            }
         });
     }
 
