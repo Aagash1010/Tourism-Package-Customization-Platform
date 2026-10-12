@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Destination Management | Ceylon Explore</title>
+    <meta name="description" content="Discover, organize, and manage tourist destinations across Sri Lanka.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin-dashboard.css">
+    <link rel="stylesheet" href="css/destinations.css">
+</head>
+<body class="admin-dashboard-body">
+    <div class="dashboard-shell">
+        <aside class="admin-sidebar" id="adminSidebar" aria-label="Admin dashboard navigation">
+            <div class="sidebar-header">
+                <a class="admin-brand d-flex align-items-center text-decoration-none" href="index.html" aria-label="Ceylon Explore home">
+                    <span class="brand-icon me-2"><i class="bi bi-compass-fill"></i></span>
+                    <span class="brand-text">Ceylon <span class="text-gold">Explore</span></span>
+                </a>
+                <span class="sidebar-label">Admin Console</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a class="sidebar-link" href="admin-dashboard.html" data-module="Dashboard">
+                    <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+                </a>
+                <a class="sidebar-link module-placeholder" href="#" data-module="Tourist Management">
+                    <i class="bi bi-people"></i><span>Tourist Management</span>
+                </a>
+                <a class="sidebar-link module-placeholder" href="#" data-module="Tour Package Management">
+                    <i class="bi bi-map"></i><span>Tour Package Management</span>
+                </a>
+                <a class="sidebar-link active" href="destinations.html" aria-current="page">
+                    <i class="bi bi-geo-alt"></i><span>Destination Management</span>
+                </a>
+                <a class="sidebar-link module-placeholder" href="#" data-module="Booking Management">
+                    <i class="bi bi-calendar-check"></i><span>Booking Management</span>
+                </a>
+                <a class="sidebar-link module-placeholder" href="#" data-module="Hotel Management">
+                    <i class="bi bi-building"></i><span>Hotel Management</span>
+                </a>
+                <a class="sidebar-link module-placeholder" href="#" data-module="Tour Guide Management">
+                    <i class="bi bi-person-badge"></i><span>Tour Guide Management</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a class="sidebar-link logout-link" href="admin-login.html">
+                    <i class="bi bi-box-arrow-left"></i><span>Logout</span>
+                </a>
+            </div>
+        </aside>
+        <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
+
+        <main class="dashboard-main destination-main">
+            <header class="admin-topbar">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="icon-button sidebar-toggle" type="button" id="sidebarToggle" aria-label="Toggle sidebar" aria-controls="adminSidebar" aria-expanded="false">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <div>
+                        <span class="section-badge text-uppercase fw-bold text-success">Admin Console</span>
+                        <h1 class="page-title mb-0">Destination Management</h1>
+                    </div>
+                </div>
+                <div class="topbar-actions">
+                    <div class="admin-profile" aria-label="Administrator profile">
+                        <span class="profile-avatar">A</span>
+                        <div>
+                            <span class="profile-name">Administrator</span>
+                            <span class="profile-role">Frontend Demo</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="destination-heading">
+                <div>
+                    <nav aria-label="Breadcrumb">
+                        <ol class="breadcrumb destination-breadcrumb">
+                            <li class="breadcrumb-item"><a href="admin-dashboard.html">Dashboard</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Destination Management</li>
+                        </ol>
+                    </nav>
+                    <p class="destination-subtitle mb-0">Discover, organize, and manage tourist destinations across Sri Lanka.</p>
+                </div>
+                <button class="btn btn-emerald destination-add-button" type="button" id="addDestinationButton">
+                    <i class="bi bi-plus-lg me-2"></i>Add New Destination
+                </button>
+            </div>
+
+            <div class="alert alert-success-subtle border-0 rounded-3 small destination-demo-note" role="note">
+                <i class="bi bi-info-circle me-1"></i>
+                Demonstration destinations and estimated entry fees only. Records are stored in this browser's localStorage; no backend or file handling is connected.
+            </div>
+
+            <section class="stats-grid destination-stats" aria-label="Destination statistics">
+                <article class="stat-card">
+                    <span class="stat-icon emerald"><i class="bi bi-geo-alt"></i></span>
+                    <div><span class="stat-label">Total Destinations</span><strong class="stat-value" id="totalDestinations">0</strong><span class="stat-trend neutral">Across Sri Lanka</span></div>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-icon gold"><i class="bi bi-star"></i></span>
+                    <div><span class="stat-label">Popular Destinations</span><strong class="stat-value" id="popularDestinations">0</strong><span class="stat-trend neutral">Featured places</span></div>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-icon blue"><i class="bi bi-map"></i></span>
+                    <div><span class="stat-label">Districts Covered</span><strong class="stat-value" id="districtsCovered">0</strong><span class="stat-trend neutral">Unique districts</span></div>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-icon rose"><i class="bi bi-cash-coin"></i></span>
+                    <div><span class="stat-label">Average Entry Fee</span><strong class="stat-value stat-currency" id="averageEntryFee">LKR 0</strong><span class="stat-trend neutral">Estimated per destination</span></div>
+                </article>
+            </section>
+
+            <section class="destination-toolbar dashboard-panel" aria-label="Search and filter destinations">
+                <div class="destination-search-wrap">
+                    <label class="visually-hidden" for="destinationSearch">Search destinations</label>
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <input id="destinationSearch" type="search" placeholder="Search name, district, province, or description..." autocomplete="off">
+                </div>
+                <div class="destination-filters">
+                    <div class="filter-control">
+                        <label for="districtFilter">District</label>
+                        <select id="districtFilter" class="form-select"><option value="">All districts</option></select>
+                    </div>
+                    <div class="filter-control">
+                        <label for="provinceFilter">Province</label>
+                        <select id="provinceFilter" class="form-select"><option value="">All provinces</option></select>
+                    </div>
+                    <div class="filter-control">
+                        <label for="categoryFilter">Category</label>
+                        <select id="categoryFilter" class="form-select"><option value="">All categories</option></select>
+                    </div>
+                    <div class="filter-control">
+                        <label for="statusFilter">Status</label>
+                        <select id="statusFilter" class="form-select">
+                            <option value="">All statuses</option>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="filter-control sort-control">
+                        <label for="sortFilter">Sort by</label>
+                        <select id="sortFilter" class="form-select">
+                            <option value="name">Name (A–Z)</option>
+                            <option value="fee-asc">Entry fee (low to high)</option>
+                            <option value="fee-desc">Entry fee (high to low)</option>
+                        </select>
+                    </div>
+                    <label class="featured-filter" for="featuredFilter">
+                        <input class="form-check-input" type="checkbox" id="featuredFilter">
+                        <span>Featured only</span>
+                    </label>
+                    <button class="btn btn-outline-secondary reset-filters" type="button" id="resetFiltersButton">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+                    </button>
+                </div>
+            </section>
+
+            <div class="destination-results-header">
+                <h2 class="h5 fw-bold mb-0">Destinations <span class="results-count" id="destinationCount">0 destinations</span></h2>
+            </div>
+            <section class="destination-grid" id="destinationGrid" aria-label="Destination listing" aria-live="polite"></section>
+        </main>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3 destination-toast-container">
+        <div id="destinationToast" class="toast border-0 shadow-lg" role="status" aria-live="polite" aria-atomic="true">
+            <div class="toast-header bg-emerald text-white">
+                <i class="bi bi-check-circle me-2 text-gold" id="destinationToastIcon"></i>
+                <strong class="me-auto">Ceylon Explore</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="destinationToastBody"></div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="destinationFormModal" tabindex="-1" aria-labelledby="destinationFormTitle" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content destination-modal">
+                <form id="destinationForm" novalidate>
+                    <div class="modal-header">
+                        <div>
+                            <span class="modal-eyebrow">Destination details</span>
+                            <h2 class="modal-title fs-4 fw-bold" id="destinationFormTitle">Add New Destination</h2>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-section-label"><i class="bi bi-card-text me-2"></i>Essential information</div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label" for="destinationId">Destination ID</label>
+                                <input class="form-control" id="destinationId" name="id" type="text" readonly>
+                                <div class="form-text">Generated automatically and kept unchanged.</div>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label" for="destinationName">Destination Name <span class="required-mark">*</span></label>
+                                <input class="form-control" id="destinationName" name="name" type="text" maxlength="100" required>
+                                <div class="invalid-feedback">Enter a destination name.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="destinationDistrict">District <span class="required-mark">*</span></label>
+                                <input class="form-control" id="destinationDistrict" name="district" type="text" maxlength="60" required>
+                                <div class="invalid-feedback">Enter the district.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="destinationProvince">Province <span class="required-mark">*</span></label>
+                                <select class="form-select" id="destinationProvince" name="province" required>
+                                    <option value="">Select a province</option>
+                                    <option>Central</option><option>Eastern</option><option>North Central</option>
+                                    <option>Northern</option><option>North Western</option><option>Sabaragamuwa</option>
+                                    <option>Southern</option><option>Uva</option><option>Western</option>
+                                </select>
+                                <div class="invalid-feedback">Select a province.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="destinationCategory">Destination Category <span class="required-mark">*</span></label>
+                                <select class="form-select" id="destinationCategory" name="category" required>
+                                    <option value="">Select a category</option>
+                                    <option>Historical and Cultural</option><option>Beach</option><option>Wildlife</option>
+                                    <option>Nature and Adventure</option><option>Hill Country</option><option>Religious</option>
+                                </select>
+                                <div class="invalid-feedback">Select a destination category.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="destinationFee">Entry Fee (LKR) <span class="required-mark">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">LKR</span>
+                                    <input class="form-control" id="destinationFee" name="entryFee" type="number" min="0" step="0.01" required>
+                                    <div class="invalid-feedback">Enter a fee of zero or more.</div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="destinationShortDescription">Short Description <span class="required-mark">*</span></label>
+                                <textarea class="form-control" id="destinationShortDescription" name="shortDescription" rows="2" maxlength="240" required></textarea>
+                                <div class="invalid-feedback">Add a short description.</div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="destinationFullDescription">Full Description <span class="optional-label">Optional</span></label>
+                                <textarea class="form-control" id="destinationFullDescription" name="fullDescription" rows="4" maxlength="2000"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="form-section-label mt-4"><i class="bi bi-calendar2-week me-2"></i>Visit planning</div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label" for="destinationBestTime">Best Time to Visit <span class="required-mark">*</span></label>
+                                <input class="form-control" id="destinationBestTime" name="bestTime" type="text" maxlength="100" placeholder="e.g. December to April" required>
+                                <div class="invalid-feedback">Enter the best time to visit.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="destinationDuration">Recommended Visit Duration <span class="required-mark">*</span></label>
+                                <input class="form-control" id="destinationDuration" name="duration" type="text" maxlength="80" placeholder="e.g. 2–3 hours" required>
+                                <div class="invalid-feedback">Enter a recommended visit duration.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="destinationHours">Opening Hours <span class="optional-label">Optional</span></label>
+                                <input class="form-control" id="destinationHours" name="openingHours" type="text" maxlength="100" placeholder="e.g. 6:00 AM – 6:00 PM">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="destinationAddress">Address or Location <span class="required-mark">*</span></label>
+                                <input class="form-control" id="destinationAddress" name="address" type="text" maxlength="180" required>
+                                <div class="invalid-feedback">Enter an address or location.</div>
+                            </div>
+                        </div>
+
+                        <div class="form-section-label mt-4"><i class="bi bi-geo me-2"></i>Map coordinates <span class="optional-label">Optional</span></div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label" for="destinationLatitude">Latitude</label>
+                                <input class="form-control" id="destinationLatitude" name="latitude" type="number" min="-90" max="90" step="any" placeholder="Between -90 and 90">
+                                <div class="invalid-feedback" id="latitudeFeedback">Latitude must be between -90 and 90.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="destinationLongitude">Longitude</label>
+                                <input class="form-control" id="destinationLongitude" name="longitude" type="number" min="-180" max="180" step="any" placeholder="Between -180 and 180">
+                                <div class="invalid-feedback" id="longitudeFeedback">Longitude must be between -180 and 180.</div>
+                            </div>
+                        </div>
+
+                        <div class="form-section-label mt-4"><i class="bi bi-sliders me-2"></i>Display and status</div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label" for="destinationFeatured">Featured Destination</label>
+                                <select class="form-select" id="destinationFeatured" name="featured">
+                                    <option value="false">No</option><option value="true">Yes</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="destinationStatus">Destination Status</label>
+                                <select class="form-select" id="destinationStatus" name="status">
+                                    <option>Active</option><option>Inactive</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="destinationImage">Image URL <span class="optional-label">Optional</span></label>
+                                <input class="form-control" id="destinationImage" name="image" type="text" maxlength="500" placeholder="https://example.com/destination.jpg">
+                                <div class="form-text">Use an image URL; broken or unavailable images show a local fallback.</div>
+                                <div class="invalid-feedback">Enter an HTTP, HTTPS, or relative image URL.</div>
+                            </div>
+                        </div>
+                        <div class="alert alert-danger py-2 mt-3 d-none" id="destinationFormError" role="alert"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-light" type="button" data-bs-dismiss="modal">Cancel</button>
+                        <button class="btn btn-emerald px-4" type="submit"><i class="bi bi-check2 me-1"></i><span id="saveDestinationLabel">Save Destination</span></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="deleteDestinationModal" tabindex="-1" aria-labelledby="deleteDestinationTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content destination-modal">
+                <div class="modal-header border-0 pb-0">
+                    <span class="delete-icon"><i class="bi bi-trash3"></i></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body pt-3">
+                    <h2 class="h5 fw-bold" id="deleteDestinationTitle">Delete destination?</h2>
+                    <p class="text-muted mb-0">You are about to delete <strong id="deleteDestinationName"></strong> (<span id="deleteDestinationId"></span>). This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button class="btn btn-light" type="button" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-danger" type="button" id="confirmDeleteButton">Delete Destination</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="destinationDetailsModal" tabindex="-1" aria-labelledby="destinationDetailsTitle" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content destination-modal destination-details-modal" id="destinationDetailsContent"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/destinations.js"></script>
+</body>
+</html>
