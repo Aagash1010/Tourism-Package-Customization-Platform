@@ -197,3 +197,74 @@
         padding: 1rem;
     }
 }
+
+.login-visual-overlay {
+    background:
+        linear-gradient(180deg, rgba(5, 28, 45, 0.34), rgba(5, 28, 45, 0.82)),
+        linear-gradient(110deg, rgba(7, 80, 91, 0.64), rgba(7, 80, 91, 0.08));
+}
+
+.login-form-panel {
+    background:
+        linear-gradient(145deg, rgba(230, 245, 246, 0.84), rgba(242, 248, 249, 0.92)),
+        url('../assets/images/about-sri-lanka.jpg') center / cover no-repeat;
+}
+
+.login-card {
+    border-color: rgba(255, 255, 255, 0.84);
+    background: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 26px 80px rgba(9, 37, 54, 0.17);
+    -webkit-backdrop-filter: blur(22px) saturate(150%);
+    backdrop-filter: blur(22px) saturate(150%);
+}
+
+.login-kicker {
+    color: var(--primary-emerald);
+    background: rgba(227, 245, 243, 0.9);
+}
+
+.admin-input-group {
+    border-color: rgba(18, 59, 84, 0.14);
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.admin-input-group .input-group-text {
+    color: var(--accent-green);
+    background: transparent;
+}
+
+.admin-input-group .form-control {
+    background: transparent;
+}
+
+.admin-input-group:focus-within {
+    border-color: var(--accent-green);
+    box-shadow: 0 0 0 4px rgba(8, 127, 131, 0.14);
+}
+
+.back-home-link {
+    color: var(--primary-emerald);
+}
+
+.back-home-link:hover,
+.back-home-link:focus {
+    color: var(--accent-green);
+}
+
+.admin-login-body .btn:focus-visible,
+.admin-login-body .form-control:focus-visible,
+.admin-login-body .password-toggle:focus-visible,
+.admin-login-body .back-home-link:focus-visible {
+    outline: 3px solid rgba(8, 127, 131, 0.45);
+    outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .admin-login-body *,
+    .admin-login-body *::before,
+    .admin-login-body *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

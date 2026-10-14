@@ -8,25 +8,31 @@
    -------------------------------------------------------------------------- */
 :root {
     /* Color Palette */
-    --primary-emerald: #1b4332;
-    --emerald-hover: #143527;
-    --accent-green: #2d6a4f;
-    --leaf-green: #52b788;
-    --emerald-light-bg: #e8f5e9;
+    --primary-emerald: #123b54;
+    --emerald-hover: #0b2c41;
+    --accent-green: #087f83;
+    --leaf-green: #38b9aa;
+    --emerald-light-bg: #e3f5f3;
     
-    --primary-gold: #d4af37;
-    --gold-hover: #b89428;
-    --gold-light-bg: #fff9e6;
+    --primary-gold: #55d4c6;
+    --gold-hover: #30bbaa;
+    --gold-light-bg: #e8faf7;
     
-    --bg-light: #f8f9fa;
-    --card-bg: #ffffff;
-    --dark-emerald: #0b1f17;
+    --bg-light: #f1f7f8;
+    --card-bg: rgba(255, 255, 255, 0.82);
+    --dark-emerald: #092536;
     
-    --text-dark: #1e293b;
-    --text-body: #334155;
-    --text-muted: #64748b;
+    --text-dark: #102d40;
+    --text-body: #294354;
+    --text-muted: #5b7180;
     --text-white-80: rgba(255, 255, 255, 0.85);
     --text-white-60: rgba(255, 255, 255, 0.65);
+
+    --glass-surface: rgba(255, 255, 255, 0.76);
+    --glass-border: rgba(255, 255, 255, 0.7);
+    --glass-shadow: 0 18px 50px rgba(9, 37, 54, 0.12);
+    --radius-card: 1.25rem;
+    --radius-control: 0.9rem;
     
     /* Typography */
     --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -66,6 +72,18 @@ h1, h2, h3, h4, h5, h6, .brand-text {
 
 .text-gold {
     color: var(--primary-gold) !important;
+}
+
+.text-white-80 {
+    color: var(--text-white-80);
+}
+
+.text-white-70 {
+    color: rgba(255, 255, 255, 0.76);
+}
+
+.text-white-60 {
+    color: var(--text-white-60);
 }
 
 .text-emerald {
@@ -533,5 +551,243 @@ h1, h2, h3, h4, h5, h6, .brand-text {
     .py-6 {
         padding-top: 3.5rem;
         padding-bottom: 3.5rem;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   15. Ceylon Explore Liquid Glass theme
+   -------------------------------------------------------------------------- */
+body {
+    background:
+        radial-gradient(ellipse at 12% 0%, rgba(85, 212, 198, 0.11), transparent 34rem),
+        linear-gradient(145deg, #f6fafb 0%, #eef5f7 52%, #f5f8f8 100%);
+}
+
+.navbar {
+    padding: 0.85rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(9, 37, 54, 0.2);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    backdrop-filter: blur(16px) saturate(150%);
+}
+
+.navbar.navbar-scrolled {
+    border-bottom-color: rgba(255, 255, 255, 0.16);
+    background: rgba(9, 37, 54, 0.88) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    backdrop-filter: blur(20px) saturate(160%);
+}
+
+.navbar .navbar-toggler {
+    border-color: rgba(255, 255, 255, 0.45);
+}
+
+.navbar .navbar-toggler-icon {
+    filter: invert(1) grayscale(1) brightness(1.8);
+}
+
+.hero-section .badge.text-gold {
+    color: var(--primary-emerald) !important;
+    background: rgba(231, 251, 248, 0.94);
+}
+
+.navbar-nav .nav-link::after {
+    transition: transform 0.25s ease, opacity 0.25s ease;
+    transform: scaleX(0);
+    transform-origin: left;
+    opacity: 0;
+}
+
+.navbar-nav .nav-link:hover::after,
+.navbar-nav .nav-link.active::after {
+    transform: scaleX(1);
+    opacity: 1;
+}
+
+.hero-overlay {
+    background:
+        linear-gradient(180deg, rgba(5, 28, 45, 0.5), rgba(5, 28, 45, 0.42) 42%, rgba(5, 28, 45, 0.82)),
+        linear-gradient(110deg, rgba(7, 80, 91, 0.34), transparent 72%);
+}
+
+.hero-title {
+    max-width: 900px;
+    margin-right: auto;
+    margin-left: auto;
+    font-size: clamp(2.7rem, 6vw, 5rem);
+    line-height: 1.04;
+    letter-spacing: -0.045em;
+}
+
+.hero-subtitle {
+    max-width: 700px;
+    font-size: clamp(1rem, 1.6vw, 1.2rem);
+}
+
+.hero-section .search-panel {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    background: rgba(255, 255, 255, 0.84);
+    box-shadow: 0 24px 60px rgba(4, 27, 42, 0.24);
+    -webkit-backdrop-filter: blur(22px) saturate(155%);
+    backdrop-filter: blur(22px) saturate(155%);
+}
+
+.search-panel .form-select,
+.search-panel .form-control {
+    min-height: 48px;
+    border: 1px solid rgba(18, 59, 84, 0.1) !important;
+    background-color: rgba(245, 249, 250, 0.9) !important;
+}
+
+.search-panel .form-select:focus,
+.search-panel .form-control:focus {
+    border-color: var(--accent-green) !important;
+    box-shadow: 0 0 0 4px rgba(8, 127, 131, 0.15);
+}
+
+.btn-emerald,
+.btn-gold,
+.btn-outline-emerald,
+.btn-admin-login {
+    min-height: 44px;
+    border-radius: 999px;
+    font-weight: 700;
+    transition: transform 0.22s ease, box-shadow 0.22s ease, background-color 0.22s ease, color 0.22s ease;
+}
+
+.btn-emerald {
+    background: linear-gradient(135deg, #123b54, #087f83);
+    box-shadow: 0 8px 20px rgba(8, 89, 104, 0.16);
+}
+
+.btn-gold,
+.btn-admin-login {
+    color: #073849;
+    background: linear-gradient(135deg, #70e0d2, #42c8bd);
+}
+
+.btn-admin-login {
+    border: 1px solid rgba(139, 242, 224, 0.65);
+    background: rgba(85, 212, 198, 0.16);
+    color: #efffff;
+}
+
+.btn-outline-emerald {
+    border-width: 1px;
+    border-color: rgba(18, 59, 84, 0.35);
+}
+
+.btn-emerald:hover,
+.btn-gold:hover,
+.btn-admin-login:hover,
+.btn-outline-emerald:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 26px rgba(9, 54, 72, 0.2);
+}
+
+.btn:focus-visible,
+.form-control:focus-visible,
+.form-select:focus-visible,
+.form-check-input:focus-visible,
+a:focus-visible,
+button:focus-visible {
+    outline: 3px solid rgba(8, 127, 131, 0.48);
+    outline-offset: 3px;
+}
+
+.card,
+.hotel-card,
+.feature-card,
+.testimonial-card {
+    border-color: rgba(255, 255, 255, 0.82);
+    border-radius: var(--radius-card);
+    background: var(--glass-surface);
+    box-shadow: 0 12px 36px rgba(13, 54, 72, 0.08);
+    -webkit-backdrop-filter: blur(12px) saturate(135%);
+    backdrop-filter: blur(12px) saturate(135%);
+}
+
+.destination-card,
+.package-card,
+.hotel-card,
+.feature-card,
+.testimonial-card {
+    transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
+}
+
+.destination-card:hover,
+.package-card:hover,
+.hotel-card:hover,
+.feature-card:hover,
+.testimonial-card:hover {
+    border-color: rgba(85, 212, 198, 0.48);
+    box-shadow: 0 20px 44px rgba(13, 54, 72, 0.15);
+}
+
+.cta-overlay {
+    background: linear-gradient(135deg, rgba(9, 50, 70, 0.88), rgba(7, 104, 108, 0.78));
+}
+
+.modal-backdrop.show {
+    opacity: 0.58;
+    -webkit-backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.82);
+    border-radius: var(--radius-card);
+    box-shadow: 0 26px 80px rgba(6, 34, 51, 0.24);
+}
+
+.admin-dashboard-body > main.container {
+    max-width: 920px;
+}
+
+.admin-dashboard-body > main.container .admin-brand .brand-text {
+    color: var(--primary-emerald);
+}
+
+.admin-dashboard-body > main.container .dashboard-panel {
+    padding: clamp(1.5rem, 5vw, 3rem);
+    border: 1px solid rgba(255, 255, 255, 0.84);
+    border-radius: 1.5rem;
+    background: rgba(255, 255, 255, 0.8);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: blur(18px) saturate(145%);
+    backdrop-filter: blur(18px) saturate(145%);
+}
+
+@media (max-width: 991.98px) {
+    .navbar {
+        background: rgba(9, 37, 54, 0.84) !important;
+        -webkit-backdrop-filter: blur(18px) saturate(155%);
+        backdrop-filter: blur(18px) saturate(155%);
+    }
+
+    .navbar-collapse {
+        margin-top: 0.65rem;
+        padding: 0.85rem 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 1rem;
+        background: rgba(9, 37, 54, 0.96);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
     }
 }
