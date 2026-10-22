@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const TOURIST_KEYS = ['ceylonExploreTourists', 'ceylonExplore.tourists.v1', 'ceylonExploreTouristsV1', 'ceylonExploreTouristManagement'];
     const PAYMENT_STATUS_OPTIONS = ['Unpaid', 'Partially Paid', 'Paid'];
     const BOOKING_STATUS_OPTIONS = ['Pending', 'Confirmed', 'Cancelled', 'Completed'];
+    const API_BASE_URL = 'http://' + window.location.hostname + ':8080';
     const bookingFormModal = new bootstrap.Modal(document.getElementById('bookingFormModal'));
     const bookingDetailsModal = new bootstrap.Modal(document.getElementById('bookingDetailsModal'));
     const deleteBookingModal = new bootstrap.Modal(document.getElementById('deleteBookingModal'));
@@ -56,17 +57,59 @@ document.addEventListener('DOMContentLoaded', function () {
         bookingDetailContent: document.getElementById('bookingDetailContent')
     };
 
-    const packageCatalog = getPackageCatalog();
-    const touristCatalog = getTouristCatalog();
+    const packageCatalog = [];
+    const touristCatalog = [];
     const bookingRepository = createBookingRepository();
-    let bookings = bookingRepository.load();
+    let bookings = [];
     let editingBookingId = null;
     let detailsBookingId = null;
     let pendingDeleteBookingId = null;
 
     bindEvents();
-    populateLookupOptions();
-    renderAll();
+    initializeDashboardData();
+
+    async function initializeDashboardData() {
+        try {
+            const [tourists, packages, fetchedBookings] = await Promise.all([
+                fetchBackendData('/api/tourists'),
+                fetchBackendData('/api/tour-packages'),
+                fetchBackendData('/api/bookings')
+            ]);
+
+            touristCatalog.length = 0;
+            packageCatalog.length = 0;
+            bookings = Array.isArray(fetchedBookings) ? fetchedBookings.map(normalizeBookingRecord) : [];
+
+            tourists.forEach(function (tourist) {
+                touristCatalog.push({
+                    id: String(tourist.id),
+                    name: tourist.fullName || tourist.name || 'Unnamed tourist',
+                    phone: tourist.phone || tourist.contact || '',
+                    email: tourist.email || '',
+                    contact: tourist.contact || ''
+                });
+            });
+
+            packages.forEach(function (pkg) {
+                packageCatalog.push({
+                    id: String(pkg.id),
+                    name: pkg.name || 'Unnamed package',
+                    price: Number(pkg.price || 0),
+                    maxTravelers: Number(pkg.maxTravelers || pkg.capacity || 0),
+                    status: pkg.status || 'Active'
+                });
+            });
+
+            populateLookupOptions();
+            renderAll();
+        } catch (error) {
+            console.error('Unable to load backend data for bookings page.', error);
+            bookings = bookingRepository.load();
+            populateLookupOptions();
+            renderAll();
+            showToast('Unable to connect to the backend. Showing the saved local fallback data.');
+        }
+    }
 
     function bindEvents() {
         elements.sidebarToggle.addEventListener('click', function () {
@@ -384,7 +427,7 @@ document.addEventListener('DOMContentLoaded', function () {
         bookingFormModal.show();
     }
 
-    function handleBookingSubmit(event) {
+    async function handleBookingSubmit(event) {
         event.preventDefault();
 
         const validation = validateBookingForm();
@@ -395,19 +438,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const payload = buildBookingPayload();
 
-        if (editingBookingId) {
-            bookings = bookings.map(function (item) {
-                return item.id === editingBookingId ? Object.assign({}, item, payload) : item;
-            });
-            showToast('Booking updated successfully.');
-        } else {
-            bookings = bookings.concat(payload);
-            showToast('Booking created successfully.');
-        }
+        try {
+            if (editingBookingId) {
+                const updated = await saveBooking(payload, editingBookingId);
+                bookings = bookings.map(function (item) {
+                    return item.id === editingBookingId ? normalizeBookingRecord(updated) : item;
+                });
+                showToast('Booking updated successfully.');
+            } else {
+                const created = await saveBooking(payload);
+                bookings = bookings.concat(normalizeBookingRecord(created));
+                showToast('Booking created successfully.');
+            }
 
-        bookingRepository.save(bookings);
-        bookingFormModal.hide();
-        renderAll();
+            bookingFormModal.hide();
+            renderAll();
+        } catch (error) {
+            showToast(error.message || 'Booking request failed.');
+        }
     }
 
     function validateBookingForm() {
@@ -466,35 +514,20 @@ document.addEventListener('DOMContentLoaded', function () {
         const selectedTourist = getSelectedTourist();
         const selectedPackage = getSelectedPackage();
         const travelers = Number(elements.numberOfTravelers.value || 0);
-        const pricePerPerson = Number(elements.pricePerPerson.value || 0);
-        const subtotalValue = Number(elements.subtotal.value || 0);
         const discountValue = Number(elements.discount.value || 0);
-        const finalTotalValue = Number(elements.finalTotal.value || 0);
         const amountPaidValue = Number(elements.amountPaid.value || 0);
-        const balanceDueValue = Number(elements.balanceDue.value || 0);
-
-        const id = editingBookingId || elements.bookingId.value || generateNextBookingId(bookings);
 
         return {
-            id: id,
-            touristId: selectedTourist.id,
-            touristName: selectedTourist.name,
-            touristContact: selectedTourist.phone || selectedTourist.email || selectedTourist.contact || '',
-            packageId: selectedPackage.id,
-            packageName: selectedPackage.name,
+            touristId: Number(selectedTourist.id),
+            packageId: Number(selectedPackage.id),
+            numberOfPeople: travelers,
             bookingDate: elements.bookingDate.value,
             travelDate: elements.travelDate.value,
-            numberOfTravelers: travelers,
-            pricePerPerson: pricePerPerson,
-            subtotal: subtotalValue,
             discount: discountValue,
-            finalTotal: finalTotalValue,
             amountPaid: amountPaidValue,
-            balanceDue: balanceDueValue,
             paymentStatus: elements.paymentStatus.value,
             bookingStatus: elements.bookingStatus.value,
-            specialRequests: elements.specialRequests.value.trim(),
-            createdAt: new Date().toISOString()
+            specialRequests: elements.specialRequests.value.trim()
         };
     }
 
@@ -586,17 +619,21 @@ document.addEventListener('DOMContentLoaded', function () {
         deleteBookingModal.show();
     }
 
-    function confirmDeleteBooking() {
+    async function confirmDeleteBooking() {
         if (!pendingDeleteBookingId) {
             return;
         }
 
-        bookings = bookings.filter(function (booking) { return booking.id !== pendingDeleteBookingId; });
-        bookingRepository.save(bookings);
-        deleteBookingModal.hide();
-        pendingDeleteBookingId = null;
-        renderAll();
-        showToast('Booking deleted successfully.');
+        try {
+            await deleteBookingById(pendingDeleteBookingId);
+            bookings = bookings.filter(function (booking) { return booking.id !== pendingDeleteBookingId; });
+            deleteBookingModal.hide();
+            pendingDeleteBookingId = null;
+            renderAll();
+            showToast('Booking deleted successfully.');
+        } catch (error) {
+            showToast(error.message || 'Unable to delete this booking.');
+        }
     }
 
     function resetFilters() {
@@ -685,6 +722,104 @@ document.addEventListener('DOMContentLoaded', function () {
                 safeWriteStorage(STORAGE_KEY, records);
             }
         };
+    }
+
+    async function fetchBackendData(endpoint) {
+        const response = await fetch(API_BASE_URL + endpoint, {
+            method: 'GET',
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            throw new Error('Unable to load data from ' + endpoint);
+        }
+
+        return await response.json();
+    }
+
+    async function saveBooking(payload, bookingId) {
+        const method = bookingId ? 'PUT' : 'POST';
+        const url = bookingId ? '/api/bookings/' + bookingId : '/api/bookings';
+        const response = await fetch(API_BASE_URL + url, {
+            method: method,
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': await getCsrfToken()
+            },
+            body: JSON.stringify(payload)
+        });
+        const json = await response.json().catch(function () { return null; });
+        if (!response.ok) {
+            throw new Error(json && json.message ? json.message : 'Booking request failed.');
+        }
+        return json;
+    }
+
+    async function deleteBookingById(bookingId) {
+        const response = await fetch(API_BASE_URL + '/api/bookings/' + bookingId, {
+            method: 'DELETE',
+            credentials: 'include',
+            headers: {
+                'X-CSRF-TOKEN': await getCsrfToken()
+            }
+        });
+
+        if (!response.ok) {
+            const body = await response.json().catch(function () { return null; });
+            throw new Error(body && body.message ? body.message : 'Unable to delete booking.');
+        }
+    }
+
+    async function getCsrfToken() {
+        const tokenResponse = await fetch(API_BASE_URL + '/api/auth/csrf', {
+            method: 'GET',
+            credentials: 'include'
+        });
+        const tokenBody = await tokenResponse.json().catch(function () { return {}; });
+        if (!tokenResponse.ok || !tokenBody.csrfToken) {
+            return '';
+        }
+        return tokenBody.csrfToken;
+    }
+
+    function normalizeBookingRecord(booking) {
+        const normalized = {
+            id: booking.id,
+            touristId: String(booking.touristId || ''),
+            touristName: booking.touristName || 'Unknown tourist',
+            touristContact: booking.touristContact || '',
+            packageId: String(booking.packageId || ''),
+            packageName: booking.packageName || 'Unknown package',
+            bookingDate: booking.bookingDate || '',
+            travelDate: booking.travelDate || '',
+            numberOfTravelers: Number(booking.numberOfPeople || 0),
+            pricePerPerson: Number(booking.packagePrice || 0),
+            subtotal: Number(booking.totalAmount || 0) + Number(booking.discount || 0),
+            discount: Number(booking.discount || 0),
+            finalTotal: Number(booking.totalAmount || 0),
+            amountPaid: Number(booking.amountPaid || 0),
+            balanceDue: Math.max(0, Number(booking.totalAmount || 0) - Number(booking.amountPaid || 0)),
+            paymentStatus: booking.paymentStatus || 'UNPAID',
+            bookingStatus: booking.bookingStatus || 'PENDING',
+            specialRequests: booking.specialRequests || '',
+            createdAt: booking.createdAt || new Date().toISOString()
+        };
+
+        normalized.paymentStatus = normalized.paymentStatus.charAt(0).toUpperCase() + normalized.paymentStatus.slice(1).toLowerCase().replace('_', ' ');
+        normalized.bookingStatus = normalized.bookingStatus.charAt(0).toUpperCase() + normalized.bookingStatus.slice(1).toLowerCase();
+
+        if (normalized.paymentStatus === 'Partially paid') {
+            normalized.paymentStatus = 'Partially Paid';
+        }
+        if (normalized.paymentStatus === 'Unpaid') {
+            normalized.paymentStatus = 'Unpaid';
+        }
+        if (normalized.paymentStatus === 'Paid') {
+            normalized.paymentStatus = 'Paid';
+        }
+
+        return normalized;
     }
 
     function createSampleBookings() {

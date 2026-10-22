@@ -14,6 +14,7 @@ import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -52,6 +53,30 @@ public class ApiExceptionHandler {
     @ExceptionHandler(DuplicateAccountEmailException.class)
     public ResponseEntity<Map<String, Object>> handleDuplicateAccountEmail(
             DuplicateAccountEmailException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(HttpStatus.CONFLICT, exception.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(TourPackageNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleTourPackageNotFound(
+            TourPackageNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(BookingNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleBookingNotFound(
+            BookingNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(BookingConflictException.class)
+    public ResponseEntity<Map<String, Object>> handleBookingConflict(
+            BookingConflictException exception,
             HttpServletRequest request
     ) {
         return buildErrorResponse(HttpStatus.CONFLICT, exception.getMessage(), request, null);
@@ -99,14 +124,17 @@ public class ApiExceptionHandler {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, "Request validation failed.", request, errors);
     }
 
-    @ExceptionHandler({HttpMessageNotReadableException.class, TypeMismatchException.class})
+    @ExceptionHandler({HttpMessageNotReadableException.class, TypeMismatchException.class, MethodArgumentTypeMismatchException.class, IllegalArgumentException.class})
     public ResponseEntity<Map<String, Object>> handleMalformedRequest(
             Exception exception,
             HttpServletRequest request
     ) {
+        String message = exception.getMessage() == null || exception.getMessage().isBlank()
+                ? "The request contains invalid or malformed values."
+                : exception.getMessage();
         return buildErrorResponse(
                 HttpStatus.BAD_REQUEST,
-                "The request contains invalid or malformed values.",
+                message,
                 request,
                 null
         );
