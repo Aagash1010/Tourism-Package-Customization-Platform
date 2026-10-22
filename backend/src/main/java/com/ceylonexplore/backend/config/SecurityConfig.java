@@ -128,7 +128,11 @@ public class SecurityConfig {
                                 "/api/admin/dashboard",
                                 "/api/tourists/**",
                                 "/api/destinations",
-                                "/api/destinations/**"
+                                "/api/destinations/**",
+                                "/api/tour-packages",
+                                "/api/tour-packages/**",
+                                "/api/bookings",
+                                "/api/bookings/**"
                         ).hasRole("ADMIN")
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll()
