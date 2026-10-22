@@ -37,11 +37,6 @@
     font-weight: 700;
 }
 
-.destination-demo-note {
-    color: var(--primary-emerald);
-    background: var(--emerald-light-bg);
-}
-
 .destination-stats .stat-card {
     min-width: 0;
     padding: 1rem;
@@ -367,12 +362,21 @@
     box-shadow: 0 20px 70px rgba(11, 31, 23, 0.22);
 }
 
+.destination-modal > form {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+}
+
 .destination-modal .modal-header {
     padding: 1.3rem 1.5rem;
     border-bottom: 1px solid #edf1ef;
 }
 
 .destination-modal .modal-body {
+    min-height: 0;
+    overflow-y: auto;
     padding: 1.35rem 1.5rem;
 }
 

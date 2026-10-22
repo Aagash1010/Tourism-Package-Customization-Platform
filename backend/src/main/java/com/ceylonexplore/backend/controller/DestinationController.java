@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -30,6 +31,21 @@ public class DestinationController {
     @GetMapping
     public List<Destination> getAllDestinations() {
         return destinationService.getAllDestinations();
+    }
+
+    @GetMapping("/search")
+    public List<Destination> searchDestinations(@RequestParam(required = false) String keyword) {
+        return destinationService.searchDestinations(keyword);
+    }
+
+    @GetMapping("/category/{category}")
+    public List<Destination> getDestinationsByCategory(@PathVariable String category) {
+        return destinationService.getDestinationsByCategory(category);
+    }
+
+    @GetMapping("/active")
+    public List<Destination> getActiveDestinations() {
+        return destinationService.getActiveDestinations();
     }
 
     @GetMapping("/{id}")

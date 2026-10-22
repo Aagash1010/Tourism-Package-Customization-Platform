@@ -8,4 +8,6 @@ public interface TourPackageRepository extends JpaRepository<TourPackage, Long> 
     boolean existsByNameIgnoreCase(String name);
 
     boolean existsByNameIgnoreCaseAndIdNot(String name, Long id);
+
+    boolean existsByDestinationIgnoreCase(String destination);
 }

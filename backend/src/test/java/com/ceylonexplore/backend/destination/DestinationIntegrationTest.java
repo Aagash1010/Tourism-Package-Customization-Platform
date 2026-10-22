@@ -2,8 +2,10 @@ package com.ceylonexplore.backend.destination;
 
 import com.ceylonexplore.backend.entity.AccountRole;
 import com.ceylonexplore.backend.entity.Destination;
+import com.ceylonexplore.backend.entity.TourPackage;
 import com.ceylonexplore.backend.entity.UserAccount;
 import com.ceylonexplore.backend.repository.DestinationRepository;
+import com.ceylonexplore.backend.repository.TourPackageRepository;
 import com.ceylonexplore.backend.repository.UserAccountRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,6 +24,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -60,6 +63,9 @@ class DestinationIntegrationTest {
 
     @Autowired
     private DestinationRepository destinationRepository;
+
+    @Autowired
+    private TourPackageRepository tourPackageRepository;
 
     @Autowired
     private UserAccountRepository userAccountRepository;
@@ -115,6 +121,15 @@ class DestinationIntegrationTest {
         Destination persistedDestination = destinationRepository.findById(id).orElseThrow();
         String createdAt = persistedDestination.getCreatedAt().toString();
         assertNotNull(persistedDestination.getCreatedAt());
+        assertNotNull(persistedDestination.getUpdatedAt());
+
+        TokenAndSession duplicateToken = csrfToken(createToken.session());
+        mockMvc.perform(post("/api/destinations")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VALID_DESTINATION.replace("Sigiriya", "sigiriya"))
+                        .header("X-CSRF-TOKEN", duplicateToken.token())
+                        .session(duplicateToken.session()))
+                .andExpect(status().isConflict());
 
         mockMvc.perform(get("/api/destinations/{id}", id))
                 .andExpect(status().isOk())
@@ -148,7 +163,8 @@ class DestinationIntegrationTest {
                                   "address": "Matale",
                                   "latitude": 91,
                                   "featured": false,
-                                  "status": "Active"
+                                  "status": "Active",
+                                  "imageUrl": "javascript:alert(1)"
                                 }
                                 """)
                         .header("X-CSRF-TOKEN", invalidToken.token())
@@ -156,7 +172,8 @@ class DestinationIntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors.name").exists())
                 .andExpect(jsonPath("$.errors.entryFee").exists())
-                .andExpect(jsonPath("$.errors.latitude").exists());
+                .andExpect(jsonPath("$.errors.latitude").exists())
+                .andExpect(jsonPath("$.errors.imageUrl").exists());
 
         mockMvc.perform(get("/api/destinations/999999"))
                 .andExpect(status().isNotFound())
@@ -171,9 +188,65 @@ class DestinationIntegrationTest {
     }
 
     @Test
+    void searchCategoryAndActiveRoutesReturnMatchingDestinations() throws Exception {
+        Destination active = objectMapper.readValue(VALID_DESTINATION, Destination.class);
+        destinationRepository.save(active);
+        Destination inactive = objectMapper.readValue(
+                VALID_DESTINATION.replace("Sigiriya", "Inactive Sigiriya"),
+                Destination.class
+        );
+        inactive.setStatus("Inactive");
+        destinationRepository.save(inactive);
+
+        mockMvc.perform(get("/api/destinations/search").param("keyword", "sigiriya"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+
+        mockMvc.perform(get("/api/destinations/search").param("keyword", "matale"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+
+        mockMvc.perform(get("/api/destinations/category/{category}", "Historical and Cultural"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+
+        mockMvc.perform(get("/api/destinations/active"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].status").value("Active"));
+    }
+
+    @Test
+    void destinationReferencedByTourPackageCannotBeDeleted() throws Exception {
+        Destination destination = objectMapper.readValue(VALID_DESTINATION, Destination.class);
+        destination = destinationRepository.save(destination);
+
+        TourPackage tourPackage = new TourPackage();
+        tourPackage.setName("Sigiriya package");
+        tourPackage.setDestination(destination.getName());
+        tourPackage.setDuration("2 days");
+        tourPackage.setPrice(new java.math.BigDecimal("25000.00"));
+        tourPackage.setMaxTravelers(8);
+        tourPackage.setStatus("Active");
+        TourPackage savedTourPackage = tourPackageRepository.save(tourPackage);
+
+        MockHttpSession adminSession = login("destination-admin@example.com", "AdminPass123");
+        TokenAndSession token = csrfToken(adminSession);
+        mockMvc.perform(delete("/api/destinations/{id}", destination.getId())
+                        .header("X-CSRF-TOKEN", token.token())
+                        .session(token.session()))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value(
+                        "This destination cannot be deleted because a tour package references it."
+                ));
+        assertTrue(destinationRepository.existsById(destination.getId()));
+        tourPackageRepository.delete(savedTourPackage);
+    }
+
+    @Test
     void destinationBrowsingIsPublicButMutationsRequireAnAdmin() throws Exception {
         Destination destination = objectMapper.readValue(VALID_DESTINATION, Destination.class);
-        destinationRepository.save(destination);
+        destination = destinationRepository.save(destination);
 
         mockMvc.perform(get("/api/destinations"))
                 .andExpect(status().isOk())
@@ -187,6 +260,18 @@ class DestinationIntegrationTest {
                         .header("X-CSRF-TOKEN", userToken.token())
                         .session(userToken.session()))
                 .andExpect(status().isForbidden());
+
+        mockMvc.perform(put("/api/destinations/{id}", destination.getId())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(VALID_DESTINATION)
+                                .header("X-CSRF-TOKEN", userToken.token())
+                                .session(userToken.session()))
+                        .andExpect(status().isForbidden());
+
+        mockMvc.perform(delete("/api/destinations/{id}", destination.getId())
+                                .header("X-CSRF-TOKEN", userToken.token())
+                                .session(userToken.session()))
+                        .andExpect(status().isForbidden());
     }
 
     private MockHttpSession login(String email, String password) throws Exception {
