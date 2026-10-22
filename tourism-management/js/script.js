@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const searchDateInput = document.getElementById('searchDate');
     const contactForm = document.getElementById('contactForm');
     const adminLoginForm = document.getElementById('adminLoginForm');
+    const apiBaseUrl = 'http://' + window.location.hostname + ':8080';
     
     // Demo Modal Elements
     const demoModalElement = document.getElementById('demoModal');
@@ -247,8 +248,20 @@ document.addEventListener('DOMContentLoaded', function () {
                         <input type="number" class="form-control py-2" value="2" min="1" max="20" required id="bookGuests">
                     </div>
                 </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Phone Number</label>
+                    <input type="tel" class="form-control py-2" placeholder="+94 77 123 4567" id="bookGuestPhone">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Country</label>
+                    <input type="text" class="form-control py-2" placeholder="Sri Lanka" id="bookGuestCountry">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Special Requests</label>
+                    <textarea class="form-control py-2" rows="3" placeholder="Optional notes for the travel team" id="bookGuestNotes"></textarea>
+                </div>
                 <div class="alert alert-warning-subtle text-dark small border-0 mb-3">
-                    <i class="bi bi-shield-check text-gold me-1"></i> No immediate payment required. Confirmation sent via email.
+                    <i class="bi bi-shield-check text-gold me-1"></i> No immediate payment required. Your request will be reviewed by the admin team.
                 </div>
                 <button type="submit" class="btn btn-emerald w-100 py-2 fw-bold rounded-pill">Confirm Reservation Request</button>
             </form>`
@@ -257,31 +270,159 @@ document.addEventListener('DOMContentLoaded', function () {
         setTimeout(() => {
             const bookingForm = document.getElementById('modalBookingForm');
             if (bookingForm) {
-                bookingForm.addEventListener('submit', function (e) {
+                bookingForm.addEventListener('submit', async function (e) {
                     e.preventDefault();
-                    const name = document.getElementById('bookGuestName').value;
-                    const date = document.getElementById('bookDate').value;
-                    
-                    showModal(
-                        'Booking Request Received!',
-                        `<div class="text-center py-3">
-                            <div class="text-success mb-3"><i class="bi bi-check-circle-fill display-3"></i></div>
-                            <h5 class="fw-bold mb-2">Thank you, ${name}!</h5>
-                            <p class="text-muted small mb-3">
-                                Your booking request for <strong>${pkgName}</strong> on <strong>${date}</strong> has been logged.
-                            </p>
-                            <div class="p-3 bg-light rounded-3 text-start small border">
-                                <div><strong>Status:</strong> Pending Admin Approval</div>
-                                <div><strong>Booking Reference:</strong> #CE-2026-${Math.floor(1000 + Math.random() * 9000)}</div>
-                            </div>
-                            <p class="small text-muted mt-3 mb-0">
-                                <em>Spring Boot Backend Integration Ready: <code>POST /api/v1/bookings</code></em>
-                            </p>
-                        </div>`
-                    );
+                    const name = document.getElementById('bookGuestName').value.trim();
+                    const email = document.getElementById('bookGuestEmail').value.trim();
+                    const travelDate = document.getElementById('bookDate').value;
+                    const guests = Number(document.getElementById('bookGuests').value || 1);
+                    const phone = document.getElementById('bookGuestPhone').value.trim();
+                    const country = document.getElementById('bookGuestCountry').value.trim() || 'Sri Lanka';
+                    const notes = document.getElementById('bookGuestNotes').value.trim();
+
+                    if (!name || !email || !travelDate) {
+                        showModal('Incomplete Booking Form', '<p class="text-danger mb-0">Please complete the required booking details before submitting.</p>');
+                        return;
+                    }
+
+                    const bookingButton = bookingForm.querySelector('button[type="submit"]');
+                    const originalText = bookingButton.innerHTML;
+                    bookingButton.disabled = true;
+                    bookingButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Submitting...';
+
+                    try {
+                        const csrfToken = await getCsrfToken();
+                        const packageRecord = await findPackageByName(pkgName);
+
+                        const touristResponse = await fetch(apiBaseUrl + '/api/tourists', {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: JSON.stringify({
+                                fullName: name,
+                                email: email,
+                                phone: phone || null,
+                                country: country
+                            })
+                        });
+
+                        let tourist = null;
+                        if (touristResponse.ok) {
+                            tourist = await touristResponse.json();
+                        } else {
+                            const touristBody = await touristResponse.json().catch(() => ({}));
+                            if (touristResponse.status === 409 || touristResponse.status === 400) {
+                                const existingTourists = await fetch(apiBaseUrl + '/api/tourists', {
+                                    credentials: 'include',
+                                    headers: { Accept: 'application/json' }
+                                });
+                                if (existingTourists.ok) {
+                                    const tourists = await existingTourists.json();
+                                    tourist = tourists.find(item => item.email && item.email.toLowerCase() === email.toLowerCase()) || null;
+                                }
+                                if (!tourist) {
+                                    throw new Error(touristBody.message || 'Unable to create the traveler profile for this booking.');
+                                }
+                            } else {
+                                throw new Error(touristBody.message || 'Unable to create the traveler profile for this booking.');
+                            }
+                        }
+
+                        const bookingDate = new Date().toISOString().slice(0, 10);
+                        const bookingResponse = await fetch(apiBaseUrl + '/api/bookings', {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: JSON.stringify({
+                                touristId: tourist.id,
+                                packageId: packageRecord.id,
+                                numberOfPeople: guests,
+                                bookingDate: bookingDate,
+                                travelDate: travelDate,
+                                specialRequests: notes || 'No additional requests',
+                                bookingStatus: 'PENDING',
+                                paymentStatus: 'UNPAID',
+                                discount: 0,
+                                amountPaid: 0
+                            })
+                        });
+
+                        const bookingBody = await bookingResponse.json().catch(() => ({}));
+                        if (!bookingResponse.ok) {
+                            throw new Error(bookingBody.message || 'Your booking request could not be submitted to the admin team.');
+                        }
+
+                        showModal(
+                            'Booking Request Received!',
+                            `<div class="text-center py-3">
+                                <div class="text-success mb-3"><i class="bi bi-check-circle-fill display-3"></i></div>
+                                <h5 class="fw-bold mb-2">Thank you, ${name}!</h5>
+                                <p class="text-muted small mb-3">
+                                    Your booking request for <strong>${pkgName}</strong> on <strong>${travelDate}</strong> has been sent to the admin team.
+                                </p>
+                                <div class="p-3 bg-light rounded-3 text-start small border">
+                                    <div><strong>Status:</strong> Pending Admin Approval</div>
+                                    <div><strong>Booking Reference:</strong> ${bookingBody.bookingReference || 'Awaiting confirmation'}</div>
+                                </div>
+                            </div>`
+                        );
+                        bookingForm.reset();
+                    } catch (error) {
+                        showModal('Booking Not Submitted', '<p class="text-danger mb-0">' + escapeHtml(error.message || 'Unable to send the booking request right now. Please try again.') + '</p>');
+                    } finally {
+                        bookingButton.disabled = false;
+                        bookingButton.innerHTML = originalText;
+                    }
                 });
             }
         }, 200);
+    }
+
+    async function getCsrfToken() {
+        const csrfResponse = await fetch(apiBaseUrl + '/api/auth/csrf', {
+            credentials: 'include'
+        });
+        const csrfBody = await csrfResponse.json().catch(() => ({}));
+        if (!csrfResponse.ok || !csrfBody.csrfToken) {
+            throw new Error('Unable to initialize a secure booking request.');
+        }
+        return csrfBody.csrfToken;
+    }
+
+    async function findPackageByName(packageName) {
+        const response = await fetch(apiBaseUrl + '/api/tour-packages', {
+            credentials: 'include',
+            headers: { Accept: 'application/json' }
+        });
+        const packages = await response.json().catch(() => []);
+        if (!response.ok || !Array.isArray(packages)) {
+            throw new Error('Unable to load the available tour packages.');
+        }
+        const normalizedTarget = normalizePackageName(packageName);
+        const match = packages.find(pkg => normalizePackageName(pkg.name) === normalizedTarget);
+        if (!match) {
+            throw new Error('This selected package is currently unavailable.');
+        }
+        return match;
+    }
+
+    function normalizePackageName(value) {
+        return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    }
+
+    function escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/\"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
     // ----------------------------------------------------------------------
