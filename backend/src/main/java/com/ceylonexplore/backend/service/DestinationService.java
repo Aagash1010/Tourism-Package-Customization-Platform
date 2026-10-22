@@ -1,8 +1,11 @@
 package com.ceylonexplore.backend.service;
 
 import com.ceylonexplore.backend.entity.Destination;
+import com.ceylonexplore.backend.exception.DuplicateDestinationException;
+import com.ceylonexplore.backend.exception.DestinationInUseException;
 import com.ceylonexplore.backend.exception.DestinationNotFoundException;
 import com.ceylonexplore.backend.repository.DestinationRepository;
+import com.ceylonexplore.backend.repository.TourPackageRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,13 +16,33 @@ import java.util.List;
 public class DestinationService {
 
     private final DestinationRepository destinationRepository;
+    private final TourPackageRepository tourPackageRepository;
 
-    public DestinationService(DestinationRepository destinationRepository) {
+    public DestinationService(
+            DestinationRepository destinationRepository,
+            TourPackageRepository tourPackageRepository
+    ) {
         this.destinationRepository = destinationRepository;
+        this.tourPackageRepository = tourPackageRepository;
     }
 
     public List<Destination> getAllDestinations() {
         return destinationRepository.findAll();
+    }
+
+    public List<Destination> searchDestinations(String keyword) {
+        String normalizedKeyword = keyword == null ? "" : keyword.trim();
+        return normalizedKeyword.isEmpty()
+                ? getAllDestinations()
+                : destinationRepository.search(normalizedKeyword);
+    }
+
+    public List<Destination> getDestinationsByCategory(String category) {
+        return destinationRepository.findByCategoryIgnoreCase(category.trim());
+    }
+
+    public List<Destination> getActiveDestinations() {
+        return destinationRepository.findByStatusIgnoreCase("Active");
     }
 
     public Destination getDestinationById(Long id) {
@@ -29,7 +52,11 @@ public class DestinationService {
 
     @Transactional
     public Destination createDestination(Destination destination) {
-        destination.setName(destination.getName().trim());
+        String normalizedName = destination.getName().trim();
+        if (destinationRepository.existsByNameIgnoreCase(normalizedName)) {
+            throw new DuplicateDestinationException("A destination with this name already exists.");
+        }
+        destination.setName(normalizedName);
         destination.setDistrict(destination.getDistrict().trim());
         destination.setProvince(destination.getProvince().trim());
         destination.setCategory(destination.getCategory().trim());
@@ -47,7 +74,17 @@ public class DestinationService {
     @Transactional
     public Destination updateDestination(Long id, Destination destination) {
         Destination existing = getDestinationById(id);
-        existing.setName(destination.getName().trim());
+        String normalizedName = destination.getName().trim();
+        if (destinationRepository.existsByNameIgnoreCaseAndIdNot(normalizedName, id)) {
+            throw new DuplicateDestinationException("A different destination with this name already exists.");
+        }
+        if (!existing.getName().equalsIgnoreCase(normalizedName)
+                && tourPackageRepository.existsByDestinationIgnoreCase(existing.getName())) {
+            throw new DestinationInUseException(
+                    "This destination cannot be renamed because a tour package references it."
+            );
+        }
+        existing.setName(normalizedName);
         existing.setDistrict(destination.getDistrict().trim());
         existing.setProvince(destination.getProvince().trim());
         existing.setCategory(destination.getCategory().trim());
@@ -69,6 +106,11 @@ public class DestinationService {
     @Transactional
     public void deleteDestination(Long id) {
         Destination destination = getDestinationById(id);
+        if (tourPackageRepository.existsByDestinationIgnoreCase(destination.getName())) {
+            throw new DestinationInUseException(
+                    "This destination cannot be deleted because a tour package references it."
+            );
+        }
         destinationRepository.delete(destination);
     }
 

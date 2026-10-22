@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
@@ -112,6 +113,10 @@ public class Destination {
     private String status = "Active";
 
     @Size(max = 500, message = "Image URL must not exceed 500 characters.")
+    @Pattern(
+            regexp = "(?i)^(https?://[^\\s]+|/(?!/)[^\\s]*|(?:\\.\\.?/)?[A-Za-z0-9][A-Za-z0-9._/-]*)$",
+            message = "Image URL must use HTTP, HTTPS, or a relative path."
+    )
     @Column(name = "image_url", length = 500)
     private String imageUrl;
 
@@ -119,14 +124,27 @@ public class Destination {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
     protected Destination() {
     }
 
     @PrePersist
     private void setCreatedAt() {
+        LocalDateTime now = LocalDateTime.now();
         if (createdAt == null) {
-            createdAt = LocalDateTime.now();
+            createdAt = now;
         }
+        if (updatedAt == null) {
+            updatedAt = now;
+        }
+    }
+
+    @PreUpdate
+    private void setUpdatedAt() {
+        updatedAt = LocalDateTime.now();
     }
 
     public Long getId() {
@@ -263,5 +281,9 @@ public class Destination {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt == null ? createdAt : updatedAt;
     }
 }

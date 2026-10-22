@@ -18,6 +18,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const contactForm = document.getElementById('contactForm');
     const adminLoginForm = document.getElementById('adminLoginForm');
     const apiBaseUrl = 'http://' + window.location.hostname + ':8080';
+    const homeDestinationGrid = document.getElementById('homeDestinationGrid');
+    const homeDestinationStatus = document.getElementById('homeDestinationStatus');
     
     // Demo Modal Elements
     const demoModalElement = document.getElementById('demoModal');
@@ -140,31 +142,103 @@ document.addEventListener('DOMContentLoaded', function () {
     // ----------------------------------------------------------------------
     // 5. Destination Card Buttons Interactivity
     // ----------------------------------------------------------------------
-    const exploreButtons = document.querySelectorAll('.btn-explore');
-    exploreButtons.forEach(button => {
-        button.addEventListener('click', function () {
-            const destinationName = this.getAttribute('data-destination');
-            
+    if (homeDestinationGrid) {
+        homeDestinationGrid.addEventListener('click', function (event) {
+            const button = event.target.closest('.btn-explore');
+            if (!button) {
+                return;
+            }
+
+            const destinationName = button.dataset.destination;
+            const destinationDescription = button.dataset.description;
+            const destinationCategory = button.dataset.category;
             showModal(
                 `Explore ${destinationName}`,
                 `<div class="py-2">
-                    <h5 class="fw-bold mb-2 text-emerald"><i class="bi bi-geo-alt-fill me-2"></i>${destinationName} Overview</h5>
-                    <p class="text-muted mb-3">
-                        ${destinationName} is one of Sri Lanka's prime travel destinations offering rich cultural history, breathtaking landscapes, and unforgettable local adventures.
-                    </p>
-                    <div class="row g-2 mb-3 small">
-                        <div class="col-6"><i class="bi bi-check2-circle text-emerald me-1"></i> Guided Heritage Walks</div>
-                        <div class="col-6"><i class="bi bi-check2-circle text-emerald me-1"></i> Photography Spots</div>
-                        <div class="col-6"><i class="bi bi-check2-circle text-emerald me-1"></i> Luxury Transfers</div>
-                        <div class="col-6"><i class="bi bi-check2-circle text-emerald me-1"></i> Local Food Tastings</div>
-                    </div>
+                    <h5 class="fw-bold mb-2 text-emerald"><i class="bi bi-geo-alt-fill me-2"></i>${escapeHtml(destinationCategory)}</h5>
+                    <p class="text-muted mb-3">${escapeHtml(destinationDescription)}</p>
                     <div class="d-grid">
-                        <a href="#packages" class="btn btn-emerald rounded-pill" data-bs-dismiss="modal">View Packages for ${destinationName}</a>
+                        <a href="#packages" class="btn btn-emerald rounded-pill" data-bs-dismiss="modal">View Tour Packages</a>
                     </div>
                 </div>`
             );
         });
-    });
+    }
+
+    loadHomeDestinations();
+
+    async function loadHomeDestinations() {
+        if (!homeDestinationGrid || !homeDestinationStatus) {
+            return;
+        }
+
+        try {
+            const response = await fetch(apiBaseUrl + '/api/destinations/active', {
+                credentials: 'include'
+            });
+            if (!response.ok) {
+                throw new Error('Destination request failed with status ' + response.status + '.');
+            }
+
+            const destinations = await response.json();
+            if (!Array.isArray(destinations)) {
+                throw new Error('The destination service returned an invalid response.');
+            }
+
+            homeDestinationGrid.innerHTML = destinations.map(function (destination) {
+                const name = escapeHtml(destination.name);
+                const category = escapeHtml(destination.category);
+                const description = escapeHtml(destination.shortDescription || destination.fullDescription || '');
+                const duration = escapeHtml(destination.duration || 'Visit duration not specified');
+                const imageUrl = getDestinationImageUrl(destination.imageUrl);
+
+                return `<div class="col-lg-4 col-md-6">
+                    <div class="destination-card rounded-4 overflow-hidden shadow-sm h-100 bg-white border-0 position-relative">
+                        <div class="card-img-wrapper position-relative overflow-hidden">
+                            <img src="${escapeHtml(imageUrl)}" class="card-img-top destination-img" alt="${name}" loading="lazy">
+                            <span class="badge-tag bg-emerald">${category}</span>
+                        </div>
+                        <div class="card-body p-4 d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h3 class="card-title h5 fw-bold mb-0">${name}</h3>
+                            </div>
+                            <p class="card-text text-muted small flex-grow-1">${description}</p>
+                            <div class="pt-3 border-top d-flex justify-content-between align-items-center gap-2">
+                                <span class="text-emerald fw-semibold small"><i class="bi bi-clock me-1"></i>${duration}</span>
+                                <button class="btn btn-outline-emerald btn-sm rounded-pill px-3 btn-explore" type="button"
+                                    data-destination="${name}" data-category="${category}" data-description="${description}">
+                                    Explore More <i class="bi bi-arrow-right ms-1"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            homeDestinationStatus.textContent = destinations.length
+                ? ''
+                : 'No active destinations are available right now.';
+        } catch (error) {
+            console.error('Unable to load homepage destinations.', error);
+            homeDestinationStatus.textContent = 'Destinations could not be loaded. Please try again later.';
+        }
+    }
+
+    function getDestinationImageUrl(imageUrl) {
+        const fallbackImage = 'assets/images/hero-bg.jpg';
+        if (typeof imageUrl !== 'string' || !imageUrl.trim() || imageUrl.trim().startsWith('//')) {
+            return fallbackImage;
+        }
+
+        try {
+            const parsedUrl = new URL(imageUrl.trim(), window.location.href);
+            return parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:'
+                ? parsedUrl.href
+                : fallbackImage;
+        } catch (error) {
+            return fallbackImage;
+        }
+    }
 
     // ----------------------------------------------------------------------
     // 6. Tour Package Details & Booking Interactivity

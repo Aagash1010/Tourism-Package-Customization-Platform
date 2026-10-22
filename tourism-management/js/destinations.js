@@ -1,88 +1,15 @@
 /**
  * Ceylon Explore - Destination Management
- * The storage object is deliberately isolated so it can be replaced by API calls later.
+ * Destination records are loaded from and persisted by the Spring Boot API.
  */
 document.addEventListener('DOMContentLoaded', function () {
     'use strict';
 
-    const STORAGE_KEY = 'ceylonExplore.destinations.v1';
+    const API_BASE_URL = (window.location.protocol === 'file:' ? 'http:' : window.location.protocol) +
+        '//' + (window.location.hostname || 'localhost') + ':8080';
     const FALLBACK_IMAGE = 'assets/images/hero-bg.jpg';
     const provinces = ['Central', 'Eastern', 'North Central', 'Northern', 'North Western', 'Sabaragamuwa', 'Southern', 'Uva', 'Western'];
     const categories = ['Historical and Cultural', 'Beach', 'Wildlife', 'Nature and Adventure', 'Hill Country', 'Religious'];
-    const sampleDestinations = [
-        {
-            id: 'DST-0001', name: 'Sigiriya Rock Fortress', district: 'Matale', province: 'Central',
-            category: 'Historical and Cultural',
-            shortDescription: 'Climb the ancient rock citadel for remarkable frescoes, water gardens, and panoramic views.',
-            fullDescription: 'A UNESCO World Heritage Site rising dramatically above the central plains. Explore the landscaped water gardens, historic frescoes, and the remains of the fifth-century royal citadel. Sample international visitor fees are estimates for demonstration purposes.',
-            entryFee: 7500, bestTime: 'January to April', duration: '3–4 hours',
-            openingHours: '7:00 AM – 5:30 PM', address: 'Sigiriya, Dambulla, Matale District',
-            latitude: 7.957, longitude: 80.760, featured: true, status: 'Active', image: 'assets/images/sigiriya.jpg'
-        },
-        {
-            id: 'DST-0002', name: 'Nine Arch Bridge', district: 'Badulla', province: 'Uva',
-            category: 'Nature and Adventure',
-            shortDescription: 'A graceful stone railway bridge surrounded by tea-covered hills near Ella.',
-            fullDescription: 'Built during the colonial era, the Nine Arch Bridge is one of Ella’s best-known landmarks. Walk to a viewpoint through tea fields and forest, and check local railway times before visiting. Entry fee is estimated demonstration data; access routes may have separate charges.',
-            entryFee: 500, bestTime: 'January to April', duration: '1–2 hours',
-            openingHours: 'Open daily, daylight hours', address: 'Demodara, near Ella, Badulla District',
-            latitude: 6.876, longitude: 81.060, featured: true, status: 'Active', image: 'assets/images/ella.jpg'
-        },
-        {
-            id: 'DST-0003', name: 'Galle Fort', district: 'Galle', province: 'Southern',
-            category: 'Historical and Cultural',
-            shortDescription: 'Wander the UNESCO-listed ramparts, lighthouse, and lively streets of the old coastal fort.',
-            fullDescription: 'The historic fortified city blends Portuguese and Dutch-era architecture with contemporary galleries, cafés, and local shops. A walk along the sea-facing ramparts is especially memorable around sunset. Walking through the public fort area is generally free; any listed fee is an estimated demonstration value.',
-            entryFee: 0, bestTime: 'November to April', duration: '2–4 hours',
-            openingHours: 'Open daily, daylight hours', address: 'Galle Fort, Galle District',
-            latitude: 6.026, longitude: 80.217, featured: true, status: 'Active', image: 'assets/images/galle.jpg'
-        },
-        {
-            id: 'DST-0004', name: 'Horton Plains National Park', district: 'Nuwara Eliya', province: 'Central',
-            category: 'Hill Country',
-            shortDescription: 'Discover cloud forest, rolling grasslands, Baker’s Falls, and the famous World’s End viewpoint.',
-            fullDescription: 'This high-altitude national park offers a scenic circular trail through montane grassland and cloud forest. Start early for clearer views at World’s End, and bring layers for cool, changeable weather. Park entrance charges vary by visitor category; the fee shown is estimated sample data.',
-            entryFee: 6000, bestTime: 'January to March', duration: '5–6 hours',
-            openingHours: '6:00 AM – 4:00 PM', address: 'Ohiya Road, Nuwara Eliya District',
-            latitude: 6.802, longitude: 80.807, featured: true, status: 'Active', image: 'assets/images/nuwara-eliya.jpg'
-        },
-        {
-            id: 'DST-0005', name: 'Yala National Park', district: 'Hambantota', province: 'Southern',
-            category: 'Wildlife',
-            shortDescription: 'Explore dry-zone wilderness known for elephants, crocodiles, birds, and elusive leopards.',
-            fullDescription: 'Yala protects a varied landscape of scrub, lagoons, and forest along Sri Lanka’s southeast coast. Wildlife is best observed on a guided safari, and sightings are never guaranteed. Entrance and jeep charges change; the fee here is only an estimated demonstration value.',
-            entryFee: 8500, bestTime: 'February to July', duration: 'Half or full day',
-            openingHours: '6:00 AM – 6:00 PM', address: 'Palatupana, Hambantota District',
-            latitude: 6.372, longitude: 81.518, featured: true, status: 'Active', image: 'assets/images/yala.jpg'
-        },
-        {
-            id: 'DST-0006', name: 'Nilaveli Beach', district: 'Trincomalee', province: 'Eastern',
-            category: 'Beach',
-            shortDescription: 'Relax beside calm turquoise water and pale sand on Sri Lanka’s northeastern coast.',
-            fullDescription: 'Nilaveli is a peaceful beach base near Trincomalee, with seasonal boat trips to Pigeon Island and opportunities for swimming and snorkelling when sea conditions are suitable. Public beach access is generally free; the listed fee is estimated demonstration data and excludes activities.',
-            entryFee: 0, bestTime: 'May to September', duration: '2–5 hours',
-            openingHours: 'Open daily, daylight hours', address: 'Nilaveli, Trincomalee District',
-            latitude: 8.693, longitude: 81.197, featured: false, status: 'Active', image: 'assets/images/trincomalee.jpg'
-        },
-        {
-            id: 'DST-0007', name: 'Jaffna Fort', district: 'Jaffna', province: 'Northern',
-            category: 'Historical and Cultural',
-            shortDescription: 'Explore the broad stone ramparts of a historic coastal fort in northern Sri Lanka.',
-            fullDescription: 'Jaffna Fort stands beside the lagoon and offers a window into the region’s layered Portuguese, Dutch, and British history. Walk the bastions and open grounds, and visit respectfully as restoration work continues. Any entry charge may change; the amount shown is an estimate for this frontend demonstration.',
-            entryFee: 1000, bestTime: 'January to April', duration: '1–2 hours',
-            openingHours: '8:00 AM – 6:00 PM', address: 'Fort Road, Jaffna',
-            latitude: 9.661, longitude: 80.011, featured: false, status: 'Active', image: 'assets/images/galle.jpg'
-        },
-        {
-            id: 'DST-0008', name: 'Temple of the Tooth', district: 'Kandy', province: 'Central',
-            category: 'Religious',
-            shortDescription: 'Visit the revered temple complex beside Kandy Lake, an important Buddhist pilgrimage site.',
-            fullDescription: 'Sri Dalada Maligawa is a sacred temple complex in the heart of Kandy, known for its religious significance and richly decorated spaces. Visitors should dress modestly and follow site guidance during worship and ceremonies. The entry fee shown is estimated demonstration data.',
-            entryFee: 2000, bestTime: 'January to April', duration: '1–2 hours',
-            openingHours: '5:30 AM – 8:00 PM', address: 'Sri Dalada Veediya, Kandy',
-            latitude: 7.294, longitude: 80.641, featured: true, status: 'Active', image: 'assets/images/cultural-tour.jpg'
-        }
-    ];
 
     const elements = {
         sidebar: document.getElementById('adminSidebar'),
@@ -102,6 +29,11 @@ document.addEventListener('DOMContentLoaded', function () {
         districtsCovered: document.getElementById('districtsCovered'),
         averageFee: document.getElementById('averageEntryFee'),
         form: document.getElementById('destinationForm'),
+        addButton: document.getElementById('addDestinationButton'),
+        pageStatus: document.getElementById('destinationPageStatus'),
+        profileAvatar: document.querySelector('.profile-avatar'),
+        profileName: document.querySelector('.profile-name'),
+        profileRole: document.querySelector('.profile-role'),
         formModal: bootstrap.Modal.getOrCreateInstance(document.getElementById('destinationFormModal')),
         deleteModal: bootstrap.Modal.getOrCreateInstance(document.getElementById('deleteDestinationModal')),
         detailsModal: bootstrap.Modal.getOrCreateInstance(document.getElementById('destinationDetailsModal')),
@@ -110,98 +42,102 @@ document.addEventListener('DOMContentLoaded', function () {
         formError: document.getElementById('destinationFormError')
     };
 
-    function cloneSamples() {
-        return sampleDestinations.map(function (destination) {
-            return Object.assign({}, destination);
-        });
-    }
-
-    function isValidDestinationList(value) {
-        return Array.isArray(value) && value.every(function (destination) {
-            return destination && typeof destination === 'object' &&
-                typeof destination.id === 'string' && typeof destination.name === 'string';
-        });
-    }
-
     function showToast(message) {
         elements.toastBody.textContent = message;
         elements.toast.show();
     }
 
-    function loadInitialDestinations() {
+    async function apiRequest(path, options) {
+        const response = await fetch(API_BASE_URL + path, Object.assign({
+            credentials: 'include'
+        }, options || {}));
+        let body = null;
         try {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            if (stored === null) {
-                const samples = cloneSamples();
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(samples));
-                return samples;
-            }
-
-            const parsed = JSON.parse(stored);
-            if (!isValidDestinationList(parsed)) {
-                throw new Error('Stored destination data has an invalid structure.');
-            }
-            return parsed;
+            body = await response.json();
         } catch (error) {
-            const recoverySamples = cloneSamples();
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(recoverySamples));
-                showToast('Stored destination data was invalid and has been restored with demonstration records.');
-            } catch (storageError) {
-                showToast('Browser storage is unavailable. Changes will only last until this page is closed.');
+            if (response.status !== 204) {
+                throw new Error('The destination service returned an unreadable response.');
             }
-            return recoverySamples;
         }
+
+        if (!response.ok) {
+            const fieldErrors = body && body.errors ? Object.values(body.errors).join(' ') : '';
+            const error = new Error(fieldErrors || (body && body.message) || 'The request could not be completed.');
+            error.status = response.status;
+            throw error;
+        }
+        return body;
     }
 
-    // Future API adapter: GET /api/destinations, GET /api/destinations/{id},
-    // POST /api/destinations, PUT /api/destinations/{id}, DELETE /api/destinations/{id}.
+    async function mutateDestination(method, id, destination) {
+        const csrf = await apiRequest('/api/auth/csrf');
+        const body = destination ? {
+            name: destination.name,
+            district: destination.district,
+            province: destination.province,
+            category: destination.category,
+            shortDescription: destination.shortDescription,
+            fullDescription: destination.fullDescription,
+            entryFee: destination.entryFee,
+            bestTime: destination.bestTime,
+            duration: destination.duration,
+            openingHours: destination.openingHours,
+            address: destination.address,
+            latitude: destination.latitude,
+            longitude: destination.longitude,
+            featured: destination.featured,
+            status: destination.status,
+            imageUrl: destination.image || null
+        } : undefined;
+        return apiRequest('/api/destinations' + (id ? '/' + encodeURIComponent(id) : ''), {
+            method: method,
+            headers: Object.assign(
+                { 'X-CSRF-TOKEN': csrf.csrfToken },
+                body ? { 'Content-Type': 'application/json' } : {}
+            ),
+            body: body ? JSON.stringify(body) : undefined
+        });
+    }
+
     const DestinationStore = {
-        records: loadInitialDestinations(),
+        records: [],
 
         getAll: function () {
             return this.records.slice();
         },
 
-        saveAll: function (records) {
-            this.records = records;
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-                return true;
-            } catch (error) {
-                showToast('Could not save to browser storage. Changes are currently available only until this page is closed.');
-                return false;
+        load: async function () {
+            const records = await apiRequest('/api/destinations');
+            if (!Array.isArray(records)) {
+                throw new Error('The destination service returned an invalid record list.');
             }
+            this.records = records.map(function (record) {
+                return Object.assign({}, record, {
+                    id: String(record.id),
+                    image: record.imageUrl || ''
+                });
+            });
         },
 
-        create: function (destination) {
-            if (this.records.some(function (record) { return record.id === destination.id; })) {
-                throw new Error('This destination ID is already in use. Please try again.');
-            }
-            const updated = this.getAll();
-            updated.push(destination);
-            return this.saveAll(updated);
+        getById: async function (id) {
+            const record = await apiRequest('/api/destinations/' + encodeURIComponent(id));
+            return Object.assign({}, record, { id: String(record.id), image: record.imageUrl || '' });
         },
 
-        update: function (id, destination) {
-            const index = this.records.findIndex(function (record) { return record.id === id; });
-            if (index === -1) {
-                throw new Error('This destination could not be found. Refresh the page and try again.');
-            }
-            const updated = this.getAll();
-            updated[index] = Object.assign({}, destination, { id: id });
-            return this.saveAll(updated);
+        create: async function (destination) {
+            return mutateDestination('POST', null, destination);
         },
 
-        remove: function (id) {
-            const updated = this.records.filter(function (record) { return record.id !== id; });
-            if (updated.length === this.records.length) {
-                throw new Error('This destination could not be found. Refresh the page and try again.');
-            }
-            return this.saveAll(updated);
+        update: async function (id, destination) {
+            return mutateDestination('PUT', id, destination);
+        },
+
+        remove: async function (id) {
+            return mutateDestination('DELETE', id);
         }
     };
 
+    let isAdmin = false;
     let editingId = null;
     let deletingId = null;
 
@@ -250,22 +186,6 @@ document.addEventListener('DOMContentLoaded', function () {
         return 'LKR ' + (Number.isFinite(amount) ? amount.toLocaleString('en-LK', { maximumFractionDigits: 2 }) : '0');
     }
 
-    function generateDestinationId() {
-        const usedIds = new Set(DestinationStore.getAll().map(function (destination) {
-            return destination.id;
-        }));
-        let nextNumber = DestinationStore.getAll().reduce(function (highest, destination) {
-            const match = /^DST-(\d+)$/.exec(destination.id);
-            return match ? Math.max(highest, Number(match[1])) : highest;
-        }, 0) + 1;
-        let candidate = '';
-        do {
-            candidate = 'DST-' + String(nextNumber).padStart(4, '0');
-            nextNumber += 1;
-        } while (usedIds.has(candidate));
-        return candidate;
-    }
-
     function refreshFilterOptions() {
         const selected = {
             district: elements.district.value,
@@ -305,7 +225,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const filtered = DestinationStore.getAll().filter(function (destination) {
             const searchable = [
-                destination.name, destination.district, destination.province,
+                destination.name, destination.district, destination.province, destination.address,
                 destination.shortDescription, destination.fullDescription
             ].join(' ').toLocaleLowerCase();
             return (!query || searchable.includes(query)) &&
@@ -364,11 +284,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     '<div class="destination-meta-item"><i class="bi bi-sun me-1"></i>Best time<strong>' + escapeHtml(destination.bestTime || 'Not specified') + '</strong></div>' +
                 '</div>' +
             '</div>' +
-            '<div class="destination-card-actions">' +
+            (isAdmin ? '<div class="destination-card-actions">' +
                 '<button class="btn btn-outline-secondary btn-view" type="button" data-action="view" data-id="' + escapeHtml(destination.id) + '"><i class="bi bi-eye me-1"></i>View Details</button>' +
                 '<button class="btn btn-outline-success btn-icon" type="button" data-action="edit" data-id="' + escapeHtml(destination.id) + '" aria-label="Edit ' + escapeHtml(destination.name) + '" title="Edit"><i class="bi bi-pencil"></i></button>' +
                 '<button class="btn btn-outline-danger btn-icon" type="button" data-action="delete" data-id="' + escapeHtml(destination.id) + '" aria-label="Delete ' + escapeHtml(destination.name) + '" title="Delete"><i class="bi bi-trash3"></i></button>' +
-            '</div>' +
+            '</div>' : '<div class="destination-card-actions"><button class="btn btn-outline-secondary btn-view" type="button" data-action="view" data-id="' + escapeHtml(destination.id) + '"><i class="bi bi-eye me-1"></i>View Details</button></div>') +
         '</article>';
     }
 
@@ -379,8 +299,8 @@ document.addEventListener('DOMContentLoaded', function () {
             elements.grid.innerHTML = '<div class="destination-empty">' +
                 '<span class="destination-empty-icon"><i class="bi bi-geo-alt"></i></span>' +
                 '<h3 class="h5 fw-bold">No destinations found</h3>' +
-                '<p class="text-muted mb-3">Try adjusting your search or filters, or add a new destination.</p>' +
-                '<button class="btn btn-emerald" type="button" data-action="add">Add New Destination</button>' +
+                '<p class="text-muted mb-3">Try adjusting your search or filters.' + (isAdmin ? ' You can also add a destination.' : '') + '</p>' +
+                (isAdmin ? '<button class="btn btn-emerald" type="button" data-action="add">Add New Destination</button>' : '') +
                 '</div>';
             return;
         }
@@ -398,6 +318,7 @@ document.addEventListener('DOMContentLoaded', function () {
         refreshFilterOptions();
         renderStatistics();
         renderDestinations();
+        elements.addButton.classList.toggle('d-none', !isAdmin);
     }
 
     function closeSidebar() {
@@ -407,6 +328,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function showForm(destination) {
+        if (!isAdmin) {
+            showToast('Sign in with an administrator account to manage destinations.');
+            return;
+        }
         editingId = destination ? destination.id : null;
         elements.form.reset();
         elements.form.classList.remove('was-validated');
@@ -414,7 +339,7 @@ document.addEventListener('DOMContentLoaded', function () {
         elements.formError.textContent = '';
         document.getElementById('destinationFormTitle').textContent = destination ? 'Edit Destination' : 'Add New Destination';
         document.getElementById('saveDestinationLabel').textContent = destination ? 'Save Changes' : 'Save Destination';
-        document.getElementById('destinationId').value = destination ? destination.id : generateDestinationId();
+        document.getElementById('destinationId').value = destination ? destination.id : 'Assigned when saved';
 
         if (destination) {
             document.getElementById('destinationName').value = destination.name || '';
@@ -432,7 +357,7 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('destinationLongitude').value = destination.longitude == null ? '' : destination.longitude;
             document.getElementById('destinationFeatured').value = String(destination.featured === true);
             document.getElementById('destinationStatus').value = destination.status || 'Active';
-            document.getElementById('destinationImage').value = destination.image || '';
+            document.getElementById('destinationImage').value = destination.image || destination.imageUrl || '';
         } else {
             document.getElementById('destinationStatus').value = 'Active';
             document.getElementById('destinationFeatured').value = 'false';
@@ -443,7 +368,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function readDestinationForm() {
         return {
-            id: document.getElementById('destinationId').value,
             name: document.getElementById('destinationName').value.trim(),
             district: document.getElementById('destinationDistrict').value.trim(),
             province: document.getElementById('destinationProvince').value,
@@ -473,7 +397,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return validLatitude && validLongitude;
     }
 
-    function handleFormSubmit(event) {
+    async function handleFormSubmit(event) {
         event.preventDefault();
         const destination = readDestinationForm();
         const coordinatesValid = validateCoordinates(destination);
@@ -490,78 +414,74 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
+        const saveButton = elements.form.querySelector('button[type="submit"]');
+        saveButton.disabled = true;
         try {
             if (editingId) {
-                const existing = DestinationStore.getAll().find(function (record) { return record.id === editingId; });
-                if (!existing) {
-                    throw new Error('This destination could not be found. Refresh the page and try again.');
-                }
-                destination.id = editingId;
-                if (DestinationStore.update(editingId, destination)) {
-                    elements.formModal.hide();
-                    refreshPage();
-                    showToast(destination.name + ' was updated successfully.');
-                }
+                await DestinationStore.update(editingId, destination);
+                elements.formModal.hide();
+                await refreshAfterMutation(destination.name + ' was updated successfully.');
             } else {
-                destination.id = generateDestinationId();
-                if (DestinationStore.create(destination)) {
-                    elements.formModal.hide();
-                    refreshPage();
-                    showToast(destination.name + ' was added successfully.');
-                }
+                await DestinationStore.create(destination);
+                elements.formModal.hide();
+                await refreshAfterMutation(destination.name + ' was added successfully.');
             }
         } catch (error) {
             elements.formError.textContent = error.message;
             elements.formError.classList.remove('d-none');
+        } finally {
+            saveButton.disabled = false;
         }
     }
 
-    function showDetails(id) {
-        const destination = DestinationStore.getAll().find(function (record) { return record.id === id; });
-        if (!destination) {
-            showToast('This destination could not be found.');
-            return;
+    async function showDetails(id) {
+        try {
+            const destination = await DestinationStore.getById(id);
+            const statusClass = destination.status === 'Active' ? 'active' : 'inactive';
+            const coordinates = destination.latitude == null || destination.longitude == null ?
+                'Not provided' : destination.latitude + ', ' + destination.longitude;
+            const detailsContent = document.getElementById('destinationDetailsContent');
+            detailsContent.innerHTML =
+                '<div class="position-relative">' +
+                    '<img class="destination-details-image" src="' + escapeHtml(safeImageUrl(destination.image)) + '" alt="' + escapeHtml(destination.name) + '">' +
+                    '<button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3 bg-dark bg-opacity-50 p-2" data-bs-dismiss="modal" aria-label="Close"></button>' +
+                '</div>' +
+                '<div class="destination-details-content">' +
+                    '<div class="d-flex flex-wrap align-items-center gap-2 mb-2">' +
+                        '<span class="destination-badge category-badge">' + escapeHtml(destination.category) + '</span>' +
+                        (destination.featured ? '<span class="destination-badge featured-badge"><i class="bi bi-star-fill"></i> Featured</span>' : '') +
+                        '<span class="destination-status ' + statusClass + '">' + escapeHtml(destination.status || 'Inactive') + '</span>' +
+                    '</div>' +
+                    '<p class="text-muted small mb-1">' + escapeHtml(destination.id) + '</p>' +
+                    '<h2 class="h3 fw-bold" id="destinationDetailsTitle">' + escapeHtml(destination.name) + '</h2>' +
+                    '<p class="details-location"><i class="bi bi-geo-alt-fill me-1"></i>' + escapeHtml(destination.district) + ' District, ' + escapeHtml(destination.province) + ' Province</p>' +
+                    '<h3 class="h6 fw-bold mt-4">About this destination</h3>' +
+                    '<p class="details-description mb-2">' + escapeHtml(destination.shortDescription) + '</p>' +
+                    '<p class="details-description mb-0">' + escapeHtml(destination.fullDescription || 'No additional description provided.') + '</p>' +
+                    '<div class="details-grid">' +
+                        detailItem('Entry fee', formatCurrency(destination.entryFee)) +
+                        detailItem('Best time to visit', destination.bestTime || 'Not specified') +
+                        detailItem('Recommended duration', destination.duration || 'Not specified') +
+                        detailItem('Opening hours', destination.openingHours || 'Not specified') +
+                        detailItem('Address or location', destination.address || 'Not provided') +
+                        detailItem('Coordinates', coordinates) +
+                        detailItem('Featured destination', destination.featured ? 'Yes' : 'No') +
+                        detailItem('Destination status', destination.status || 'Inactive') +
+                        detailItem('Created', destination.createdAt || 'Not available') +
+                        detailItem('Last updated', destination.updatedAt || destination.createdAt || 'Not available') +
+                    '</div>' +
+                    '<div class="text-end mt-4"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button></div>' +
+                '</div>';
+            const detailsImage = detailsContent.querySelector('.destination-details-image');
+            detailsImage.addEventListener('error', function () {
+                if (detailsImage.getAttribute('src') !== FALLBACK_IMAGE) {
+                    detailsImage.src = FALLBACK_IMAGE;
+                }
+            }, { once: true });
+            elements.detailsModal.show();
+        } catch (error) {
+            showToast(error.message);
         }
-        const statusClass = destination.status === 'Active' ? 'active' : 'inactive';
-        const coordinates = destination.latitude == null || destination.longitude == null ?
-            'Not provided' : destination.latitude + ', ' + destination.longitude;
-        const detailsContent = document.getElementById('destinationDetailsContent');
-        detailsContent.innerHTML =
-            '<div class="position-relative">' +
-                '<img class="destination-details-image" src="' + escapeHtml(safeImageUrl(destination.image)) + '" alt="' + escapeHtml(destination.name) + '">' +
-                '<button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3 bg-dark bg-opacity-50 p-2" data-bs-dismiss="modal" aria-label="Close"></button>' +
-            '</div>' +
-            '<div class="destination-details-content">' +
-                '<div class="d-flex flex-wrap align-items-center gap-2 mb-2">' +
-                    '<span class="destination-badge category-badge">' + escapeHtml(destination.category) + '</span>' +
-                    (destination.featured ? '<span class="destination-badge featured-badge"><i class="bi bi-star-fill"></i> Featured</span>' : '') +
-                    '<span class="destination-status ' + statusClass + '">' + escapeHtml(destination.status || 'Inactive') + '</span>' +
-                '</div>' +
-                '<p class="text-muted small mb-1">' + escapeHtml(destination.id) + '</p>' +
-                '<h2 class="h3 fw-bold" id="destinationDetailsTitle">' + escapeHtml(destination.name) + '</h2>' +
-                '<p class="details-location"><i class="bi bi-geo-alt-fill me-1"></i>' + escapeHtml(destination.district) + ' District, ' + escapeHtml(destination.province) + ' Province</p>' +
-                '<h3 class="h6 fw-bold mt-4">About this destination</h3>' +
-                '<p class="details-description mb-2">' + escapeHtml(destination.shortDescription) + '</p>' +
-                '<p class="details-description mb-0">' + escapeHtml(destination.fullDescription || 'No additional description provided.') + '</p>' +
-                '<div class="details-grid">' +
-                    detailItem('Entry fee (estimated)', formatCurrency(destination.entryFee)) +
-                    detailItem('Best time to visit', destination.bestTime || 'Not specified') +
-                    detailItem('Recommended duration', destination.duration || 'Not specified') +
-                    detailItem('Opening hours', destination.openingHours || 'Not specified') +
-                    detailItem('Address or location', destination.address || 'Not provided') +
-                    detailItem('Coordinates', coordinates) +
-                    detailItem('Featured destination', destination.featured ? 'Yes' : 'No') +
-                    detailItem('Destination status', destination.status || 'Inactive') +
-                '</div>' +
-                '<div class="text-end mt-4"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button></div>' +
-            '</div>';
-        const detailsImage = detailsContent.querySelector('.destination-details-image');
-        detailsImage.addEventListener('error', function () {
-            if (detailsImage.getAttribute('src') !== FALLBACK_IMAGE) {
-                detailsImage.src = FALLBACK_IMAGE;
-            }
-        }, { once: true });
-        elements.detailsModal.show();
     }
 
     function detailItem(label, value) {
@@ -569,6 +489,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function startDelete(id) {
+        if (!isAdmin) {
+            showToast('Sign in with an administrator account to manage destinations.');
+            return;
+        }
         const destination = DestinationStore.getAll().find(function (record) { return record.id === id; });
         if (!destination) {
             showToast('This destination could not be found.');
@@ -580,20 +504,81 @@ document.addEventListener('DOMContentLoaded', function () {
         elements.deleteModal.show();
     }
 
-    function confirmDelete() {
+    async function confirmDelete() {
         if (!deletingId) {
             return;
         }
         const destination = DestinationStore.getAll().find(function (record) { return record.id === deletingId; });
+        const deleteButton = document.getElementById('confirmDeleteButton');
+        deleteButton.disabled = true;
         try {
-            if (DestinationStore.remove(deletingId)) {
-                elements.deleteModal.hide();
-                refreshPage();
-                showToast((destination ? destination.name : 'Destination') + ' was deleted.');
-                deletingId = null;
-            }
+            await DestinationStore.remove(deletingId);
+            elements.deleteModal.hide();
+            deletingId = null;
+            await refreshAfterMutation((destination ? destination.name : 'Destination') + ' was deleted.');
         } catch (error) {
             showToast(error.message);
+        } finally {
+            deleteButton.disabled = false;
+        }
+    }
+
+    async function refreshAfterMutation(successMessage) {
+        try {
+            await DestinationStore.load();
+            refreshPage();
+            showToast(successMessage);
+        } catch (error) {
+            elements.pageStatus.classList.remove('d-none', 'alert-info');
+            elements.pageStatus.classList.add('alert-danger');
+            elements.pageStatus.textContent = 'The change was saved, but the destination list could not be refreshed. ' + error.message;
+            showToast(successMessage + ' Refresh the page to reload the latest records.');
+        }
+    }
+
+    async function initializePage() {
+        elements.pageStatus.textContent = 'Loading destinations from the backend...';
+        elements.pageStatus.classList.remove('d-none', 'alert-danger');
+        elements.pageStatus.classList.add('alert-info');
+
+        try {
+            const account = await apiRequest('/api/auth/me');
+            const user = account && account.user;
+            isAdmin = Boolean(user && user.role === 'ADMIN');
+            if (user && elements.profileName) {
+                elements.profileName.textContent = user.fullName || user.name || 'Administrator';
+            }
+            if (user && elements.profileAvatar) {
+                elements.profileAvatar.textContent = (user.fullName || user.name || 'A').charAt(0).toUpperCase();
+            }
+            if (user && elements.profileRole) {
+                elements.profileRole.textContent = user.role === 'ADMIN' ? 'Administrator' : 'Signed in';
+            }
+        } catch (error) {
+            if (error.status !== 401) {
+                showToast(error.message);
+            }
+            isAdmin = false;
+        }
+
+        try {
+            await DestinationStore.load();
+            refreshPage();
+            if (isAdmin) {
+                elements.pageStatus.classList.add('d-none');
+            } else {
+                elements.pageStatus.textContent = 'Sign in as an administrator to add, edit, or delete destinations.';
+            }
+        } catch (error) {
+            elements.pageStatus.classList.remove('alert-info');
+            elements.pageStatus.classList.add('alert-danger');
+            elements.pageStatus.textContent = window.location.protocol === 'file:'
+                ? 'Serve this page over HTTP (for example, with VS Code Live Server) to connect to the backend.'
+                : 'Could not load destinations from ' + API_BASE_URL + ': ' + error.message;
+            elements.grid.innerHTML = '<div class="destination-empty">' +
+                '<h3 class="h5 fw-bold">Destinations are unavailable</h3>' +
+                '<p class="text-muted mb-0">Check the backend connection and refresh this page. No demonstration records are shown.</p>' +
+                '</div>';
         }
     }
 
@@ -612,7 +597,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    document.getElementById('addDestinationButton').addEventListener('click', function () {
+    elements.addButton.addEventListener('click', function () {
         showForm(null);
     });
     document.getElementById('resetFiltersButton').addEventListener('click', function () {
@@ -648,14 +633,16 @@ document.addEventListener('DOMContentLoaded', function () {
             showForm(null);
             return;
         }
-        const destination = DestinationStore.getAll().find(function (record) { return record.id === button.dataset.id; });
-        if (!destination) {
-            showToast('This destination could not be found.');
+        if (action === 'view') {
+            showDetails(button.dataset.id);
             return;
         }
-        if (action === 'view') {
-            showDetails(destination.id);
-        } else if (action === 'edit') {
+        const destination = DestinationStore.getAll().find(function (record) { return record.id === button.dataset.id; });
+        if (!destination) {
+            showToast('This destination could not be found. Refresh the page and try again.');
+            return;
+        }
+        if (action === 'edit') {
             showForm(destination);
         } else if (action === 'delete') {
             startDelete(destination.id);
@@ -663,5 +650,5 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     document.getElementById('confirmDeleteButton').addEventListener('click', confirmDelete);
 
-    refreshPage();
+    initializePage();
 });

@@ -34,6 +34,22 @@ public class ApiExceptionHandler {
         return buildErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage(), request, null);
     }
 
+    @ExceptionHandler(DestinationInUseException.class)
+    public ResponseEntity<Map<String, Object>> handleDestinationInUse(
+            DestinationInUseException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(HttpStatus.CONFLICT, exception.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(DuplicateDestinationException.class)
+    public ResponseEntity<Map<String, Object>> handleDuplicateDestination(
+            DuplicateDestinationException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(HttpStatus.CONFLICT, exception.getMessage(), request, null);
+    }
+
     @ExceptionHandler(TouristNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleTouristNotFound(
             TouristNotFoundException exception,
