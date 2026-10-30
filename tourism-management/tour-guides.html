@@ -51,7 +51,7 @@
                         <span class="profile-avatar">A</span>
                         <div>
                             <span class="profile-name">Administrator</span>
-                            <span class="profile-role">Frontend Demo</span>
+                            <span class="profile-role">Loading account...</span>
                         </div>
                     </div>
                 </div>
@@ -70,8 +70,10 @@
                 <button class="btn btn-emerald guide-add-button" type="button" id="addGuideButton"><i class="bi bi-plus-lg me-2"></i>Add New Guide</button>
             </div>
 
-            <div class="alert alert-success-subtle border-0 rounded-3 small guide-demo-note" role="note">
-                <i class="bi bi-info-circle me-1"></i>Frontend demo records are stored in this browser's localStorage only. No backend or database integration is connected yet.
+            <div class="alert alert-info border-0 rounded-3 small guide-demo-note" id="guidePageStatus" role="status">
+                <i class="bi bi-info-circle me-1"></i><span id="guidePageStatusText">Loading tour guides from the database...</span>
+                <a class="ms-1" href="admin-login.html" id="guideLoginLink">Sign in as an administrator</a>
+                <button class="btn btn-sm btn-outline-primary ms-2 d-none" id="recoverLocalGuideButton" type="button">Review unsaved browser guide</button>
             </div>
 
             <section class="stats-grid guide-stats" aria-label="Tour guide statistics">
@@ -256,12 +258,13 @@
                                 <div class="invalid-feedback">Enter a valid HTTP or HTTPS image URL.</div>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label" for="guideDob">Date of Birth</label>
-                                <input class="form-control" id="guideDob" type="date">
+                                <label class="form-label" for="guideDob">Date of Birth <span class="required-mark">*</span></label>
+                                <input class="form-control" id="guideDob" type="date" required>
+                                <div class="invalid-feedback">Enter a date of birth in the past.</div>
                             </div>
                             <div class="col-md-2">
-                                <label class="form-label" for="guideGender">Gender</label>
-                                <select class="form-select" id="guideGender">
+                                <label class="form-label" for="guideGender">Gender <span class="required-mark">*</span></label>
+                                <select class="form-select" id="guideGender" required>
                                     <option value="">Select</option>
                                     <option>Male</option>
                                     <option>Female</option>
@@ -272,6 +275,11 @@
                                 <label class="form-label" for="guideNationality">Nationality <span class="required-mark">*</span></label>
                                 <input class="form-control" id="guideNationality" maxlength="80" required>
                                 <div class="invalid-feedback">Enter the guide's nationality.</div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label" for="guideNicNumber">NIC Number <span class="required-mark">*</span></label>
+                                <input class="form-control" id="guideNicNumber" maxlength="30" required>
+                                <div class="invalid-feedback">Enter a unique NIC or national identity number.</div>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label" for="guideContact">Contact Number <span class="required-mark">*</span></label>

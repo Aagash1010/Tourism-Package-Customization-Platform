@@ -122,6 +122,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/test", "/api/test/database").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/destinations", "/api/destinations/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/tour-packages", "/api/tour-packages/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/tour-guides", "/api/tour-guides/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/tourists", "/api/bookings").permitAll()
                         .requestMatchers("/api/auth/me").authenticated()
                         .requestMatchers("/api/auth/logout").authenticated()
@@ -131,6 +132,8 @@ public class SecurityConfig {
                                 "/api/tourists/**",
                                 "/api/destinations",
                                 "/api/destinations/**",
+                                "/api/tour-guides",
+                                "/api/tour-guides/**",
                                 "/api/bookings",
                                 "/api/bookings/**"
                         ).hasRole("ADMIN")
