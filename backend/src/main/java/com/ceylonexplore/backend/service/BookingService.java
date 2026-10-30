@@ -117,7 +117,7 @@ public class BookingService {
         booking.setTourist(tourist);
         booking.setTourPackage(tourPackage);
         booking.setNumberOfPeople(request.numberOfPeople());
-        booking.setBookingDate(LocalDateTime.now());
+        booking.setBookingDate(request.bookingDate().atStartOfDay());
         booking.setTravelDate(request.travelDate());
         booking.setTotalAmount(totalAmount);
         booking.setDiscount(BigDecimal.ZERO);
@@ -154,6 +154,7 @@ public class BookingService {
         existingBooking.setTourist(tourist);
         existingBooking.setTourPackage(tourPackage);
         existingBooking.setNumberOfPeople(request.numberOfPeople());
+        existingBooking.setBookingDate(request.bookingDate().atStartOfDay());
         existingBooking.setTravelDate(request.travelDate());
         existingBooking.setTotalAmount(totalAmount);
         existingBooking.setSpecialRequests(normalizeOptionalText(request.specialRequests()));
@@ -198,7 +199,7 @@ public class BookingService {
         if (request.travelDate().isBefore(LocalDate.now()) || request.travelDate().isEqual(LocalDate.now())) {
             throw new InvalidBookingException("Travel date must be in the future.");
         }
-        if (request.bookingDate().toLocalDate().isAfter(request.travelDate())) {
+        if (request.bookingDate().isAfter(request.travelDate())) {
             throw new InvalidBookingException("Travel date cannot be earlier than the booking date.");
         }
     }

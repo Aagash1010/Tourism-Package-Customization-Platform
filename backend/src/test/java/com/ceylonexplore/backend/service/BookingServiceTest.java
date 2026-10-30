@@ -67,7 +67,7 @@ class BookingServiceTest {
                 1L,
                 2L,
                 2,
-                LocalDateTime.now().minusDays(1),
+                LocalDate.now().minusDays(1),
                 LocalDate.now().plusDays(10),
                 "Window seat",
                 null,
