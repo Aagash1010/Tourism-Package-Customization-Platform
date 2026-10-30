@@ -162,6 +162,25 @@
     color: var(--text-dark);
 }
 
+#bookingFormModal .modal-dialog,
+#bookingDetailsModal .modal-dialog {
+    max-height: calc(100vh - 2rem);
+}
+
+#bookingFormModal .modal-content,
+#bookingDetailsModal .modal-content {
+    max-height: calc(100vh - 2rem);
+    overflow: hidden;
+}
+
+#bookingFormModal .modal-body,
+#bookingDetailsModal .modal-body {
+    max-height: calc(100vh - 14.5rem);
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
 .booking-detail-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));

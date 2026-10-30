@@ -6,12 +6,13 @@ import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public record BookingRequest(
         @NotNull(message = "Tourist ID is required.") Long touristId,
         @NotNull(message = "Tour package ID is required.") Long packageId,
         @NotNull(message = "Number of people is required.") @Min(value = 1, message = "Number of people must be at least 1.") Integer numberOfPeople,
-        @NotNull(message = "Booking date is required.") @JsonFormat(pattern = "yyyy-MM-dd") LocalDate bookingDate,
+        @NotNull(message = "Booking date is required.") @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss") LocalDateTime bookingDate,
         @NotNull(message = "Travel date is required.") @JsonFormat(pattern = "yyyy-MM-dd") LocalDate travelDate,
         String specialRequests,
         String bookingStatus,

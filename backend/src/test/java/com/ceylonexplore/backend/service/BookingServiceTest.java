@@ -16,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -66,11 +67,11 @@ class BookingServiceTest {
                 1L,
                 2L,
                 2,
-                LocalDate.now().plusDays(3),
+                LocalDateTime.now().minusDays(1),
                 LocalDate.now().plusDays(10),
                 "Window seat",
                 null,
-                null,
+                "PAID",
                 BigDecimal.ZERO,
                 BigDecimal.valueOf(10000)
         );
@@ -80,7 +81,7 @@ class BookingServiceTest {
         assertNotNull(response);
         assertEquals("BK-123456", response.bookingReference());
         assertEquals(new BigDecimal("50000.00"), response.totalAmount());
-        assertEquals(PaymentStatus.PARTIALLY_PAID.name(), response.paymentStatus());
+        assertEquals(PaymentStatus.UNPAID.name(), response.paymentStatus());
         assertEquals(BookingStatus.PENDING.name(), response.bookingStatus());
     }
 }
