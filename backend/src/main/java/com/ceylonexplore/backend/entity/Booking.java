@@ -61,7 +61,7 @@ public class Booking {
 
     @NotNull(message = "Booking date is required.")
     @Column(name = "booking_date", nullable = false)
-    private LocalDate bookingDate;
+    private LocalDateTime bookingDate;
 
     @NotNull(message = "Travel date is required.")
     @Column(name = "travel_date", nullable = false)
@@ -162,11 +162,11 @@ public class Booking {
         this.numberOfPeople = numberOfPeople;
     }
 
-    public LocalDate getBookingDate() {
+    public LocalDateTime getBookingDate() {
         return bookingDate;
     }
 
-    public void setBookingDate(LocalDate bookingDate) {
+    public void setBookingDate(LocalDateTime bookingDate) {
         this.bookingDate = bookingDate;
     }
 
@@ -228,6 +228,10 @@ public class Booking {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 
     public LocalDateTime getUpdatedAt() {
