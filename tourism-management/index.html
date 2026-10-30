@@ -153,7 +153,7 @@
                 <div class="title-divider mx-auto mt-3"></div>
             </div>
             
-            <div class="row g-4">
+            <div class="row g-4 d-none" aria-hidden="true">
                 <!-- Card 1: Sigiriya -->
                 <div class="col-lg-4 col-md-6">
                     <div class="destination-card rounded-4 overflow-hidden shadow-sm h-100 bg-white border-0 position-relative">
@@ -304,6 +304,8 @@
                     </div>
                 </div>
             </div>
+            <div class="row g-4" id="homeDestinationGrid" aria-live="polite"></div>
+            <p class="text-center text-muted mb-0" id="homeDestinationStatus" role="status">Loading destinations...</p>
         </div>
     </section>
 
@@ -832,7 +834,7 @@
                     <ul class="list-unstyled footer-links small">
                         <li class="mb-2"><a href="#" class="module-link" data-module="Tourist Management"><i class="bi bi-people me-1"></i> Tourist Management</a></li>
                         <li class="mb-2"><a href="#" class="module-link" data-module="Package Management"><i class="bi bi-box-seam me-1"></i> Tour Package Management</a></li>
-                        <li class="mb-2"><a href="#" class="module-link" data-module="Destination Management"><i class="bi bi-geo-alt me-1"></i> Destination Management</a></li>
+                        <li class="mb-2"><a href="destinations.html"><i class="bi bi-geo-alt me-1"></i> Destination Management</a></li>
                         <li class="mb-2"><a href="#" class="module-link" data-module="Booking Management"><i class="bi bi-journal-check me-1"></i> Booking Management</a></li>
                         <li class="mb-2"><a href="#" class="module-link" data-module="Hotel Management"><i class="bi bi-building me-1"></i> Hotel Management</a></li>
                         <li class="mb-2"><a href="#" class="module-link" data-module="Tour Guide Management"><i class="bi bi-person-badge me-1"></i> Tour Guide Management</a></li>
@@ -893,16 +895,16 @@
                 </div>
                 <div class="modal-body p-4">
                     <div class="alert alert-success-subtle text-emerald small mb-3 border-0 rounded-3">
-                        <i class="bi bi-info-circle me-1"></i> Spring Boot REST API authentication endpoint ready: <code>/api/v1/auth/login</code>
+                        <i class="bi bi-info-circle me-1"></i> Spring Boot session authentication: <code>POST /api/auth/login</code>
                     </div>
                     <form id="adminLoginForm">
                         <div class="mb-3">
                             <label for="adminUsername" class="form-label small fw-semibold">Username / Email</label>
-                            <input type="text" class="form-control py-2" id="adminUsername" value="admin@ceylonexplore.lk" required>
+                            <input type="email" class="form-control py-2" id="adminUsername" autocomplete="username" placeholder="Enter administrator email" required>
                         </div>
                         <div class="mb-3">
                             <label for="adminPassword" class="form-label small fw-semibold">Password</label>
-                            <input type="password" class="form-control py-2" id="adminPassword" value="••••••••" required>
+                            <input type="password" class="form-control py-2" id="adminPassword" autocomplete="current-password" placeholder="Enter administrator password" required>
                         </div>
                         <div class="mb-3 form-check">
                             <input type="checkbox" class="form-check-input" id="rememberMe">

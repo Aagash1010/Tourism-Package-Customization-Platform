@@ -17,6 +17,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const searchDateInput = document.getElementById('searchDate');
     const contactForm = document.getElementById('contactForm');
     const adminLoginForm = document.getElementById('adminLoginForm');
+    const apiBaseUrl = 'http://' + window.location.hostname + ':8080';
+    const homeDestinationGrid = document.getElementById('homeDestinationGrid');
+    const homeDestinationStatus = document.getElementById('homeDestinationStatus');
     
     // Demo Modal Elements
     const demoModalElement = document.getElementById('demoModal');
@@ -139,31 +142,103 @@ document.addEventListener('DOMContentLoaded', function () {
     // ----------------------------------------------------------------------
     // 5. Destination Card Buttons Interactivity
     // ----------------------------------------------------------------------
-    const exploreButtons = document.querySelectorAll('.btn-explore');
-    exploreButtons.forEach(button => {
-        button.addEventListener('click', function () {
-            const destinationName = this.getAttribute('data-destination');
-            
+    if (homeDestinationGrid) {
+        homeDestinationGrid.addEventListener('click', function (event) {
+            const button = event.target.closest('.btn-explore');
+            if (!button) {
+                return;
+            }
+
+            const destinationName = button.dataset.destination;
+            const destinationDescription = button.dataset.description;
+            const destinationCategory = button.dataset.category;
             showModal(
                 `Explore ${destinationName}`,
                 `<div class="py-2">
-                    <h5 class="fw-bold mb-2 text-emerald"><i class="bi bi-geo-alt-fill me-2"></i>${destinationName} Overview</h5>
-                    <p class="text-muted mb-3">
-                        ${destinationName} is one of Sri Lanka's prime travel destinations offering rich cultural history, breathtaking landscapes, and unforgettable local adventures.
-                    </p>
-                    <div class="row g-2 mb-3 small">
-                        <div class="col-6"><i class="bi bi-check2-circle text-emerald me-1"></i> Guided Heritage Walks</div>
-                        <div class="col-6"><i class="bi bi-check2-circle text-emerald me-1"></i> Photography Spots</div>
-                        <div class="col-6"><i class="bi bi-check2-circle text-emerald me-1"></i> Luxury Transfers</div>
-                        <div class="col-6"><i class="bi bi-check2-circle text-emerald me-1"></i> Local Food Tastings</div>
-                    </div>
+                    <h5 class="fw-bold mb-2 text-emerald"><i class="bi bi-geo-alt-fill me-2"></i>${escapeHtml(destinationCategory)}</h5>
+                    <p class="text-muted mb-3">${escapeHtml(destinationDescription)}</p>
                     <div class="d-grid">
-                        <a href="#packages" class="btn btn-emerald rounded-pill" data-bs-dismiss="modal">View Packages for ${destinationName}</a>
+                        <a href="#packages" class="btn btn-emerald rounded-pill" data-bs-dismiss="modal">View Tour Packages</a>
                     </div>
                 </div>`
             );
         });
-    });
+    }
+
+    loadHomeDestinations();
+
+    async function loadHomeDestinations() {
+        if (!homeDestinationGrid || !homeDestinationStatus) {
+            return;
+        }
+
+        try {
+            const response = await fetch(apiBaseUrl + '/api/destinations/active', {
+                credentials: 'include'
+            });
+            if (!response.ok) {
+                throw new Error('Destination request failed with status ' + response.status + '.');
+            }
+
+            const destinations = await response.json();
+            if (!Array.isArray(destinations)) {
+                throw new Error('The destination service returned an invalid response.');
+            }
+
+            homeDestinationGrid.innerHTML = destinations.map(function (destination) {
+                const name = escapeHtml(destination.name);
+                const category = escapeHtml(destination.category);
+                const description = escapeHtml(destination.shortDescription || destination.fullDescription || '');
+                const duration = escapeHtml(destination.duration || 'Visit duration not specified');
+                const imageUrl = getDestinationImageUrl(destination.imageUrl);
+
+                return `<div class="col-lg-4 col-md-6">
+                    <div class="destination-card rounded-4 overflow-hidden shadow-sm h-100 bg-white border-0 position-relative">
+                        <div class="card-img-wrapper position-relative overflow-hidden">
+                            <img src="${escapeHtml(imageUrl)}" class="card-img-top destination-img" alt="${name}" loading="lazy">
+                            <span class="badge-tag bg-emerald">${category}</span>
+                        </div>
+                        <div class="card-body p-4 d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h3 class="card-title h5 fw-bold mb-0">${name}</h3>
+                            </div>
+                            <p class="card-text text-muted small flex-grow-1">${description}</p>
+                            <div class="pt-3 border-top d-flex justify-content-between align-items-center gap-2">
+                                <span class="text-emerald fw-semibold small"><i class="bi bi-clock me-1"></i>${duration}</span>
+                                <button class="btn btn-outline-emerald btn-sm rounded-pill px-3 btn-explore" type="button"
+                                    data-destination="${name}" data-category="${category}" data-description="${description}">
+                                    Explore More <i class="bi bi-arrow-right ms-1"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            homeDestinationStatus.textContent = destinations.length
+                ? ''
+                : 'No active destinations are available right now.';
+        } catch (error) {
+            console.error('Unable to load homepage destinations.', error);
+            homeDestinationStatus.textContent = 'Destinations could not be loaded. Please try again later.';
+        }
+    }
+
+    function getDestinationImageUrl(imageUrl) {
+        const fallbackImage = 'assets/images/hero-bg.jpg';
+        if (typeof imageUrl !== 'string' || !imageUrl.trim() || imageUrl.trim().startsWith('//')) {
+            return fallbackImage;
+        }
+
+        try {
+            const parsedUrl = new URL(imageUrl.trim(), window.location.href);
+            return parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:'
+                ? parsedUrl.href
+                : fallbackImage;
+        } catch (error) {
+            return fallbackImage;
+        }
+    }
 
     // ----------------------------------------------------------------------
     // 6. Tour Package Details & Booking Interactivity
@@ -247,8 +322,20 @@ document.addEventListener('DOMContentLoaded', function () {
                         <input type="number" class="form-control py-2" value="2" min="1" max="20" required id="bookGuests">
                     </div>
                 </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Phone Number</label>
+                    <input type="tel" class="form-control py-2" placeholder="+94 77 123 4567" id="bookGuestPhone">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Country</label>
+                    <input type="text" class="form-control py-2" placeholder="Sri Lanka" id="bookGuestCountry">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Special Requests</label>
+                    <textarea class="form-control py-2" rows="3" placeholder="Optional notes for the travel team" id="bookGuestNotes"></textarea>
+                </div>
                 <div class="alert alert-warning-subtle text-dark small border-0 mb-3">
-                    <i class="bi bi-shield-check text-gold me-1"></i> No immediate payment required. Confirmation sent via email.
+                    <i class="bi bi-shield-check text-gold me-1"></i> No immediate payment required. Your request will be reviewed by the admin team.
                 </div>
                 <button type="submit" class="btn btn-emerald w-100 py-2 fw-bold rounded-pill">Confirm Reservation Request</button>
             </form>`
@@ -257,31 +344,159 @@ document.addEventListener('DOMContentLoaded', function () {
         setTimeout(() => {
             const bookingForm = document.getElementById('modalBookingForm');
             if (bookingForm) {
-                bookingForm.addEventListener('submit', function (e) {
+                bookingForm.addEventListener('submit', async function (e) {
                     e.preventDefault();
-                    const name = document.getElementById('bookGuestName').value;
-                    const date = document.getElementById('bookDate').value;
-                    
-                    showModal(
-                        'Booking Request Received!',
-                        `<div class="text-center py-3">
-                            <div class="text-success mb-3"><i class="bi bi-check-circle-fill display-3"></i></div>
-                            <h5 class="fw-bold mb-2">Thank you, ${name}!</h5>
-                            <p class="text-muted small mb-3">
-                                Your booking request for <strong>${pkgName}</strong> on <strong>${date}</strong> has been logged.
-                            </p>
-                            <div class="p-3 bg-light rounded-3 text-start small border">
-                                <div><strong>Status:</strong> Pending Admin Approval</div>
-                                <div><strong>Booking Reference:</strong> #CE-2026-${Math.floor(1000 + Math.random() * 9000)}</div>
-                            </div>
-                            <p class="small text-muted mt-3 mb-0">
-                                <em>Spring Boot Backend Integration Ready: <code>POST /api/v1/bookings</code></em>
-                            </p>
-                        </div>`
-                    );
+                    const name = document.getElementById('bookGuestName').value.trim();
+                    const email = document.getElementById('bookGuestEmail').value.trim();
+                    const travelDate = document.getElementById('bookDate').value;
+                    const guests = Number(document.getElementById('bookGuests').value || 1);
+                    const phone = document.getElementById('bookGuestPhone').value.trim();
+                    const country = document.getElementById('bookGuestCountry').value.trim() || 'Sri Lanka';
+                    const notes = document.getElementById('bookGuestNotes').value.trim();
+
+                    if (!name || !email || !travelDate) {
+                        showModal('Incomplete Booking Form', '<p class="text-danger mb-0">Please complete the required booking details before submitting.</p>');
+                        return;
+                    }
+
+                    const bookingButton = bookingForm.querySelector('button[type="submit"]');
+                    const originalText = bookingButton.innerHTML;
+                    bookingButton.disabled = true;
+                    bookingButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Submitting...';
+
+                    try {
+                        const csrfToken = await getCsrfToken();
+                        const packageRecord = await findPackageByName(pkgName);
+
+                        const touristResponse = await fetch(apiBaseUrl + '/api/tourists', {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: JSON.stringify({
+                                fullName: name,
+                                email: email,
+                                phone: phone || null,
+                                country: country
+                            })
+                        });
+
+                        let tourist = null;
+                        if (touristResponse.ok) {
+                            tourist = await touristResponse.json();
+                        } else {
+                            const touristBody = await touristResponse.json().catch(() => ({}));
+                            if (touristResponse.status === 409 || touristResponse.status === 400) {
+                                const existingTourists = await fetch(apiBaseUrl + '/api/tourists', {
+                                    credentials: 'include',
+                                    headers: { Accept: 'application/json' }
+                                });
+                                if (existingTourists.ok) {
+                                    const tourists = await existingTourists.json();
+                                    tourist = tourists.find(item => item.email && item.email.toLowerCase() === email.toLowerCase()) || null;
+                                }
+                                if (!tourist) {
+                                    throw new Error(touristBody.message || 'Unable to create the traveler profile for this booking.');
+                                }
+                            } else {
+                                throw new Error(touristBody.message || 'Unable to create the traveler profile for this booking.');
+                            }
+                        }
+
+                        const bookingDate = new Date().toISOString().slice(0, 10);
+                        const bookingResponse = await fetch(apiBaseUrl + '/api/bookings', {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: JSON.stringify({
+                                touristId: tourist.id,
+                                packageId: packageRecord.id,
+                                numberOfPeople: guests,
+                                bookingDate: bookingDate,
+                                travelDate: travelDate,
+                                specialRequests: notes || 'No additional requests',
+                                bookingStatus: 'PENDING',
+                                paymentStatus: 'UNPAID',
+                                discount: 0,
+                                amountPaid: 0
+                            })
+                        });
+
+                        const bookingBody = await bookingResponse.json().catch(() => ({}));
+                        if (!bookingResponse.ok) {
+                            throw new Error(bookingBody.message || 'Your booking request could not be submitted to the admin team.');
+                        }
+
+                        showModal(
+                            'Booking Request Received!',
+                            `<div class="text-center py-3">
+                                <div class="text-success mb-3"><i class="bi bi-check-circle-fill display-3"></i></div>
+                                <h5 class="fw-bold mb-2">Thank you, ${name}!</h5>
+                                <p class="text-muted small mb-3">
+                                    Your booking request for <strong>${pkgName}</strong> on <strong>${travelDate}</strong> has been sent to the admin team.
+                                </p>
+                                <div class="p-3 bg-light rounded-3 text-start small border">
+                                    <div><strong>Status:</strong> Pending Admin Approval</div>
+                                    <div><strong>Booking Reference:</strong> ${bookingBody.bookingReference || 'Awaiting confirmation'}</div>
+                                </div>
+                            </div>`
+                        );
+                        bookingForm.reset();
+                    } catch (error) {
+                        showModal('Booking Not Submitted', '<p class="text-danger mb-0">' + escapeHtml(error.message || 'Unable to send the booking request right now. Please try again.') + '</p>');
+                    } finally {
+                        bookingButton.disabled = false;
+                        bookingButton.innerHTML = originalText;
+                    }
                 });
             }
         }, 200);
+    }
+
+    async function getCsrfToken() {
+        const csrfResponse = await fetch(apiBaseUrl + '/api/auth/csrf', {
+            credentials: 'include'
+        });
+        const csrfBody = await csrfResponse.json().catch(() => ({}));
+        if (!csrfResponse.ok || !csrfBody.csrfToken) {
+            throw new Error('Unable to initialize a secure booking request.');
+        }
+        return csrfBody.csrfToken;
+    }
+
+    async function findPackageByName(packageName) {
+        const response = await fetch(apiBaseUrl + '/api/tour-packages', {
+            credentials: 'include',
+            headers: { Accept: 'application/json' }
+        });
+        const packages = await response.json().catch(() => []);
+        if (!response.ok || !Array.isArray(packages)) {
+            throw new Error('Unable to load the available tour packages.');
+        }
+        const normalizedTarget = normalizePackageName(packageName);
+        const match = packages.find(pkg => normalizePackageName(pkg.name) === normalizedTarget);
+        if (!match) {
+            throw new Error('This selected package is currently unavailable.');
+        }
+        return match;
+    }
+
+    function normalizePackageName(value) {
+        return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    }
+
+    function escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/\"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
     // ----------------------------------------------------------------------
@@ -339,39 +554,50 @@ document.addEventListener('DOMContentLoaded', function () {
     // 9. Admin Login Form Interactivity
     // ----------------------------------------------------------------------
     if (adminLoginForm) {
-        adminLoginForm.addEventListener('submit', function (e) {
+        adminLoginForm.addEventListener('submit', async function (e) {
             e.preventDefault();
-            const adminModalEl = document.getElementById('adminLoginModal');
-            const adminBsModal = bootstrap.Modal.getInstance(adminModalEl);
-            if (adminBsModal) {
-                adminBsModal.hide();
-            }
+            const email = document.getElementById('adminUsername').value.trim();
+            const password = document.getElementById('adminPassword').value;
+            const apiBaseUrl = 'http://' + window.location.hostname + ':8080';
 
-            setTimeout(() => {
-                showModal(
-                    'Admin Authentication',
-                    `<div class="text-center py-3">
-                        <div class="text-emerald mb-3"><i class="bi bi-shield-check display-3"></i></div>
-                        <h5 class="fw-bold mb-2">Authentication Successful</h5>
-                        <p class="text-muted small mb-3">
-                            Welcome to the Ceylon Explore Administrative Portal.
-                        </p>
-                        <div class="p-3 bg-light text-start small border rounded-3 mb-3">
-                            <h6 class="fw-bold mb-2 text-dark">Active Administrative Modules:</h6>
-                            <ul class="mb-0 ps-3">
-                                <li>Tourist Management</li>
-                                <li>Tour Package Management</li>
-                                <li>Destination Management</li>
-                                <li>Booking & Hotel Management</li>
-                                <li>Tour Guide Allocation</li>
-                            </ul>
-                        </div>
-                        <div class="alert alert-success-subtle border-0 small text-start mb-0">
-                            <i class="bi bi-gear-fill me-1"></i> Backend Target: Spring Boot Controller <code>@RestController /api/v1/admin</code>
-                        </div>
-                    </div>`
-                );
-            }, 300);
+            try {
+                const csrfResponse = await fetch(apiBaseUrl + '/api/auth/csrf', { credentials: 'include' });
+                const csrfBody = await csrfResponse.json();
+                if (!csrfResponse.ok || !csrfBody.csrfToken) {
+                    throw new Error('Unable to initialize secure sign-in.');
+                }
+                const loginResponse = await fetch(apiBaseUrl + '/api/auth/login', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfBody.csrfToken
+                    },
+                    body: JSON.stringify({ email: email, password: password })
+                });
+                const loginBody = await loginResponse.json();
+                if (!loginResponse.ok) {
+                    throw new Error(loginBody.message || 'Invalid email or password.');
+                }
+                if (!loginBody.user || (loginBody.user.role !== 'ADMIN' && loginBody.user.role !== 'USER')) {
+                    throw new Error('The server returned an invalid account response.');
+                }
+                window.location.href = loginBody.user.role === 'ADMIN'
+                    ? 'admin-dashboard.html'
+                    : 'user-dashboard.html';
+            } catch (error) {
+                const safeMessage = String(error.message || 'Unable to reach the authentication service.')
+                    .replace(/[&<>"']/g, function (character) {
+                        return {
+                            '&': '&amp;',
+                            '<': '&lt;',
+                            '>': '&gt;',
+                            '"': '&quot;',
+                            "'": '&#39;'
+                        }[character];
+                    });
+                showModal('Login failed', '<p class="text-danger mb-0">' + safeMessage + '</p>');
+            }
         });
     }
 

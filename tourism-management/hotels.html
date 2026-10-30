@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Management | Ceylon Explore</title>
+    <meta name="description" content="Manage hotel and accommodation information for Ceylon Explore.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin-dashboard.css">
+    <link rel="stylesheet" href="css/hotels.css">
+</head>
+<body class="admin-dashboard-body">
+    <div class="dashboard-shell">
+        <aside class="admin-sidebar" id="adminSidebar" aria-label="Admin dashboard navigation">
+            <div class="sidebar-header">
+                <a class="admin-brand d-flex align-items-center text-decoration-none" href="index.html" aria-label="Ceylon Explore home">
+                    <span class="brand-icon me-2"><i class="bi bi-compass-fill"></i></span>
+                    <span class="brand-text">Ceylon <span class="text-gold">Explore</span></span>
+                </a>
+                <span class="sidebar-label">Admin Console</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a class="sidebar-link" href="admin-dashboard.html" data-module="Dashboard"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
+                <a class="sidebar-link module-placeholder" href="#" data-module="Tourist Management"><i class="bi bi-people"></i><span>Tourist Management</span></a>
+                <a class="sidebar-link module-placeholder" href="#" data-module="Tour Package Management"><i class="bi bi-map"></i><span>Tour Package Management</span></a>
+                <a class="sidebar-link" href="destinations.html" data-module="Destination Management"><i class="bi bi-geo-alt"></i><span>Destination Management</span></a>
+                <a class="sidebar-link" href="bookings.html" data-module="Booking Management"><i class="bi bi-calendar-check"></i><span>Booking Management</span></a>
+                <a class="sidebar-link active" href="hotels.html" aria-current="page"><i class="bi bi-building"></i><span>Hotel Management</span></a>
+                <a class="sidebar-link" href="tour-guides.html" data-module="Tour Guide Management"><i class="bi bi-person-badge"></i><span>Tour Guide Management</span></a>
+            </nav>
+            <div class="sidebar-footer"><a class="sidebar-link logout-link" href="admin-login.html"><i class="bi bi-box-arrow-left"></i><span>Logout</span></a></div>
+        </aside>
+        <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
+
+        <main class="dashboard-main hotel-main">
+            <header class="admin-topbar">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="icon-button sidebar-toggle" type="button" id="sidebarToggle" aria-label="Toggle sidebar" aria-controls="adminSidebar" aria-expanded="false"><i class="bi bi-list"></i></button>
+                    <div><span class="section-badge text-uppercase fw-bold text-success">Admin Console</span><h1 class="page-title mb-0">Hotel Management</h1></div>
+                </div>
+                <div class="topbar-actions"><div class="admin-profile" aria-label="Administrator profile"><span class="profile-avatar">A</span><div><span class="profile-name">Administrator</span><span class="profile-role">Frontend Demo</span></div></div></div>
+            </header>
+
+            <div class="hotel-heading">
+                <div><nav aria-label="Breadcrumb"><ol class="breadcrumb hotel-breadcrumb"><li class="breadcrumb-item"><a href="admin-dashboard.html">Dashboard</a></li><li class="breadcrumb-item active" aria-current="page">Hotel Management</li></ol></nav><p class="hotel-subtitle mb-0">Manage hotels and accommodation information.</p></div>
+                <button class="btn btn-emerald hotel-add-button" type="button" id="addHotelButton"><i class="bi bi-plus-lg me-2"></i>Add New Hotel</button>
+            </div>
+            <div class="alert alert-success-subtle border-0 rounded-3 small hotel-demo-note" role="note"><i class="bi bi-info-circle me-1"></i>Demonstration records are stored in this browser's localStorage only. No backend or file handling is connected.</div>
+
+            <section class="stats-grid hotel-stats" aria-label="Hotel statistics">
+                <article class="stat-card"><span class="stat-icon emerald"><i class="bi bi-buildings"></i></span><div><span class="stat-label">Total Hotels</span><strong class="stat-value" id="totalHotels">0</strong><span class="stat-trend neutral">Registered properties</span></div></article>
+                <article class="stat-card"><span class="stat-icon gold"><i class="bi bi-check-circle"></i></span><div><span class="stat-label">Active Hotels</span><strong class="stat-value" id="activeHotels">0</strong><span class="stat-trend neutral">Available listings</span></div></article>
+                <article class="stat-card"><span class="stat-icon rose"><i class="bi bi-pause-circle"></i></span><div><span class="stat-label">Inactive Hotels</span><strong class="stat-value" id="inactiveHotels">0</strong><span class="stat-trend neutral">Hidden listings</span></div></article>
+                <article class="stat-card"><span class="stat-icon blue"><i class="bi bi-star-fill"></i></span><div><span class="stat-label">Average Rating</span><strong class="stat-value" id="averageRating">0.0</strong><span class="stat-trend neutral">Across all hotels</span></div></article>
+            </section>
+
+            <section class="hotel-toolbar dashboard-panel" aria-label="Search and filter hotels">
+                <div class="hotel-search-wrap"><label class="visually-hidden" for="hotelSearch">Search hotels</label><i class="bi bi-search" aria-hidden="true"></i><input id="hotelSearch" type="search" placeholder="Search ID, hotel, city, district, or contact..." autocomplete="off"></div>
+                <div class="hotel-filters">
+                    <div class="hotel-filter"><label for="provinceFilter">Province</label><select id="provinceFilter" class="form-select"><option value="">All provinces</option></select></div>
+                    <div class="hotel-filter"><label for="districtFilter">District</label><select id="districtFilter" class="form-select"><option value="">All districts</option></select></div>
+                    <div class="hotel-filter"><label for="ratingFilter">Star rating</label><select id="ratingFilter" class="form-select"><option value="">All ratings</option><option value="1">1 star</option><option value="2">2 stars</option><option value="3">3 stars</option><option value="4">4 stars</option><option value="5">5 stars</option></select></div>
+                    <div class="hotel-filter"><label for="statusFilter">Status</label><select id="statusFilter" class="form-select"><option value="">All statuses</option><option>Active</option><option>Inactive</option></select></div>
+                    <div class="hotel-filter"><label for="sortFilter">Sort by</label><select id="sortFilter" class="form-select"><option value="name">Hotel name</option><option value="price">Price per night</option><option value="rating">Star rating</option><option value="city">City</option></select></div>
+                    <label class="hotel-featured-filter" for="featuredFilter"><input class="form-check-input" type="checkbox" id="featuredFilter"><span>Featured only</span></label>
+                    <button class="btn btn-outline-secondary hotel-reset-button" type="button" id="resetFiltersButton"><i class="bi bi-arrow-counterclockwise me-1"></i>Reset filters</button>
+                </div>
+            </section>
+
+            <section class="hotel-table-panel dashboard-panel" aria-label="Hotel records">
+                <div class="hotel-table-heading"><div><h2 class="h5 fw-bold mb-1">Hotels</h2><span class="hotel-results-count" id="hotelCount">0 hotels</span></div></div>
+                <div class="table-responsive"><table class="table align-middle hotel-table"><thead><tr><th scope="col">Hotel ID</th><th scope="col">Image</th><th scope="col">Hotel Name</th><th scope="col">Location</th><th scope="col">Rating</th><th scope="col">Room Types</th><th scope="col">Price / Night</th><th scope="col">Contact Number</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead><tbody id="hotelTableBody"></tbody></table></div>
+                <div class="hotel-pagination-row"><span id="paginationSummary" class="text-muted small"></span><nav aria-label="Hotel pages"><ul class="pagination pagination-sm mb-0" id="hotelPagination"></ul></nav></div>
+            </section>
+        </main>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3"><div id="hotelToast" class="toast border-0 shadow-lg" role="status" aria-live="polite" aria-atomic="true"><div class="toast-header bg-emerald text-white"><i class="bi bi-check-circle me-2 text-gold"></i><strong class="me-auto">Ceylon Explore</strong><button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button></div><div class="toast-body" id="hotelToastBody"></div></div></div>
+
+    <div class="modal fade" id="hotelFormModal" tabindex="-1" aria-labelledby="hotelFormTitle" aria-hidden="true"><div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content hotel-modal"><form id="hotelForm" novalidate>
+        <div class="modal-header"><div><span class="modal-eyebrow">Hotel details</span><h2 class="modal-title fs-4 fw-bold" id="hotelFormTitle">Add New Hotel</h2></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+        <div class="modal-body">
+            <div class="form-section-label"><i class="bi bi-card-text me-2"></i>Hotel information</div>
+            <div class="row g-3">
+                <div class="col-md-4"><label class="form-label" for="hotelId">Hotel ID</label><input class="form-control" id="hotelId" readonly><div class="form-text">Generated automatically and kept unchanged.</div></div>
+                <div class="col-md-8"><label class="form-label" for="hotelName">Hotel Name <span class="required-mark">*</span></label><input class="form-control" id="hotelName" maxlength="120" required><div class="invalid-feedback">Enter a hotel name.</div></div>
+                <div class="col-12"><label class="form-label" for="hotelDescription">Description <span class="required-mark">*</span></label><textarea class="form-control" id="hotelDescription" rows="3" maxlength="1500" required></textarea><div class="invalid-feedback">Enter a hotel description.</div></div>
+                <div class="col-md-6"><label class="form-label" for="hotelAddress">Address <span class="required-mark">*</span></label><input class="form-control" id="hotelAddress" maxlength="200" required><div class="invalid-feedback">Enter the street address.</div></div>
+                <div class="col-md-3"><label class="form-label" for="hotelCity">City <span class="required-mark">*</span></label><input class="form-control" id="hotelCity" maxlength="80" required><div class="invalid-feedback">Enter a city.</div></div>
+                <div class="col-md-3"><label class="form-label" for="hotelDistrict">District <span class="required-mark">*</span></label><input class="form-control" id="hotelDistrict" maxlength="80" required><div class="invalid-feedback">Enter a district.</div></div>
+                <div class="col-md-4"><label class="form-label" for="hotelProvince">Province <span class="required-mark">*</span></label><select class="form-select" id="hotelProvince" required><option value="">Select a province</option><option>Central</option><option>Eastern</option><option>North Central</option><option>Northern</option><option>North Western</option><option>Sabaragamuwa</option><option>Southern</option><option>Uva</option><option>Western</option></select><div class="invalid-feedback">Select a province.</div></div>
+                <div class="col-md-4"><label class="form-label" for="hotelContact">Contact Number <span class="required-mark">*</span></label><input class="form-control" id="hotelContact" type="tel" maxlength="30" required><div class="invalid-feedback">Enter a contact number.</div></div>
+                <div class="col-md-4"><label class="form-label" for="hotelEmail">Email Address <span class="required-mark">*</span></label><input class="form-control" id="hotelEmail" type="email" maxlength="150" required><div class="invalid-feedback">Enter a valid email address.</div></div>
+                <div class="col-md-6"><label class="form-label" for="hotelWebsite">Website URL <span class="optional-label">Optional</span></label><input class="form-control" id="hotelWebsite" type="url" maxlength="300" placeholder="https://example.com"><div class="invalid-feedback">Enter a valid HTTP or HTTPS website URL.</div></div>
+                <div class="col-md-3"><label class="form-label" for="hotelRating">Star Rating <span class="required-mark">*</span></label><select class="form-select" id="hotelRating" required><option value="">Select rating</option><option value="1">1 star</option><option value="2">2 stars</option><option value="3">3 stars</option><option value="4">4 stars</option><option value="5">5 stars</option></select><div class="invalid-feedback">Select a rating from 1 to 5.</div></div>
+                <div class="col-md-3"><label class="form-label" for="hotelPrice">Price Per Night (LKR) <span class="required-mark">*</span></label><input class="form-control" id="hotelPrice" type="number" min="0.01" step="0.01" required><div class="invalid-feedback">Enter a price greater than zero.</div></div>
+                <div class="col-md-6"><label class="form-label" for="hotelRoomTypes">Available Room Types <span class="required-mark">*</span></label><select class="form-select" id="hotelRoomTypes" multiple size="5" required><option>Single</option><option>Double</option><option>Twin</option><option>Deluxe</option><option>Suite</option></select><div class="form-text">Use Ctrl (Windows) or Command (Mac) to select multiple.</div><div class="invalid-feedback">Select at least one room type.</div></div>
+                <div class="col-md-6"><label class="form-label" for="hotelRooms">Available Rooms <span class="required-mark">*</span></label><input class="form-control" id="hotelRooms" type="number" min="0" step="1" required><div class="invalid-feedback">Enter zero or more available rooms.</div><div class="row g-3 mt-1"><div class="col-6"><label class="form-label" for="hotelCheckIn">Check-in Time</label><input class="form-control" id="hotelCheckIn" type="time"></div><div class="col-6"><label class="form-label" for="hotelCheckOut">Check-out Time</label><input class="form-control" id="hotelCheckOut" type="time"></div></div></div>
+                <div class="col-12"><fieldset><legend class="form-label mb-2">Facilities</legend><div class="hotel-check-grid" id="facilityOptions"><label><input class="form-check-input" type="checkbox" value="Wi-Fi"> Wi-Fi</label><label><input class="form-check-input" type="checkbox" value="Swimming Pool"> Swimming Pool</label><label><input class="form-check-input" type="checkbox" value="Restaurant"> Restaurant</label><label><input class="form-check-input" type="checkbox" value="Air Conditioning"> Air Conditioning</label><label><input class="form-check-input" type="checkbox" value="Parking"> Parking</label><label><input class="form-check-input" type="checkbox" value="Gym"> Gym</label><label><input class="form-check-input" type="checkbox" value="Spa"> Spa</label></div></fieldset></div>
+                <div class="col-md-6"><label class="form-label" for="hotelImage">Hotel Image URL <span class="optional-label">Optional</span></label><input class="form-control" id="hotelImage" type="text" maxlength="500" placeholder="https://example.com/hotel.jpg"><div class="invalid-feedback">Enter an HTTP, HTTPS, or relative image URL.</div></div>
+                <div class="col-md-3"><label class="form-label" for="hotelFeatured">Featured Hotel</label><select class="form-select" id="hotelFeatured"><option value="false">No</option><option value="true">Yes</option></select></div>
+                <div class="col-md-3"><label class="form-label" for="hotelStatus">Status</label><select class="form-select" id="hotelStatus"><option>Active</option><option>Inactive</option></select></div>
+            </div>
+            <div class="alert alert-danger py-2 mt-3 d-none" id="hotelFormError" role="alert"></div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-light" type="button" data-bs-dismiss="modal">Cancel</button><button class="btn btn-emerald px-4" type="submit"><i class="bi bi-check2 me-1"></i><span id="saveHotelLabel">Save Hotel</span></button></div>
+    </form></div></div></div>
+
+    <div class="modal fade" id="deleteHotelModal" tabindex="-1" aria-labelledby="deleteHotelTitle" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-sm"><div class="modal-content hotel-modal"><div class="modal-header border-0 pb-0"><span class="delete-icon"><i class="bi bi-trash3"></i></span><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body pt-3"><h2 class="h5 fw-bold" id="deleteHotelTitle">Delete hotel?</h2><p class="text-muted mb-0">You are about to delete <strong id="deleteHotelName"></strong> (<span id="deleteHotelId"></span>). This action cannot be undone.</p></div><div class="modal-footer border-0 pt-0"><button class="btn btn-light" type="button" data-bs-dismiss="modal">Cancel</button><button class="btn btn-danger" type="button" id="confirmDeleteButton">Delete Hotel</button></div></div></div></div>
+    <div class="modal fade" id="hotelDetailsModal" tabindex="-1" aria-labelledby="hotelDetailsTitle" aria-hidden="true"><div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"><div class="modal-content hotel-modal" id="hotelDetailsContent"></div></div></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/hotels.js"></script>
+</body>
+</html>
