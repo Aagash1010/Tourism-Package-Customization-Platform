@@ -66,6 +66,30 @@ public class ApiExceptionHandler {
         return buildErrorResponse(HttpStatus.CONFLICT, exception.getMessage(), request, null);
     }
 
+    @ExceptionHandler(TourGuideNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleTourGuideNotFound(
+            TourGuideNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(DuplicateTourGuideEmailException.class)
+    public ResponseEntity<Map<String, Object>> handleDuplicateTourGuideEmail(
+            DuplicateTourGuideEmailException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(HttpStatus.CONFLICT, exception.getMessage(), request, null);
+    }
+
+    @ExceptionHandler({DuplicateTourGuideNicException.class, DuplicateTourGuideLicenseException.class})
+    public ResponseEntity<Map<String, Object>> handleDuplicateTourGuideIdentifier(
+            RuntimeException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(HttpStatus.CONFLICT, exception.getMessage(), request, null);
+    }
+
     @ExceptionHandler(DuplicateAccountEmailException.class)
     public ResponseEntity<Map<String, Object>> handleDuplicateAccountEmail(
             DuplicateAccountEmailException exception,

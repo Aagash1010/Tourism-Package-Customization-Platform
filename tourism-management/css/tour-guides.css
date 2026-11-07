@@ -36,8 +36,9 @@
 .guide-pagination-row .page-link { color: var(--primary-emerald); }
 .guide-pagination-row .page-item.active .page-link { color: #fff; background: var(--primary-emerald); border-color: var(--primary-emerald); }
 .guide-modal { overflow: hidden; border: 0; border-radius: 16px; box-shadow: 0 20px 70px rgba(11, 31, 23, 0.22); }
+.guide-modal #guideForm { display: flex; min-height: 0; flex: 1 1 auto; flex-direction: column; overflow: hidden; }
 .guide-modal .modal-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid #edf1ef; }
-.guide-modal .modal-body { padding: 1.3rem 1.5rem; }
+.guide-modal .modal-body { min-height: 0; overflow-y: auto; padding: 1.3rem 1.5rem; }
 .guide-modal .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid #edf1ef; }
 .modal-eyebrow { display: block; margin-bottom: 0.2rem; color: var(--primary-emerald); font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
 .form-section-label { margin: 0.2rem 0 0.8rem; color: var(--primary-emerald); font-size: 0.88rem; font-weight: 800; }
