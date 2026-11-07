@@ -13,7 +13,7 @@ public record BookingResponse(
         String packageName,
         BigDecimal packagePrice,
         Integer numberOfPeople,
-        LocalDate bookingDate,
+        LocalDateTime bookingDate,
         LocalDate travelDate,
         BigDecimal totalAmount,
         BigDecimal discount,

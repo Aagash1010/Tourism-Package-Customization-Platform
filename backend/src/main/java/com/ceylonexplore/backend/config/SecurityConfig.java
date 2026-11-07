@@ -11,6 +11,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -32,6 +33,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Bean
@@ -126,6 +128,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/tourists", "/api/bookings").permitAll()
                         .requestMatchers("/api/auth/me").authenticated()
                         .requestMatchers("/api/auth/logout").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/tourists").permitAll()
                         .requestMatchers("/api/user/dashboard").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(
                                 "/api/admin/dashboard",
@@ -137,6 +140,7 @@ public class SecurityConfig {
                                 "/api/bookings",
                                 "/api/bookings/**"
                         ).hasRole("ADMIN")
+                        .requestMatchers("/api/bookings", "/api/bookings/**").authenticated()
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll()
                 )
