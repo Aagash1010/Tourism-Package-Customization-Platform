@@ -383,16 +383,88 @@ h1, h2, h3, h4, h5, h6, .brand-text {
 
 .hotel-card {
     transition: var(--transition-smooth);
+    border: 1px solid rgba(27, 67, 50, 0.08);
+    background: linear-gradient(180deg, #ffffff 0%, #f9fbf9 100%);
 }
 
 .hotel-card:hover {
-    transform: translateY(-6px);
+    transform: translateY(-8px);
     box-shadow: var(--shadow-hover) !important;
+    border-color: rgba(45, 106, 79, 0.18);
+}
+
+.hotel-image-wrap {
+    position: relative;
+    overflow: hidden;
 }
 
 .hotel-img {
-    height: 200px;
+    height: 220px;
     object-fit: cover;
+    transition: transform 0.6s ease;
+}
+
+.hotel-card:hover .hotel-img {
+    transform: scale(1.06);
+}
+
+.hotel-badge {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    background: rgba(11, 31, 23, 0.8);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.45rem 0.75rem;
+    border-radius: 999px;
+    letter-spacing: 0.04em;
+    backdrop-filter: blur(6px);
+}
+
+.hotel-rating {
+    display: inline-flex;
+    align-items: center;
+    color: var(--primary-gold);
+    font-size: 0.8rem;
+    font-weight: 700;
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.15);
+    padding: 0.35rem 0.6rem;
+    border-radius: 999px;
+}
+
+.hotel-trust-summary {
+    margin-top: -0.25rem;
+}
+
+.trust-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--emerald-light-bg);
+    color: var(--primary-emerald);
+    border: 1px solid rgba(45, 106, 79, 0.08);
+    border-radius: 999px;
+    padding: 0.7rem 1.1rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.hotel-meta {
+    margin-top: 0.1rem;
+}
+
+.hotel-meta span {
+    display: inline-flex;
+    align-items: center;
+    background: #f1f7f2;
+    color: var(--primary-emerald);
+    border-radius: 999px;
+    padding: 0.32rem 0.6rem;
+    font-size: 0.7rem;
+    font-weight: 600;
 }
 
 /* --------------------------------------------------------------------------
