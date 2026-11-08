@@ -82,6 +82,22 @@ public class ApiExceptionHandler {
         return buildErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage(), request, null);
     }
 
+    @ExceptionHandler({HotelNotFoundException.class, RoomNotFoundException.class})
+    public ResponseEntity<Map<String, Object>> handleHotelOrRoomNotFound(
+            RuntimeException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage(), request, null);
+    }
+
+    @ExceptionHandler({HotelInUseException.class, DuplicateHotelException.class, DuplicateRoomException.class})
+    public ResponseEntity<Map<String, Object>> handleHotelOrRoomConflict(
+            RuntimeException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(HttpStatus.CONFLICT, exception.getMessage(), request, null);
+    }
+
     @ExceptionHandler(DuplicateTourGuideEmailException.class)
     public ResponseEntity<Map<String, Object>> handleDuplicateTourGuideEmail(
             DuplicateTourGuideEmailException exception,

@@ -43,6 +43,11 @@
 .hotel-modal .modal-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid #edf1ef; }
 .hotel-modal .modal-body { padding: 1.3rem 1.5rem; }
 .hotel-modal .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid #edf1ef; }
+#hotelFormModal .modal-content { max-height: calc(100vh - 2rem); }
+#hotelFormModal #hotelForm { display: flex; min-height: 0; flex: 1 1 auto; flex-direction: column; }
+#hotelFormModal #hotelForm .modal-header,
+#hotelFormModal #hotelForm .modal-footer { flex-shrink: 0; }
+#hotelFormModal #hotelForm .modal-body { min-height: 0; flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; }
 .modal-eyebrow { display: block; margin-bottom: 0.2rem; color: var(--primary-emerald); font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
 .form-section-label { margin: 0.2rem 0 0.8rem; color: var(--primary-emerald); font-size: 0.88rem; font-weight: 800; }
 .hotel-modal .form-label { margin-bottom: 0.35rem; color: #334155; font-size: 0.82rem; font-weight: 700; }

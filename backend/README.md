@@ -1,8 +1,8 @@
 # Ceylon Explore Backend
 
-This folder contains the Spring Boot backend, Tourist, Destination, and Tour
-Guide Management CRUD modules, and session-based account authentication.
-Tour-package and booking management are also available.
+This folder contains the Spring Boot backend, Tourist, Destination, Hotel/Room,
+and Tour Guide Management CRUD modules, and session-based account
+authentication. Tour-package and booking management are also available.
 
 ## Requirements
 
@@ -61,8 +61,22 @@ variables after initialization. Public registration always creates a `USER`.
 - `POST http://localhost:8080/api/tour-guides` — create a guide (ADMIN).
 - `PUT http://localhost:8080/api/tour-guides/{id}` — update a guide (ADMIN).
 - `DELETE http://localhost:8080/api/tour-guides/{id}` — delete a guide (ADMIN).
+- `GET http://localhost:8080/api/hotels/active` — list/filter active hotels publicly by `keyword`, `city`, `country`, `starRating`, and `hotelType`.
+- `GET http://localhost:8080/api/hotels/{id}/rooms` — list/filter available rooms for an active hotel by `roomType`, `minPrice`, and `maxPrice`.
+- `GET http://localhost:8080/api/hotels` — list/filter hotels by `keyword`, `city`, `country`, `starRating`, `hotelType`, and `status` (ADMIN).
+- `POST http://localhost:8080/api/hotels` — create a hotel (ADMIN).
+- `PUT http://localhost:8080/api/hotels/{id}` — update a hotel (ADMIN).
+- `DELETE http://localhost:8080/api/hotels/{id}` — delete a hotel with no rooms (ADMIN).
+- `GET http://localhost:8080/api/rooms?hotelId={id}` — list/filter rooms by hotel, `roomType`, `status`, `minPrice`, `maxPrice`, and `availableOnly` (ADMIN).
+- `POST http://localhost:8080/api/rooms/hotel/{hotelId}` — add a room to a hotel (ADMIN).
+- `PUT http://localhost:8080/api/rooms/{id}` — update a room (ADMIN).
+- `DELETE http://localhost:8080/api/rooms/{id}` — delete a room (ADMIN).
 - `GET http://localhost:8080/api/auth/csrf` — obtain a session CSRF token.
 - `POST http://localhost:8080/api/auth/register` — register a normal user.
+
+Hotel deletion is blocked while rooms reference the hotel. The current booking
+model has no hotel or room association, so room deletion cannot enforce booking
+reference checks until hotel-room bookings are added to that model.
 - `POST http://localhost:8080/api/auth/login` — login and establish a session.
 - `GET http://localhost:8080/api/auth/me` — current authenticated account.
 - `POST http://localhost:8080/api/auth/logout` — invalidate the session.
