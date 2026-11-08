@@ -36,11 +36,14 @@ variables after initialization. Public registration always creates a `USER`.
 - `GET http://localhost:8080/api/test` — API liveness check.
 - `GET http://localhost:8080/api/test/database` — executes `SELECT 1` against
   the configured database.
-- `GET http://localhost:8080/api/tourists` — list tourists.
-- `GET http://localhost:8080/api/tourists/{id}` — retrieve a tourist.
-- `POST http://localhost:8080/api/tourists` — create a tourist.
-- `PUT http://localhost:8080/api/tourists/{id}` — update a tourist.
-- `DELETE http://localhost:8080/api/tourists/{id}` — delete a tourist.
+- `GET http://localhost:8080/api/tourists` — list tourists (ADMIN).
+- `GET http://localhost:8080/api/tourists/{id}` — retrieve a tourist (ADMIN).
+- `GET http://localhost:8080/api/tourists/search?keyword=alice` — search name, email, phone, and country (ADMIN).
+- `GET http://localhost:8080/api/tourists/country/{country}` — filter by country (ADMIN).
+- `GET http://localhost:8080/api/tourists/status/{status}` — filter by `ACTIVE` or `INACTIVE` (ADMIN).
+- `POST http://localhost:8080/api/tourists` — create a tourist (ADMIN).
+- `PUT http://localhost:8080/api/tourists/{id}` — update a tourist (ADMIN).
+- `DELETE http://localhost:8080/api/tourists/{id}` — delete an unreferenced tourist (ADMIN).
 - `GET http://localhost:8080/api/destinations` — public destination listing.
 - `GET http://localhost:8080/api/destinations/{id}` — public destination details.
 - `GET http://localhost:8080/api/destinations/search?keyword=sigiriya` — search by name, location, category, or description.
@@ -66,10 +69,14 @@ variables after initialization. Public registration always creates a `USER`.
 - `GET http://localhost:8080/api/user/dashboard` — USER or ADMIN.
 - `GET http://localhost:8080/api/admin/dashboard` — ADMIN only.
 
-Tourist create/update JSON uses `fullName`, `email`, `phone`, and `country`.
-Successful creation returns HTTP 201; deletion returns HTTP 204. Validation
-errors return HTTP 400, missing IDs return HTTP 404, and duplicate emails
-return HTTP 409.
+Tourist create/update JSON uses `fullName`, `email`, `phone`, `country`,
+`address`, `dateOfBirth`, `gender`, `profileImage`, and optionally `status`.
+Email is unique, phone numbers are validated, and new profiles default to
+`ACTIVE`. Responses omit passport data and include database-managed IDs and
+timestamps. Successful creation returns HTTP 201; deletion returns HTTP 204.
+Validation errors return HTTP 400, missing IDs return HTTP 404, and duplicate
+emails or deletion of a tourist with bookings return HTTP 409. Tourist
+management requires an authenticated ADMIN session and a valid CSRF token.
 
 Tour-guide create/update requests accept the complete management form:
 `fullName`, `email`, `phoneNumber`, `address`, `city`, `district`,
@@ -123,8 +130,8 @@ Java base package: `com.ceylonexplore.backend`. Tourist code is organized into
 follows the same structure and uses request/response DTOs. Shared CORS
 configuration and API error handling are in `config` and `exception`.
 
-The Destination and Tour Guide Management frontends load records from these
-endpoints using credentialed `fetch` requests and send the session CSRF token
+The Tourist, Destination, and Tour Guide Management frontends load records
+from these endpoints using credentialed `fetch` requests and send the session CSRF token
 for mutations. Serve the frontend over HTTP from an allowed CORS origin (Live
 Server defaults to port 5500). Tour-guide records are stored in the database;
 older browser-only tour-guide records are not imported automatically. The page

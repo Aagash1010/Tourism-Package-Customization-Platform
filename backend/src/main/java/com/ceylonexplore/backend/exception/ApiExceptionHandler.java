@@ -58,6 +58,14 @@ public class ApiExceptionHandler {
         return buildErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage(), request, null);
     }
 
+    @ExceptionHandler(TouristInUseException.class)
+    public ResponseEntity<Map<String, Object>> handleTouristInUse(
+            TouristInUseException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(HttpStatus.CONFLICT, exception.getMessage(), request, null);
+    }
+
     @ExceptionHandler(DuplicateTouristEmailException.class)
     public ResponseEntity<Map<String, Object>> handleDuplicateTouristEmail(
             DuplicateTouristEmailException exception,

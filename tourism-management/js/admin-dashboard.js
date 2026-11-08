@@ -31,6 +31,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.querySelectorAll('.demo-action').forEach(function (button) {
         button.addEventListener('click', function () {
+            if (button.dataset.action === 'Add Tourist') {
+                window.location.href = 'tourists.html';
+                return;
+            }
             const action = button.dataset.action || 'This action';
             showDemoToast(action + ' is a frontend demonstration. Backend saving will be added with Spring Boot later.');
         });

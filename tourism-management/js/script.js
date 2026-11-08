@@ -607,6 +607,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const moduleLinks = document.querySelectorAll('.module-link');
     moduleLinks.forEach(link => {
         link.addEventListener('click', function (e) {
+            if (this.getAttribute('data-module') === 'Tourist Management') {
+                return;
+            }
             e.preventDefault();
             const moduleName = this.getAttribute('data-module');
             showModal(

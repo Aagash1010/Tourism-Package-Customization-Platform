@@ -1,13 +1,13 @@
-INSERT INTO tourists (full_name, email, phone, country, created_at)
-SELECT 'Alice Fernando', 'alice.fernando@example.com', '+94771234567', 'Sri Lanka', NOW()
+INSERT INTO tourists (full_name, email, phone, country, created_at, updated_at, status)
+SELECT 'Alice Fernando', 'alice.fernando@example.com', '+94771234567', 'Sri Lanka', NOW(), NOW(), 'ACTIVE'
 WHERE NOT EXISTS (SELECT 1 FROM tourists WHERE email = 'alice.fernando@example.com');
 
-INSERT INTO tourists (full_name, email, phone, country, created_at)
-SELECT 'Daniel Wijesinghe', 'daniel.wijesinghe@example.com', '+94777654321', 'Sri Lanka', NOW()
+INSERT INTO tourists (full_name, email, phone, country, created_at, updated_at, status)
+SELECT 'Daniel Wijesinghe', 'daniel.wijesinghe@example.com', '+94777654321', 'Sri Lanka', NOW(), NOW(), 'ACTIVE'
 WHERE NOT EXISTS (SELECT 1 FROM tourists WHERE email = 'daniel.wijesinghe@example.com');
 
-INSERT INTO tourists (full_name, email, phone, country, created_at)
-SELECT 'Nadee Jayawardena', 'nadee.jayawardena@example.com', '+94773451234', 'Sri Lanka', NOW()
+INSERT INTO tourists (full_name, email, phone, country, created_at, updated_at, status)
+SELECT 'Nadee Jayawardena', 'nadee.jayawardena@example.com', '+94773451234', 'Sri Lanka', NOW(), NOW(), 'ACTIVE'
 WHERE NOT EXISTS (SELECT 1 FROM tourists WHERE email = 'nadee.jayawardena@example.com');
 
 INSERT INTO tour_packages (name, description, destination, duration, price, max_travelers, status, image_url, created_at)
