@@ -9,11 +9,13 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
-import java.util.Optional;
-
 public interface TouristRepository extends JpaRepository<Tourist, Long> {
 
     Optional<Tourist> findByEmailIgnoreCase(String email);
+
+    Optional<Tourist> findByUserAccountId(Long userAccountId);
+
+    boolean existsByUserAccountIdAndIdNot(Long userAccountId, Long id);
 
     boolean existsByEmailIgnoreCase(String email);
 

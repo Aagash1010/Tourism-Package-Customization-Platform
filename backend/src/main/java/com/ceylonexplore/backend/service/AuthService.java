@@ -19,7 +19,10 @@ public class AuthService {
     private final UserAccountRepository userAccountRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public AuthService(UserAccountRepository userAccountRepository, PasswordEncoder passwordEncoder) {
+    public AuthService(
+            UserAccountRepository userAccountRepository,
+            PasswordEncoder passwordEncoder
+    ) {
         this.userAccountRepository = userAccountRepository;
         this.passwordEncoder = passwordEncoder;
     }
@@ -38,7 +41,10 @@ public class AuthService {
                 AccountRole.USER,
                 true
         );
-        return AccountResponse.from(userAccountRepository.save(account));
+        account.setPhone(request.phone().trim());
+        account.setCountry(request.country().trim());
+        UserAccount savedAccount = userAccountRepository.save(account);
+        return AccountResponse.from(savedAccount);
     }
 
     public AccountResponse getAccountResponse(String email) {

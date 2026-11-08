@@ -103,9 +103,7 @@ public class BookingService {
         TourPackage tourPackage = tourPackageRepository.findById(request.packageId())
                 .orElseThrow(() -> new TourPackageNotFoundException(request.packageId()));
 
-        if (request.numberOfPeople() > tourPackage.getMaxTravelers()) {
-            throw new BookingConflictException("Number of people exceeds the package capacity of " + tourPackage.getMaxTravelers() + ".");
-        }
+        validatePackageBooking(tourPackage, request);
 
         BigDecimal totalAmount = calculateTotalAmount(tourPackage.getPrice(), request.numberOfPeople());
         if (totalAmount.compareTo(BigDecimal.ZERO) < 0) {
@@ -139,9 +137,7 @@ public class BookingService {
         TourPackage tourPackage = tourPackageRepository.findById(request.packageId())
                 .orElseThrow(() -> new TourPackageNotFoundException(request.packageId()));
 
-        if (request.numberOfPeople() > tourPackage.getMaxTravelers()) {
-            throw new BookingConflictException("Number of people exceeds the package capacity of " + tourPackage.getMaxTravelers() + ".");
-        }
+        validatePackageBooking(tourPackage, request);
 
         if (existingBooking.getBookingStatus() == BookingStatus.COMPLETED) {
             throw new BookingConflictException("Completed bookings cannot be modified without appropriate authorization.");
@@ -180,6 +176,7 @@ public class BookingService {
         if (request == null) {
             throw new InvalidBookingException("Booking request body is required.");
         }
+
         if (request.touristId() == null) {
             throw new InvalidBookingException("Tourist ID is required.");
         }
@@ -200,6 +197,25 @@ public class BookingService {
         }
         if (request.bookingDate().toLocalDate().isAfter(request.travelDate())) {
             throw new InvalidBookingException("Travel date cannot be earlier than the booking date.");
+        }
+    }
+
+    private void validatePackageBooking(TourPackage tourPackage, BookingRequest request) {
+        if (!"Active".equalsIgnoreCase(tourPackage.getStatus())) {
+            throw new BookingConflictException("Inactive tour packages cannot be booked.");
+        }
+        int minimumTravelers = tourPackage.getMinTravelers() == null ? 1 : tourPackage.getMinTravelers();
+        if (request.numberOfPeople() < minimumTravelers) {
+            throw new BookingConflictException("Number of people is below the package minimum of " + minimumTravelers + ".");
+        }
+        if (request.numberOfPeople() > tourPackage.getMaxTravelers()) {
+            throw new BookingConflictException("Number of people exceeds the package capacity of " + tourPackage.getMaxTravelers() + ".");
+        }
+        if (tourPackage.getStartDate() != null && request.travelDate().isBefore(tourPackage.getStartDate())) {
+            throw new BookingConflictException("Travel date is before this package's availability period.");
+        }
+        if (tourPackage.getEndDate() != null && request.travelDate().isAfter(tourPackage.getEndDate())) {
+            throw new BookingConflictException("Travel date is after this package's availability period.");
         }
     }
 

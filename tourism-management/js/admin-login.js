@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const togglePassword = document.getElementById('togglePassword');
     const loginButton = document.getElementById('loginButton');
     const loginStatus = document.getElementById('loginStatus');
+    if (new URLSearchParams(window.location.search).get('registered') === '1') {
+        showStatus('Your account was created. Sign in to continue.', 'success');
+    }
 
     togglePassword.addEventListener('click', function () {
         const isPassword = passwordInput.type === 'password';

@@ -13,6 +13,8 @@ public interface DestinationRepository extends JpaRepository<Destination, Long> 
 
     boolean existsByNameIgnoreCaseAndIdNot(String name, Long id);
 
+    java.util.Optional<Destination> findFirstByNameIgnoreCase(String name);
+
     List<Destination> findByCategoryIgnoreCase(String category);
 
     List<Destination> findByStatusIgnoreCase(String status);

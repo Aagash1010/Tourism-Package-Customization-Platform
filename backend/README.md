@@ -43,6 +43,7 @@ variables after initialization. Public registration always creates a `USER`.
 - `GET http://localhost:8080/api/tourists/status/{status}` — filter by `ACTIVE` or `INACTIVE` (ADMIN).
 - `POST http://localhost:8080/api/tourists` — create a tourist (ADMIN).
 - `PUT http://localhost:8080/api/tourists/{id}` — update a tourist (ADMIN).
+- `PUT http://localhost:8080/api/tourists/{id}/account` — explicitly link a tourist record to a USER account (ADMIN). This is required to expose historical bookings in that user's dashboard; email matches are not linked automatically.
 - `DELETE http://localhost:8080/api/tourists/{id}` — delete an unreferenced tourist (ADMIN).
 - `GET http://localhost:8080/api/destinations` — public destination listing.
 - `GET http://localhost:8080/api/destinations/{id}` — public destination details.
@@ -71,6 +72,17 @@ variables after initialization. Public registration always creates a `USER`.
 - `POST http://localhost:8080/api/rooms/hotel/{hotelId}` — add a room to a hotel (ADMIN).
 - `PUT http://localhost:8080/api/rooms/{id}` — update a room (ADMIN).
 - `DELETE http://localhost:8080/api/rooms/{id}` — delete a room (ADMIN).
+- `GET http://localhost:8080/api/tour-packages` — list/search/filter packages using `keyword`, `destinationId`, `category`, `status`, `minPrice`, `maxPrice`, `minDuration`, and `maxDuration`.
+- `GET http://localhost:8080/api/tour-packages/active` — list active packages for public browsing and booking.
+- `GET http://localhost:8080/api/tour-packages/{id}` — retrieve package details and ordered itinerary.
+- `POST http://localhost:8080/api/tour-packages` — create a package (ADMIN).
+- `PUT http://localhost:8080/api/tour-packages/{id}` — update a package and optionally replace its itinerary (ADMIN).
+- `DELETE http://localhost:8080/api/tour-packages/{id}` — delete a package only if it has no bookings (ADMIN).
+
+The equivalent `/api/packages` routes are also available. Package writes require
+an authenticated ADMIN session and a valid CSRF token. Packages with existing
+bookings cannot be deleted; mark them inactive instead. Legacy package fields
+and `/api/tour-packages` remain compatible with existing booking references.
 - `GET http://localhost:8080/api/auth/csrf` — obtain a session CSRF token.
 - `POST http://localhost:8080/api/auth/register` — register a normal user.
 
@@ -155,20 +167,40 @@ from browser demo data.
 
 ## Authentication and sessions
 
-Registration accepts `fullName`, `email`, and `password`; the role is always
-assigned as `USER`. Passwords are BCrypt-hashed. Never send passwords in query
-strings or save them in browser storage. For login and logout, first call
+Registration accepts `fullName`, `email`, `phone`, `country`, `password`, and
+`termsAccepted`; the role is always assigned as `USER`. Passwords are
+BCrypt-hashed. Never send passwords in query strings or save them in browser
+storage. For login and logout, first call
 `GET /api/auth/csrf` with cookies enabled, then send its `csrfToken` as the
 `X-CSRF-TOKEN` header on the POST request. Cross-origin browser requests must
 use `credentials: "include"`.
 
 The existing admin login page uses the shared login endpoint and redirects
-based on the role returned by the server. The small `user-dashboard.html` page
-provides a signed-in landing page for regular accounts. No registration form
-existed in the frontend, so registration is currently available through the
-API. Spring Security enforces roles independently of the frontend; Tourist
-endpoints and destination mutations require `ADMIN`, while destination GET
-endpoints are public.
+based on the role returned by the server. `register.html` creates traveler
+accounts, and `user-dashboard.html` provides responsive profile, booking,
+upcoming-trip, history, and password-management views. User APIs derive account
+ownership from the authenticated session and include:
+
+- `GET /api/users/me` and `PUT /api/users/me` — retrieve and update the
+  authenticated user's own profile. The sign-in email and role are immutable
+  through this endpoint.
+- `PUT /api/users/me/password` — change a password after verifying the current
+  password.
+- `GET /api/users/me/dashboard` — database-backed booking counts and recent
+  activity.
+- `GET /api/users/me/bookings`, `/upcoming`, and `/history` — retrieve the
+  authenticated user's booking records.
+- `GET /api/users/me/bookings/{bookingReference}` — view one owned booking.
+
+The `Tourist` and `UserAccount` models remain separate. An admin must explicitly
+link a tourist record to an account with `PUT /api/tourists/{id}/account`
+before its existing bookings appear to that user; matching email addresses are
+not trusted as proof of identity. Favorites are not included because the
+project has no existing persistence model for them.
+
+Spring Security enforces roles independently of the frontend; user profile and
+booking APIs require the USER role, Tourist management and destination
+mutations require ADMIN, while destination GET endpoints are public.
 
 Sessions use HTTP-only cookies. Development uses `Secure=false` and
 `SameSite=Lax`; the production profile forces secure cookies. Production CORS

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account | Ceylon Explore</title>
+    <meta name="description" content="Create your Ceylon Explore traveler account.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/register.css">
+</head>
+<body class="register-body">
+    <main class="register-shell">
+        <section class="register-visual">
+            <a class="register-brand" href="index.html"><i class="bi bi-compass-fill"></i><span>Ceylon <b>Explore</b></span></a>
+            <div class="register-visual-copy"><span>YOUR ISLAND JOURNEY STARTS HERE</span><h1>Make room for a little more wonder.</h1><p>Create an account to keep your travel plans and bookings together.</p></div>
+            <div class="register-visual-mark"><i class="bi bi-globe-asia-australia"></i></div>
+        </section>
+        <section class="register-panel">
+            <div class="register-card">
+                <span class="register-eyebrow">TRAVELER ACCOUNT</span>
+                <h2>Create your account</h2>
+                <p class="text-secondary mb-4">Join Ceylon Explore and start planning your next trip.</p>
+                <div class="alert d-none" id="registerStatus" role="status" aria-live="polite"></div>
+                <form id="registerForm" novalidate>
+                    <div class="mb-3"><label class="form-label" for="registerName">Full name</label><input class="form-control" id="registerName" maxlength="120" autocomplete="name" required></div>
+                    <div class="mb-3"><label class="form-label" for="registerEmail">Email address</label><input class="form-control" id="registerEmail" type="email" maxlength="254" autocomplete="email" required></div>
+                    <div class="row g-3">
+                        <div class="col-sm-6"><label class="form-label" for="registerPhone">Phone number</label><input class="form-control" id="registerPhone" type="tel" maxlength="30" pattern="[+()0-9.\-\s]{7,30}" autocomplete="tel" placeholder="+94 77 123 4567" required></div>
+                        <div class="col-sm-6"><label class="form-label" for="registerCountry">Country</label><input class="form-control" id="registerCountry" maxlength="100" autocomplete="country-name" value="Sri Lanka" required></div>
+                    </div>
+                    <div class="row g-3 mt-0">
+                        <div class="col-sm-6"><label class="form-label" for="registerPassword">Password</label><input class="form-control" id="registerPassword" type="password" minlength="8" maxlength="72" autocomplete="new-password" required><div class="form-text">8+ characters, upper/lowercase and a number.</div></div>
+                        <div class="col-sm-6"><label class="form-label" for="confirmPassword">Confirm password</label><input class="form-control" id="confirmPassword" type="password" minlength="8" maxlength="72" autocomplete="new-password" required></div>
+                    </div>
+                    <div class="form-check mt-3"><input class="form-check-input" id="termsAccepted" type="checkbox" required><label class="form-check-label" for="termsAccepted">I accept the terms and conditions.</label></div>
+                    <button class="btn btn-register-primary w-100 rounded-pill mt-4" id="registerButton" type="submit"><span class="button-label">Create account</span><span class="button-loading d-none"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Creating account…</span></button>
+                </form>
+                <p class="register-footer">Already have an account? <a href="admin-login.html">Sign in</a></p>
+                <a class="register-home" href="index.html"><i class="bi bi-arrow-left me-1"></i>Back to website</a>
+            </div>
+        </section>
+    </main>
+    <script src="js/register.js"></script>
+</body>
+</html>

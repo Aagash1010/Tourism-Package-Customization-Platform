@@ -1,8 +1,11 @@
 package com.ceylonexplore.backend.controller;
 
+import com.ceylonexplore.backend.dto.AccountResponse;
+import com.ceylonexplore.backend.dto.TouristAccountLinkRequest;
 import com.ceylonexplore.backend.dto.TouristRequest;
 import com.ceylonexplore.backend.dto.TouristResponse;
 import com.ceylonexplore.backend.entity.TouristStatus;
+import com.ceylonexplore.backend.service.TouristAccountLinkService;
 import com.ceylonexplore.backend.service.TouristService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -27,9 +30,11 @@ import java.util.List;
 public class TouristController {
 
     private final TouristService touristService;
+    private final TouristAccountLinkService touristAccountLinkService;
 
-    public TouristController(TouristService touristService) {
+    public TouristController(TouristService touristService, TouristAccountLinkService touristAccountLinkService) {
         this.touristService = touristService;
+        this.touristAccountLinkService = touristAccountLinkService;
     }
 
     @GetMapping
@@ -76,5 +81,13 @@ public class TouristController {
     public ResponseEntity<Void> deleteTourist(@PathVariable Long id) {
         touristService.deleteTourist(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/account")
+    public AccountResponse linkAccount(
+            @PathVariable Long id,
+            @Valid @RequestBody TouristAccountLinkRequest request
+    ) {
+        return touristAccountLinkService.linkAccount(id, request);
     }
 }

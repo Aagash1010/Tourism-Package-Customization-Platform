@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             const [tourists, packages, fetchedBookings] = await Promise.all([
                 fetchBackendData('/api/tourists'),
-                fetchBackendData('/api/tour-packages'),
+                fetchBackendData('/api/tour-packages/active'),
                 fetchBackendData('/api/bookings')
             ]);
 

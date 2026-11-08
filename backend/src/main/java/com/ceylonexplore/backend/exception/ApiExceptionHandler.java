@@ -15,6 +15,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -130,6 +131,14 @@ public class ApiExceptionHandler {
         return buildErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage(), request, null);
     }
 
+    @ExceptionHandler(DuplicateTourPackageException.class)
+    public ResponseEntity<Map<String, Object>> handleDuplicateTourPackage(
+            DuplicateTourPackageException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(HttpStatus.CONFLICT, exception.getMessage(), request, null);
+    }
+
     @ExceptionHandler(BookingNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleBookingNotFound(
             BookingNotFoundException exception,
@@ -210,6 +219,17 @@ public class ApiExceptionHandler {
                 request,
                 null
         );
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, Object>> handleExpectedRequestFailure(
+            ResponseStatusException exception,
+            HttpServletRequest request
+    ) {
+        String message = exception.getReason() == null
+                ? "The request could not be completed."
+                : exception.getReason();
+        return buildErrorResponse(exception.getStatusCode(), message, request, null);
     }
 
     @ExceptionHandler(Exception.class)

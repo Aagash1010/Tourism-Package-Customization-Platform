@@ -15,6 +15,32 @@
     margin-bottom: 2rem;
 }
 
+#packageFormModal .modal-content {
+    max-height: calc(100vh - 2rem);
+}
+
+#packageFormModal #packageForm {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#packageFormModal #packageForm .modal-header,
+#packageFormModal #packageForm .modal-footer {
+    flex-shrink: 0;
+}
+
+#packageFormModal #packageForm .modal-body {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
 .package-panel-header {
     align-items: center;
 }
@@ -26,7 +52,7 @@
 
 .package-toolbar {
     display: grid;
-    grid-template-columns: repeat(4, minmax(145px, 1fr)) auto;
+    grid-template-columns: repeat(4, minmax(145px, 1fr));
     align-items: end;
     gap: 0.8rem;
     margin-bottom: 1rem;
@@ -36,6 +62,15 @@
     border-radius: 16px;
 }
 
+.package-toolbar .filter-field label {
+    display: block;
+    margin-bottom: 0.4rem;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.package-toolbar .form-control,
 .package-toolbar .form-select {
     min-height: 44px;
     border-color: rgba(27, 67, 50, 0.13);
@@ -43,6 +78,7 @@
     font-size: 0.88rem;
 }
 
+.package-toolbar .form-control:focus,
 .package-toolbar .form-select:focus,
 .package-top-search:focus-within {
     border-color: var(--accent-green);
@@ -427,7 +463,7 @@
     }
 
     .package-toolbar {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
 

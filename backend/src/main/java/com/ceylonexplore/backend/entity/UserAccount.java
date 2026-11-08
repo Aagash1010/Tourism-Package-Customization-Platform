@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Email;
@@ -40,6 +41,22 @@ public class UserAccount {
     @Column(nullable = false, length = 254)
     private String email;
 
+    @Size(max = 30)
+    @Column(length = 30)
+    private String phone;
+
+    @Size(max = 100)
+    @Column(length = 100)
+    private String country;
+
+    @Size(max = 255)
+    @Column(length = 255)
+    private String address;
+
+    @Size(max = 500)
+    @Column(name = "profile_image", length = 500)
+    private String profileImage;
+
     @JsonIgnore
     @NotBlank
     @Column(nullable = false, length = 60)
@@ -55,6 +72,9 @@ public class UserAccount {
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     protected UserAccount() {
     }
@@ -72,6 +92,14 @@ public class UserAccount {
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
         }
+        if (updatedAt == null) {
+            updatedAt = createdAt;
+        }
+    }
+
+    @PreUpdate
+    private void setUpdatedAt() {
+        updatedAt = LocalDateTime.now();
     }
 
     public Long getId() {
@@ -86,9 +114,45 @@ public class UserAccount {
         return email;
     }
 
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getProfileImage() {
+        return profileImage;
+    }
+
+    public void setProfileImage(String profileImage) {
+        this.profileImage = profileImage;
+    }
+
     @JsonIgnore
     public String getPassword() {
         return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public AccountRole getRole() {
@@ -101,5 +165,13 @@ public class UserAccount {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt == null ? createdAt : updatedAt;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
     }
 }

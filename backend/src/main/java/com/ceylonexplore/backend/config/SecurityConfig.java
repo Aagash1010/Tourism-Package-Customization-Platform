@@ -124,11 +124,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/test", "/api/test/database").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/destinations", "/api/destinations/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/tour-packages", "/api/tour-packages/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/packages", "/api/packages/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/tour-guides", "/api/tour-guides/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/hotels/active", "/api/hotels/*/rooms").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/bookings").permitAll()
                         .requestMatchers("/api/auth/me").authenticated()
                         .requestMatchers("/api/auth/logout").authenticated()
+                        .requestMatchers("/api/users/me/**").hasRole("USER")
                         .requestMatchers("/api/user/dashboard").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(
                                 "/api/admin/dashboard",
@@ -137,6 +139,8 @@ public class SecurityConfig {
                                 "/api/destinations/**",
                                 "/api/tour-guides",
                                 "/api/tour-guides/**",
+                                "/api/packages",
+                                "/api/packages/**",
                                 "/api/hotels",
                                 "/api/hotels/**",
                                 "/api/rooms",

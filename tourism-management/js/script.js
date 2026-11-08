@@ -20,6 +20,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const apiBaseUrl = 'http://' + window.location.hostname + ':8080';
     const homeDestinationGrid = document.getElementById('homeDestinationGrid');
     const homeDestinationStatus = document.getElementById('homeDestinationStatus');
+    const homePackageGrid = document.getElementById('homePackageGrid');
+    const homePackageStatus = document.getElementById('homePackageStatus');
+    const homeHotelGrid = document.getElementById('homeHotelGrid');
+    const homeHotelStatus = document.getElementById('homeHotelStatus');
+    const searchDestination = document.getElementById('searchDestination');
+    const packageRecords = new Map();
+    const hotelRecords = new Map();
+    let destinationRecords = [];
     
     // Demo Modal Elements
     const demoModalElement = document.getElementById('demoModal');
@@ -105,39 +113,61 @@ document.addEventListener('DOMContentLoaded', function () {
         heroSearchForm.addEventListener('submit', function (e) {
             e.preventDefault();
 
-            const destinationSelect = document.getElementById('searchDestination');
-            const destinationText = destinationSelect.options[destinationSelect.selectedIndex].text;
+            const destinationId = Number(searchDestination.value);
+            const selectedDestination = destinationRecords.find(function (destination) {
+                return Number(destination.id) === destinationId;
+            });
             const travelDate = searchDateInput.value;
-            const travelers = document.getElementById('searchTravelers').value;
+            const travelers = Number(document.getElementById('searchTravelers').value);
 
-            if (!destinationSelect.value || !travelDate) {
-                showModal('Incomplete Search', '<p class="text-danger">Please select a destination and travel date to search for packages.</p>');
+            if (!selectedDestination || !travelDate) {
+                showModal('Incomplete Search', '<p class="text-danger">Please select a database destination and travel date to search for packages.</p>');
                 return;
             }
 
-            // Simulate searching results
-            showModal(
-                'Search Results',
-                `<div class="text-center py-2">
-                    <div class="mb-3 text-emerald"><i class="bi bi-compass-fill display-4"></i></div>
-                    <h5 class="fw-bold mb-2">Available Packages Found!</h5>
-                    <p class="text-muted small mb-3">
-                        We found <strong>3 curated tour packages</strong> for <strong>${destinationText}</strong> departing on <strong>${travelDate}</strong> for <strong>${travelers} traveler(s)</strong>.
-                    </p>
-                    <div class="p-3 bg-light rounded-3 text-start mb-3 border">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="fw-bold text-dark"> Ceylon Signature Tour</span>
-                            <span class="badge bg-gold text-white">Available</span>
+            const matchingPackages = Array.from(packageRecords.values()).filter(function (tourPackage) {
+                const destinationMatches = Number(tourPackage.destinationId) === destinationId ||
+                    normalizePackageName(tourPackage.destination).includes(normalizePackageName(selectedDestination.name));
+                const dateMatches = (!tourPackage.startDate || travelDate >= tourPackage.startDate) &&
+                    (!tourPackage.endDate || travelDate <= tourPackage.endDate);
+                return destinationMatches && dateMatches && Number(tourPackage.maxTravelers || 0) >= travelers;
+            });
+
+            const resultsHtml = matchingPackages.length
+                ? matchingPackages.map(function (tourPackage) {
+                    const price = formatLkr(tourPackage.price);
+                    return `<div class="p-3 bg-light rounded-3 text-start mb-3 border">
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
+                            <strong class="text-dark">${escapeHtml(tourPackage.name)}</strong>
+                            <span class="fw-bold text-emerald text-nowrap">${escapeHtml(price)}</span>
                         </div>
-                        <span class="small text-muted">Includes private luxury vehicle, 4-star accommodation, and certified English-speaking tour guide.</span>
-                    </div>
-                    <div class="alert alert-info-subtle border-0 small text-start">
-                        <i class="bi bi-info-circle me-1"></i> <strong>Frontend Demo Note:</strong> Ready for Java Spring Boot REST endpoint <code>GET /api/v1/packages/search</code>.
-                    </div>
+                        <div class="small text-muted mb-2">${escapeHtml(tourPackage.destination || '')} · ${escapeHtml(tourPackage.duration || '')}</div>
+                        <button class="btn btn-emerald btn-sm rounded-pill btn-search-book" type="button" data-package-id="${escapeHtml(tourPackage.id)}">Book this package</button>
+                    </div>`;
+                }).join('')
+                : '<p class="text-muted mb-0">No active database packages match this destination, date, and traveler count.</p>';
+
+            showModal(
+                'Database Package Search',
+                `<div class="py-2">
+                    <p class="text-muted small">Active packages for <strong>${escapeHtml(selectedDestination.name)}</strong>, departing ${escapeHtml(travelDate)}, for ${travelers} traveler(s):</p>
+                    ${resultsHtml}
                 </div>`
             );
         });
     }
+
+    demoModalBody.addEventListener('click', function (event) {
+        const button = event.target.closest('.btn-search-book');
+        if (!button) return;
+        const tourPackage = packageRecords.get(Number(button.dataset.packageId));
+        if (!tourPackage) {
+            showModal('Package unavailable', '<p class="text-danger mb-0">This package is no longer available. Reload the page and try again.</p>');
+            return;
+        }
+        demoModal.hide();
+        triggerBookingFlow(tourPackage.name, formatLkr(tourPackage.price));
+    });
 
     // ----------------------------------------------------------------------
     // 5. Destination Card Buttons Interactivity
@@ -166,6 +196,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     loadHomeDestinations();
+    loadHomePackages();
+    loadHomeHotels();
 
     async function loadHomeDestinations() {
         if (!homeDestinationGrid || !homeDestinationStatus) {
@@ -185,17 +217,29 @@ document.addEventListener('DOMContentLoaded', function () {
                 throw new Error('The destination service returned an invalid response.');
             }
 
+            destinationRecords = destinations;
+            if (searchDestination) {
+                searchDestination.replaceChildren(new Option('Where to go?', '', true, true));
+                searchDestination.options[0].disabled = true;
+                destinations.forEach(function (destination) {
+                    searchDestination.add(new Option(destination.name, destination.id));
+                });
+            }
+
             homeDestinationGrid.innerHTML = destinations.map(function (destination) {
                 const name = escapeHtml(destination.name);
                 const category = escapeHtml(destination.category);
                 const description = escapeHtml(destination.shortDescription || destination.fullDescription || '');
                 const duration = escapeHtml(destination.duration || 'Visit duration not specified');
                 const imageUrl = getDestinationImageUrl(destination.imageUrl);
+                const image = imageUrl
+                    ? `<img src="${escapeHtml(imageUrl)}" class="card-img-top destination-img" alt="${name}" loading="lazy">`
+                    : '<div class="card-img-top destination-img d-flex align-items-center justify-content-center bg-light"><i class="bi bi-geo-alt text-secondary fs-1" aria-hidden="true"></i></div>';
 
                 return `<div class="col-lg-4 col-md-6">
                     <div class="destination-card rounded-4 overflow-hidden shadow-sm h-100 bg-white border-0 position-relative">
                         <div class="card-img-wrapper position-relative overflow-hidden">
-                            <img src="${escapeHtml(imageUrl)}" class="card-img-top destination-img" alt="${name}" loading="lazy">
+                            ${image}
                             <span class="badge-tag bg-emerald">${category}</span>
                         </div>
                         <div class="card-body p-4 d-flex flex-column">
@@ -221,79 +265,208 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (error) {
             console.error('Unable to load homepage destinations.', error);
             homeDestinationStatus.textContent = 'Destinations could not be loaded. Please try again later.';
+            if (searchDestination) {
+                searchDestination.replaceChildren(new Option('Destinations unavailable', '', true, true));
+                searchDestination.options[0].disabled = true;
+            }
         }
     }
 
+    async function loadHomePackages() {
+        if (!homePackageGrid || !homePackageStatus) return;
+        try {
+            const response = await fetch(apiBaseUrl + '/api/tour-packages/active', { credentials: 'include' });
+            if (!response.ok) throw new Error('Package request failed with status ' + response.status + '.');
+            const packages = await response.json();
+            if (!Array.isArray(packages)) throw new Error('The package service returned an invalid response.');
+
+            packageRecords.clear();
+            packages.forEach(function (tourPackage) {
+                if (tourPackage.id != null) packageRecords.set(Number(tourPackage.id), tourPackage);
+            });
+            homePackageGrid.innerHTML = packages.map(renderPackageCard).join('');
+            homePackageStatus.textContent = packages.length ? '' : 'No active tour packages are available right now.';
+        } catch (error) {
+            console.error('Unable to load homepage tour packages.', error);
+            homePackageStatus.textContent = 'Tour packages could not be loaded. Please try again later.';
+        }
+    }
+
+    function renderPackageCard(tourPackage) {
+        const name = escapeHtml(tourPackage.name || 'Tour package');
+        const destination = escapeHtml(tourPackage.destination || 'Destination not specified');
+        const duration = escapeHtml(tourPackage.duration || formatDuration(tourPackage));
+        const price = escapeHtml(formatLkr(tourPackage.price));
+        const category = escapeHtml(tourPackage.category || 'Tour package');
+        const description = escapeHtml(tourPackage.description || 'No description provided.');
+        const imageUrl = getDestinationImageUrl(tourPackage.imageUrl);
+        const packageImage = imageUrl
+            ? `<img src="${escapeHtml(imageUrl)}" class="w-100 package-img" alt="${name}" loading="lazy">`
+            : '<div class="w-100 package-img d-flex align-items-center justify-content-center bg-light"><i class="bi bi-image text-secondary fs-1" aria-hidden="true"></i></div>';
+        const id = escapeHtml(tourPackage.id);
+
+        return `<div class="col-lg-3 col-md-6">
+            <div class="package-card rounded-4 border-0 shadow-sm overflow-hidden h-100 d-flex flex-column bg-white">
+                <div class="package-img-container position-relative">
+                    ${packageImage}
+                    <span class="package-badge bg-emerald">${category}</span>
+                </div>
+                <div class="p-4 d-flex flex-column flex-grow-1">
+                    <h3 class="h5 fw-bold mb-2">${name}</h3>
+                    <div class="package-meta small text-muted mb-2">
+                        <div><i class="bi bi-geo-alt-fill text-emerald me-1"></i>${destination}</div>
+                        <div><i class="bi bi-clock-fill text-emerald me-1"></i>${duration}</div>
+                    </div>
+                    <p class="small text-muted">${description}</p>
+                    <hr class="my-3 text-muted opacity-25">
+                    <div class="mb-4">
+                        <span class="small text-muted d-block">Price</span>
+                        <span class="h4 fw-bold text-emerald mb-0">${price}</span>
+                        <span class="small text-muted">/ person</span>
+                    </div>
+                    <div class="mt-auto d-grid gap-2">
+                        <button class="btn btn-outline-emerald rounded-pill btn-sm fw-semibold btn-view-details" type="button" data-package-id="${id}">View Details</button>
+                        <button class="btn btn-emerald rounded-pill btn-sm fw-semibold btn-book-now" type="button" data-package-id="${id}">Book Now</button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    async function loadHomeHotels() {
+        if (!homeHotelGrid || !homeHotelStatus) return;
+        try {
+            const response = await fetch(apiBaseUrl + '/api/hotels/active', { credentials: 'include' });
+            if (!response.ok) throw new Error('Hotel request failed with status ' + response.status + '.');
+            const hotels = await response.json();
+            if (!Array.isArray(hotels)) throw new Error('The hotel service returned an invalid response.');
+
+            hotelRecords.clear();
+            hotels.forEach(function (hotel) {
+                if (hotel.id != null) hotelRecords.set(Number(hotel.id), hotel);
+            });
+            homeHotelGrid.innerHTML = hotels.map(renderHotelCard).join('');
+            homeHotelStatus.textContent = hotels.length ? '' : 'No active hotels are available right now.';
+        } catch (error) {
+            console.error('Unable to load homepage hotels.', error);
+            homeHotelStatus.textContent = 'Hotels could not be loaded. Please try again later.';
+        }
+    }
+
+    function renderHotelCard(hotel) {
+        const name = escapeHtml(hotel.hotelName || 'Hotel');
+        const location = escapeHtml([hotel.city, hotel.district, hotel.province, hotel.country].filter(Boolean).join(', '));
+        const rating = Number(hotel.starRating);
+        const facilities = Array.isArray(hotel.facilities) ? hotel.facilities : [];
+        const description = escapeHtml(hotel.description || 'No description provided.');
+        const imageUrl = getDestinationImageUrl(hotel.imageUrl);
+        const hotelImage = imageUrl
+            ? `<img src="${escapeHtml(imageUrl)}" class="w-100 hotel-img" alt="${name}" loading="lazy">`
+            : '<div class="w-100 hotel-img d-flex align-items-center justify-content-center bg-light"><i class="bi bi-building text-secondary fs-1" aria-hidden="true"></i></div>';
+
+        return `<div class="col-lg-6 col-md-12">
+            <div class="hotel-card h-100">
+                ${hotelImage}
+                <div class="hotel-content">
+                    <div class="hotel-tier">${escapeHtml(String(hotel.hotelType || 'Hotel').replace(/_/g, ' '))}</div>
+                    <div class="hotel-header">
+                        <h4 class="hotel-title mb-0">${name}</h4>
+                        ${Number.isFinite(rating) ? `<span class="hotel-rating"><i class="bi bi-star-fill me-1"></i>${escapeHtml(rating)} / 5</span>` : ''}
+                    </div>
+                    <p class="hotel-location"><i class="bi bi-geo-alt me-2"></i>${location || 'Location not specified'}</p>
+                    <p class="hotel-tags">${escapeHtml(facilities.join(' · ') || 'No facilities listed')}</p>
+                    <p class="hotel-description">${description}</p>
+                    <button class="btn btn-outline-emerald rounded-pill w-100 hotel-button btn-hotel-info" type="button" data-hotel-id="${escapeHtml(hotel.id)}">View Details</button>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    function formatLkr(amount) {
+        const value = Number(amount);
+        return Number.isFinite(value)
+            ? 'LKR ' + new Intl.NumberFormat('en-LK', { maximumFractionDigits: 2 }).format(value)
+            : 'Price not specified';
+    }
+
+    function formatDuration(tourPackage) {
+        if (!tourPackage.durationDays) return 'Duration not specified';
+        const nights = Number(tourPackage.durationNights || 0);
+        return tourPackage.durationDays + ' days' + (nights ? ' / ' + nights + ' nights' : '');
+    }
+
     function getDestinationImageUrl(imageUrl) {
-        const fallbackImage = 'assets/images/hero-bg.jpg';
         if (typeof imageUrl !== 'string' || !imageUrl.trim() || imageUrl.trim().startsWith('//')) {
-            return fallbackImage;
+            return '';
         }
 
         try {
             const parsedUrl = new URL(imageUrl.trim(), window.location.href);
             return parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:'
                 ? parsedUrl.href
-                : fallbackImage;
+                : '';
         } catch (error) {
-            return fallbackImage;
+            return '';
         }
     }
 
     // ----------------------------------------------------------------------
     // 6. Tour Package Details & Booking Interactivity
     // ----------------------------------------------------------------------
-    const viewDetailButtons = document.querySelectorAll('.btn-view-details');
-    viewDetailButtons.forEach(button => {
-        button.addEventListener('click', function () {
-            const pkgName = this.getAttribute('data-package');
-            const pkgPrice = this.getAttribute('data-price');
-            const pkgDuration = this.getAttribute('data-duration');
-            const pkgDest = this.getAttribute('data-dest');
+    homePackageGrid.addEventListener('click', function (event) {
+        const button = event.target.closest('.btn-view-details, .btn-book-now');
+        if (!button) return;
+        const tourPackage = packageRecords.get(Number(button.dataset.packageId));
+        if (!tourPackage) {
+            showModal('Package unavailable', '<p class="text-danger mb-0">This package is no longer available. Reload the page and try again.</p>');
+            return;
+        }
 
-            showModal(
-                `${pkgName} Details`,
-                `<div class="py-2">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span class="badge bg-emerald-subtle text-emerald px-3 py-2 fs-6 rounded-pill"><i class="bi bi-clock me-1"></i> ${pkgDuration}</span>
-                        <span class="fw-bold h5 text-emerald mb-0">${pkgPrice}</span>
-                    </div>
-                    <h6 class="fw-bold text-dark mb-1">Destinations Covered:</h6>
-                    <p class="text-muted small mb-3"><i class="bi bi-geo-alt-fill text-gold me-1"></i> ${pkgDest}</p>
-                    
-                    <h6 class="fw-bold text-dark mb-1">Package Inclusions:</h6>
-                    <ul class="small text-muted mb-4 ps-3">
-                        <li>Luxury air-conditioned vehicle with driver-guide</li>
-                        <li>Daily breakfast and traditional buffet dinner</li>
-                        <li>All entrance tickets & safari jeep fees included</li>
-                        <li>24/7 dedicated travel coordinator support</li>
-                    </ul>
+        if (button.classList.contains('btn-book-now')) {
+            triggerBookingFlow(tourPackage.name, formatLkr(tourPackage.price));
+            return;
+        }
 
-                    <div class="d-grid">
-                        <button class="btn btn-emerald rounded-pill fw-bold btn-modal-book-now" data-package="${pkgName}">Book This Package</button>
-                    </div>
-                </div>`
-            );
+        const inclusions = tourPackage.inclusions
+            ? `<h6 class="fw-bold text-dark mb-1">Inclusions</h6><p class="text-muted small">${escapeHtml(tourPackage.inclusions)}</p>`
+            : '';
+        const exclusions = tourPackage.exclusions
+            ? `<h6 class="fw-bold text-dark mb-1">Exclusions</h6><p class="text-muted small">${escapeHtml(tourPackage.exclusions)}</p>`
+            : '';
+        const itinerary = Array.isArray(tourPackage.itinerary) && tourPackage.itinerary.length
+            ? `<h6 class="fw-bold text-dark mb-1">Itinerary</h6><ul class="small text-muted">${tourPackage.itinerary.map(function (day) {
+                return `<li><strong>Day ${escapeHtml(day.dayNumber)}: ${escapeHtml(day.title || '')}</strong>${day.description ? ' — ' + escapeHtml(day.description) : ''}</li>`;
+            }).join('')}</ul>`
+            : '';
 
-            // Re-bind modal book button
-            setTimeout(() => {
-                const modalBookBtn = document.querySelector('.btn-modal-book-now');
-                if (modalBookBtn) {
-                    modalBookBtn.addEventListener('click', function () {
-                        triggerBookingFlow(pkgName, pkgPrice);
-                    });
-                }
-            }, 200);
-        });
+        showModal(
+            tourPackage.name + ' Details',
+            `<div class="py-2">
+                <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+                    <span class="badge bg-emerald-subtle text-emerald px-3 py-2 rounded-pill"><i class="bi bi-clock me-1"></i>${escapeHtml(tourPackage.duration || formatDuration(tourPackage))}</span>
+                    <span class="fw-bold h5 text-emerald mb-0">${escapeHtml(formatLkr(tourPackage.price))}</span>
+                </div>
+                <h6 class="fw-bold text-dark mb-1">Destination</h6>
+                <p class="text-muted small mb-3">${escapeHtml(tourPackage.destination || 'Not specified')}</p>
+                <p class="text-muted small">${escapeHtml(tourPackage.fullDescription || tourPackage.description || 'No description provided.')}</p>
+                ${inclusions}${exclusions}${itinerary}
+                <div class="d-grid">
+                    <button class="btn btn-emerald rounded-pill fw-bold btn-modal-book-now" type="button" data-package-id="${escapeHtml(tourPackage.id)}">Book This Package</button>
+                </div>
+            </div>`
+        );
     });
 
-    const bookNowButtons = document.querySelectorAll('.btn-book-now');
-    bookNowButtons.forEach(button => {
-        button.addEventListener('click', function () {
-            const pkgName = this.getAttribute('data-package');
-            const pkgPrice = this.getAttribute('data-price');
-            triggerBookingFlow(pkgName, pkgPrice);
-        });
+    demoModalBody.addEventListener('click', function (event) {
+        const button = event.target.closest('.btn-modal-book-now');
+        if (!button) return;
+        const tourPackage = packageRecords.get(Number(button.dataset.packageId));
+        if (!tourPackage) {
+            showModal('Package unavailable', '<p class="text-danger mb-0">This package is no longer available. Reload the page and try again.</p>');
+            return;
+        }
+        demoModal.hide();
+        triggerBookingFlow(tourPackage.name, formatLkr(tourPackage.price));
     });
 
     function triggerBookingFlow(pkgName, pkgPrice) {
@@ -306,11 +479,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
                 <div class="mb-3">
                     <label class="form-label small fw-semibold">Full Name</label>
-                    <input type="text" class="form-control py-2" placeholder="Enter your full name" required id="bookGuestName">
+                    <input type="text" class="form-control py-2" placeholder="Enter your full name" id="bookGuestName">
                 </div>
                 <div class="mb-3">
                     <label class="form-label small fw-semibold">Email Address</label>
-                    <input type="email" class="form-control py-2" placeholder="name@example.com" required id="bookGuestEmail">
+                    <input type="email" class="form-control py-2" placeholder="name@example.com" id="bookGuestEmail">
                 </div>
                 <div class="row g-2 mb-3">
                     <div class="col-6">
@@ -344,6 +517,7 @@ document.addEventListener('DOMContentLoaded', function () {
         setTimeout(() => {
             const bookingForm = document.getElementById('modalBookingForm');
             if (bookingForm) {
+                prefillUserBookingForm(bookingForm);
                 bookingForm.addEventListener('submit', async function (e) {
                     e.preventDefault();
                     const name = document.getElementById('bookGuestName').value.trim();
@@ -354,11 +528,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     const country = document.getElementById('bookGuestCountry').value.trim() || 'Sri Lanka';
                     const notes = document.getElementById('bookGuestNotes').value.trim();
 
-                    if (!name || !email || !travelDate) {
-                        showModal('Incomplete Booking Form', '<p class="text-danger mb-0">Please complete the required booking details before submitting.</p>');
-                        return;
-                    }
-
                     const bookingButton = bookingForm.querySelector('button[type="submit"]');
                     const originalText = bookingButton.innerHTML;
                     bookingButton.disabled = true;
@@ -367,6 +536,48 @@ document.addEventListener('DOMContentLoaded', function () {
                     try {
                         const csrfToken = await getCsrfToken();
                         const packageRecord = await findPackageByName(pkgName);
+                        const authResponse = await fetch(apiBaseUrl + '/api/auth/me', { credentials: 'include' });
+                        let currentUser = null;
+                        if (authResponse.ok) {
+                            const authBody = await authResponse.json();
+                            currentUser = authBody.user || null;
+                        } else if (authResponse.status !== 401) {
+                            throw new Error('Unable to verify your sign-in before booking.');
+                        }
+
+                        if (currentUser && currentUser.role === 'USER') {
+                            const userBookingResponse = await fetch(apiBaseUrl + '/api/users/me/bookings', {
+                                method: 'POST',
+                                credentials: 'include',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': csrfToken
+                                },
+                                body: JSON.stringify({
+                                    packageId: packageRecord.id,
+                                    numberOfPeople: guests,
+                                    travelDate: travelDate,
+                                    specialRequests: notes || null
+                                })
+                            });
+                            const userBookingBody = await userBookingResponse.json().catch(() => ({}));
+                            if (!userBookingResponse.ok) {
+                                throw new Error(userBookingBody.message || 'Your booking request could not be submitted.');
+                            }
+                            showBookingConfirmation(
+                                currentUser.fullName || name,
+                                pkgName,
+                                travelDate,
+                                userBookingBody.bookingReference
+                            );
+                            bookingForm.reset();
+                            return;
+                        }
+
+                        if (!name || !email) {
+                            showModal('Incomplete Booking Form', '<p class="text-danger">Enter your name and email address to continue as a guest.</p>');
+                            return;
+                        }
 
                         const touristResponse = await fetch(apiBaseUrl + '/api/tourists', {
                             method: 'POST',
@@ -405,7 +616,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             }
                         }
 
-                        const bookingDate = new Date().toISOString().slice(0, 10);
+                        const bookingDate = new Date().toISOString().slice(0, 19);
                         const bookingResponse = await fetch(apiBaseUrl + '/api/bookings', {
                             method: 'POST',
                             credentials: 'include',
@@ -432,20 +643,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             throw new Error(bookingBody.message || 'Your booking request could not be submitted to the admin team.');
                         }
 
-                        showModal(
-                            'Booking Request Received!',
-                            `<div class="text-center py-3">
-                                <div class="text-success mb-3"><i class="bi bi-check-circle-fill display-3"></i></div>
-                                <h5 class="fw-bold mb-2">Thank you, ${name}!</h5>
-                                <p class="text-muted small mb-3">
-                                    Your booking request for <strong>${pkgName}</strong> on <strong>${travelDate}</strong> has been sent to the admin team.
-                                </p>
-                                <div class="p-3 bg-light rounded-3 text-start small border">
-                                    <div><strong>Status:</strong> Pending Admin Approval</div>
-                                    <div><strong>Booking Reference:</strong> ${bookingBody.bookingReference || 'Awaiting confirmation'}</div>
-                                </div>
-                            </div>`
-                        );
+                        showBookingConfirmation(name, pkgName, travelDate, bookingBody.bookingReference);
                         bookingForm.reset();
                     } catch (error) {
                         showModal('Booking Not Submitted', '<p class="text-danger mb-0">' + escapeHtml(error.message || 'Unable to send the booking request right now. Please try again.') + '</p>');
@@ -456,6 +654,53 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
             }
         }, 200);
+    }
+
+    async function prefillUserBookingForm(bookingForm) {
+        try {
+            const response = await fetch(apiBaseUrl + '/api/auth/me', { credentials: 'include' });
+            if (response.status === 401) return;
+            if (!response.ok) throw new Error('Unable to verify your account details.');
+            const authBody = await response.json();
+            if (!authBody.user || authBody.user.role !== 'USER') return;
+
+            const profileResponse = await fetch(apiBaseUrl + '/api/users/me', { credentials: 'include' });
+            if (!profileResponse.ok) throw new Error('Unable to load your account profile.');
+            const profile = await profileResponse.json();
+            const setValue = function (id, value) {
+                const input = bookingForm.querySelector('#' + id);
+                if (input && value) input.value = value;
+            };
+            setValue('bookGuestName', profile.fullName);
+            setValue('bookGuestEmail', profile.email);
+            setValue('bookGuestPhone', profile.phone);
+            setValue('bookGuestCountry', profile.country);
+            bookingForm.querySelector('#bookGuestName').readOnly = true;
+            bookingForm.querySelector('#bookGuestEmail').readOnly = true;
+            const accountNotice = document.createElement('p');
+            accountNotice.className = 'form-text mb-3';
+            accountNotice.textContent = 'Your booking will use the name and email from your account profile.';
+            bookingForm.querySelector('#bookGuestEmail').parentElement.appendChild(accountNotice);
+        } catch (error) {
+            console.error('Unable to prefill the booking form from the user account.', error);
+        }
+    }
+
+    function showBookingConfirmation(name, packageName, travelDate, bookingReference) {
+        showModal(
+            'Booking Request Received!',
+            `<div class="text-center py-3">
+                <div class="text-success mb-3"><i class="bi bi-check-circle-fill display-3"></i></div>
+                <h5 class="fw-bold mb-2">Thank you, ${escapeHtml(name)}!</h5>
+                <p class="text-muted small mb-3">
+                    Your booking request for <strong>${escapeHtml(packageName)}</strong> on <strong>${escapeHtml(travelDate)}</strong> has been sent to the admin team.
+                </p>
+                <div class="p-3 bg-light rounded-3 text-start small border">
+                    <div><strong>Status:</strong> Pending Admin Approval</div>
+                    <div><strong>Booking Reference:</strong> ${escapeHtml(bookingReference || 'Awaiting confirmation')}</div>
+                </div>
+            </div>`
+        );
     }
 
     async function getCsrfToken() {
@@ -470,7 +715,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function findPackageByName(packageName) {
-        const response = await fetch(apiBaseUrl + '/api/tour-packages', {
+        const response = await fetch(apiBaseUrl + '/api/tour-packages/active', {
             credentials: 'include',
             headers: { Accept: 'application/json' }
         });
@@ -502,29 +747,34 @@ document.addEventListener('DOMContentLoaded', function () {
     // ----------------------------------------------------------------------
     // 7. Hotel Availability Interactivity
     // ----------------------------------------------------------------------
-    const hotelInfoButtons = document.querySelectorAll('.btn-hotel-info');
-    hotelInfoButtons.forEach(button => {
-        button.addEventListener('click', function () {
-            const hotelName = this.getAttribute('data-hotel');
-            showModal(
-                `${hotelName}`,
-                `<div class="py-2 text-center">
-                    <div class="text-emerald mb-2"><i class="bi bi-building-check display-4"></i></div>
-                    <h5 class="fw-bold mb-2">Rooms Available!</h5>
-                    <p class="text-muted small mb-3">
-                        <strong>${hotelName}</strong> currently has executive deluxe suites available for online reservation.
-                    </p>
-                    <div class="p-3 bg-light rounded-3 text-start small mb-3 border">
-                        <div><i class="bi bi-wifi me-2 text-emerald"></i>Free High-Speed Wi-Fi</div>
-                        <div><i class="bi bi-cup-hot me-2 text-emerald"></i>Complimentary Ceylon Tea & Breakfast</div>
-                        <div><i class="bi bi-droplet me-2 text-emerald"></i>Outdoor Swimming Pool Access</div>
-                    </div>
-                    <div class="alert alert-info-subtle border-0 small text-start mb-0">
-                        <i class="bi bi-info-circle me-1"></i> Spring Boot Module: <code>Hotel Management System (/api/v1/hotels)</code>
-                    </div>
-                </div>`
-            );
-        });
+    homeHotelGrid.addEventListener('click', function (event) {
+        const button = event.target.closest('.btn-hotel-info');
+        if (!button) return;
+        const hotel = hotelRecords.get(Number(button.dataset.hotelId));
+        if (!hotel) {
+            showModal('Hotel unavailable', '<p class="text-danger mb-0">This hotel is no longer active. Reload the page and try again.</p>');
+            return;
+        }
+
+        const details = [
+            ['Address', [hotel.address, hotel.city, hotel.district, hotel.province, hotel.country].filter(Boolean).join(', ')],
+            ['Email', hotel.email],
+            ['Phone', hotel.phone],
+            ['Website', hotel.website],
+            ['Check-in', hotel.checkInTime],
+            ['Check-out', hotel.checkOutTime],
+            ['Registered rooms', hotel.roomsCount]
+        ].filter(function (item) { return item[1] !== null && item[1] !== undefined && item[1] !== ''; });
+
+        showModal(
+            hotel.hotelName,
+            `<div class="py-2">
+                <p class="text-muted">${escapeHtml(hotel.description || 'No description provided.')}</p>
+                <dl class="row small mb-0">${details.map(function (item) {
+                    return `<dt class="col-sm-4">${escapeHtml(item[0])}</dt><dd class="col-sm-8">${escapeHtml(item[1])}</dd>`;
+                }).join('')}</dl>
+            </div>`
+        );
     });
 
     // ----------------------------------------------------------------------

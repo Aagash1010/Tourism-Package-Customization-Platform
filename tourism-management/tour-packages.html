@@ -83,15 +83,12 @@
                     </button>
                     <div class="admin-profile" aria-label="Administrator profile">
                         <span class="profile-avatar">A</span>
-                        <div><span class="profile-name">Administrator</span><span class="profile-role">Frontend Demo</span></div>
+                        <div><span class="profile-name" id="adminProfileName">Administrator</span><span class="profile-role">Administrator</span></div>
                     </div>
                 </div>
             </header>
 
-            <div class="demo-note alert alert-success-subtle text-emerald border-0 rounded-3 small mb-4" role="note">
-                <i class="bi bi-info-circle me-1"></i>
-                Package records are saved in this browser's localStorage for demonstration only. Spring Boot API integration is planned for a later stage.
-            </div>
+            <div class="alert alert-info border-0 rounded-3 small mb-4 d-none" id="packagePageStatus" role="status"></div>
 
             <section class="stats-grid package-stats-grid" aria-label="Tour package statistics">
                 <article class="stat-card">
@@ -115,7 +112,7 @@
             <section class="dashboard-panel package-panel" aria-labelledby="packageListingTitle">
                 <div class="panel-header package-panel-header">
                     <div>
-                        <span class="panel-eyebrow">Frontend CRUD Demo</span>
+                        <span class="panel-eyebrow">Package Management</span>
                         <h2 id="packageListingTitle">Tour Packages</h2>
                         <p class="package-panel-description mb-0">Browse and manage your Sri Lankan travel experiences.</p>
                     </div>
@@ -125,6 +122,26 @@
                 </div>
 
                 <div class="package-toolbar" aria-label="Package filters">
+                    <div class="filter-field">
+                        <label for="destinationFilter">Destination</label>
+                        <select class="form-select" id="destinationFilter"><option value="">All destinations</option></select>
+                    </div>
+                    <div class="filter-field">
+                        <label for="minPriceFilter">Minimum price</label>
+                        <input class="form-control" id="minPriceFilter" type="number" min="0" step="0.01" placeholder="Any">
+                    </div>
+                    <div class="filter-field">
+                        <label for="maxPriceFilter">Maximum price</label>
+                        <input class="form-control" id="maxPriceFilter" type="number" min="0" step="0.01" placeholder="Any">
+                    </div>
+                    <div class="filter-field">
+                        <label for="minDurationFilter">Min days</label>
+                        <input class="form-control" id="minDurationFilter" type="number" min="1" step="1" placeholder="Any">
+                    </div>
+                    <div class="filter-field">
+                        <label for="maxDurationFilter">Max days</label>
+                        <input class="form-control" id="maxDurationFilter" type="number" min="1" step="1" placeholder="Any">
+                    </div>
                     <div class="filter-field">
                         <label for="categoryFilter">Package Category</label>
                         <select class="form-select" id="categoryFilter">
@@ -169,7 +186,7 @@
 
                 <div class="package-results-line">
                     <span id="packageResultsSummary" aria-live="polite">Showing 0 packages</span>
-                    <span class="package-storage-hint"><i class="bi bi-hdd me-1"></i>Browser demo storage</span>
+                    <span class="package-storage-hint"><i class="bi bi-database me-1"></i>Database records</span>
                 </div>
                 <div class="package-grid" id="packageGrid" aria-live="polite"></div>
                 <div class="empty-state d-none" id="packageEmptyState">
@@ -198,7 +215,7 @@
                             <div class="col-md-6 col-lg-4">
                                 <label for="packageId" class="form-label fw-semibold">Package ID</label>
                                 <input type="text" class="form-control" id="packageId" name="id" readonly>
-                                <div class="form-text">Generated automatically in the PKG-0001 format.</div>
+                                <div class="form-text">Assigned automatically by the database.</div>
                             </div>
                             <div class="col-md-6 col-lg-4">
                                 <label for="packageName" class="form-label fw-semibold">Package Name <span class="text-danger">*</span></label>
@@ -207,7 +224,7 @@
                             </div>
                             <div class="col-md-6 col-lg-4">
                                 <label for="destination" class="form-label fw-semibold">Destination <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="destination" name="destination" maxlength="120" required>
+                                <select class="form-select" id="destination" name="destinationId" required><option value="">Loading destinations…</option></select>
                                 <div class="invalid-feedback"></div>
                             </div>
                             <div class="col-12">
@@ -218,6 +235,38 @@
                             <div class="col-12">
                                 <label for="fullDescription" class="form-label fw-semibold">Full Description</label>
                                 <textarea class="form-control" id="fullDescription" name="fullDescription" rows="3" maxlength="1200" placeholder="Add more itinerary or experience details (optional)."></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="inclusions" class="form-label fw-semibold">Inclusions</label>
+                                <textarea class="form-control" id="inclusions" name="inclusions" rows="3" maxlength="2000" placeholder="List included services"></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="exclusions" class="form-label fw-semibold">Exclusions</label>
+                                <textarea class="form-control" id="exclusions" name="exclusions" rows="3" maxlength="2000" placeholder="List services not included"></textarea>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="minTravelers" class="form-label fw-semibold">Minimum Travelers</label>
+                                <input type="number" class="form-control" id="minTravelers" name="minTravelers" min="1" step="1" value="1" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="difficultyLevel" class="form-label fw-semibold">Difficulty Level</label>
+                                <select class="form-select" id="difficultyLevel" name="difficultyLevel"><option value="">Not specified</option><option>Easy</option><option>Moderate</option><option>Difficult</option></select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="startDate" class="form-label fw-semibold">Availability Start Date</label>
+                                <input type="date" class="form-control" id="startDate" name="startDate">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="endDate" class="form-label fw-semibold">Availability End Date</label>
+                                <input type="date" class="form-control" id="endDate" name="endDate">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            <div class="col-12">
+                                <label for="itineraryText" class="form-label fw-semibold">Day-by-day Itinerary</label>
+                                <textarea class="form-control" id="itineraryText" name="itineraryText" rows="5" placeholder="One day per line: Day title | Activities and travel details"></textarea>
+                                <div class="form-text">Example: Arrival in Kandy | Visit the Temple of the Tooth and local market</div>
                             </div>
                             <div class="col-sm-6 col-lg-3">
                                 <label for="duration" class="form-label fw-semibold">Duration in Days <span class="text-danger">*</span></label>
@@ -289,7 +338,7 @@
                                 <input type="url" class="form-control" id="imageUrl" name="imageUrl" placeholder="https://example.com/tour-image.jpg">
                                 <div class="invalid-feedback"></div>
                             </div>
-                            <div class="col-12"><p class="small text-muted mb-0"><span class="text-danger">*</span> Required fields. Data in this demonstration is stored only in browser localStorage.</p></div>
+                            <div class="col-12"><p class="small text-muted mb-0"><span class="text-danger">*</span> Required fields. Package data is saved to the backend database.</p></div>
                         </div>
                     </div>
                     <div class="modal-footer bg-light border-0 p-4">
@@ -321,8 +370,16 @@
                         <div><span>Price per person</span><strong id="detailsPrice"></strong></div>
                         <div><span>Maximum travelers</span><strong id="detailsCapacity"></strong></div>
                     </div>
+                    <div class="details-facts mt-3">
+                        <div><span>Difficulty</span><strong id="detailsDifficulty"></strong></div>
+                        <div><span>Group size</span><strong id="detailsGroupSize"></strong></div>
+                        <div><span>Availability</span><strong id="detailsAvailability"></strong></div>
+                    </div>
                     <h3 class="h6 fw-bold mt-4 mb-3">Included services</h3>
                     <div class="included-services" id="detailsServices"></div>
+                    <h3 class="h6 fw-bold mt-4 mb-2">Inclusions</h3><p id="detailsInclusions" class="text-muted"></p>
+                    <h3 class="h6 fw-bold mt-3 mb-2">Exclusions</h3><p id="detailsExclusions" class="text-muted"></p>
+                    <h3 class="h6 fw-bold mt-4 mb-3">Day-by-day itinerary</h3><div id="detailsItinerary" class="text-muted"></div>
                     <div class="details-status-row mt-4"><span class="fw-semibold">Package status</span><span id="detailsStatus" class="status-badge"></span></div>
                 </div>
                 <div class="modal-footer bg-light border-0 p-3">
