@@ -172,6 +172,40 @@ class AuthIntegrationTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    @Test
+    void anonymousUserCanCreateTouristAndBookingRequest() throws Exception {
+        MockHttpSession adminSession = login("admin@example.com", "AdminPass123");
+        TokenAndSession adminToken = csrfToken(adminSession);
+
+        mockMvc.perform(post("/api/tour-packages")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Cultural Heritage Tour\",\"destination\":\"Kandy\",\"duration\":\"3 Days / 2 Nights\",\"price\":35000.00,\"maxTravelers\":10,\"status\":\"Active\"}")
+                        .header("X-CSRF-TOKEN", adminToken.token())
+                        .session(adminSession))
+                .andExpect(status().isCreated());
+
+        TokenAndSession publicTouristToken = csrfToken();
+        MvcResult touristResult = mockMvc.perform(post("/api/tourists")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"fullName\":\"Guest Traveler\",\"email\":\"guest@example.com\",\"phone\":\"+94770000000\",\"country\":\"Sri Lanka\"}")
+                        .header("X-CSRF-TOKEN", publicTouristToken.token())
+                        .session(publicTouristToken.session()))
+                .andExpect(status().isCreated())
+                .andReturn();
+        JsonNode touristBody = objectMapper.readTree(touristResult.getResponse().getContentAsString());
+        long touristId = touristBody.get("id").asLong();
+
+        TokenAndSession publicBookingToken = csrfToken();
+        mockMvc.perform(post("/api/bookings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"touristId\":" + touristId + ",\"packageId\":1,\"numberOfPeople\":2,\"bookingDate\":\"2026-10-22\",\"travelDate\":\"2026-10-30\",\"specialRequests\":\"Need airport pickup\",\"discount\":0.00,\"amountPaid\":0.00}")
+                        .header("X-CSRF-TOKEN", publicBookingToken.token())
+                        .session(publicBookingToken.session()))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.bookingReference").exists())
+                .andExpect(jsonPath("$.touristId").value(touristId));
+    }
+
     private MockHttpSession login(String email, String password) throws Exception {
         TokenAndSession token = csrfToken();
         MvcResult result = mockMvc.perform(post("/api/auth/login")

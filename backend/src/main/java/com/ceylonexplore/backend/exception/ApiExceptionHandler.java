@@ -14,6 +14,7 @@ import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -24,6 +25,30 @@ import java.util.stream.Collectors;
 public class ApiExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(ApiExceptionHandler.class);
+
+    @ExceptionHandler(DestinationNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleDestinationNotFound(
+            DestinationNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(DestinationInUseException.class)
+    public ResponseEntity<Map<String, Object>> handleDestinationInUse(
+            DestinationInUseException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(HttpStatus.CONFLICT, exception.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(DuplicateDestinationException.class)
+    public ResponseEntity<Map<String, Object>> handleDuplicateDestination(
+            DuplicateDestinationException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(HttpStatus.CONFLICT, exception.getMessage(), request, null);
+    }
 
     @ExceptionHandler(TouristNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleTouristNotFound(
@@ -41,12 +66,68 @@ public class ApiExceptionHandler {
         return buildErrorResponse(HttpStatus.CONFLICT, exception.getMessage(), request, null);
     }
 
+    @ExceptionHandler(TourGuideNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleTourGuideNotFound(
+            TourGuideNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(DuplicateTourGuideEmailException.class)
+    public ResponseEntity<Map<String, Object>> handleDuplicateTourGuideEmail(
+            DuplicateTourGuideEmailException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(HttpStatus.CONFLICT, exception.getMessage(), request, null);
+    }
+
+    @ExceptionHandler({DuplicateTourGuideNicException.class, DuplicateTourGuideLicenseException.class})
+    public ResponseEntity<Map<String, Object>> handleDuplicateTourGuideIdentifier(
+            RuntimeException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(HttpStatus.CONFLICT, exception.getMessage(), request, null);
+    }
+
     @ExceptionHandler(DuplicateAccountEmailException.class)
     public ResponseEntity<Map<String, Object>> handleDuplicateAccountEmail(
             DuplicateAccountEmailException exception,
             HttpServletRequest request
     ) {
         return buildErrorResponse(HttpStatus.CONFLICT, exception.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(TourPackageNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleTourPackageNotFound(
+            TourPackageNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(BookingNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleBookingNotFound(
+            BookingNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(BookingConflictException.class)
+    public ResponseEntity<Map<String, Object>> handleBookingConflict(
+            BookingConflictException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(HttpStatus.CONFLICT, exception.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(InvalidBookingException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidBooking(
+            InvalidBookingException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, exception.getMessage(), request, null);
     }
 
     @ExceptionHandler(AuthenticationException.class)
@@ -91,14 +172,17 @@ public class ApiExceptionHandler {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, "Request validation failed.", request, errors);
     }
 
-    @ExceptionHandler({HttpMessageNotReadableException.class, TypeMismatchException.class})
+    @ExceptionHandler({HttpMessageNotReadableException.class, TypeMismatchException.class, MethodArgumentTypeMismatchException.class, IllegalArgumentException.class})
     public ResponseEntity<Map<String, Object>> handleMalformedRequest(
             Exception exception,
             HttpServletRequest request
     ) {
+        String message = exception.getMessage() == null || exception.getMessage().isBlank()
+                ? "The request contains invalid or malformed values."
+                : exception.getMessage();
         return buildErrorResponse(
                 HttpStatus.BAD_REQUEST,
-                "The request contains invalid or malformed values.",
+                message,
                 request,
                 null
         );

@@ -69,10 +69,10 @@
                 </div>
                 <div class="topbar-actions">
                     <div class="admin-profile" aria-label="Administrator profile">
-                        <span class="profile-avatar">A</span>
+                        <span class="profile-avatar">P</span>
                         <div>
-                            <span class="profile-name">Administrator</span>
-                            <span class="profile-role">Frontend Demo</span>
+                            <span class="profile-name">Public visitor</span>
+                            <span class="profile-role">Browse destinations</span>
                         </div>
                     </div>
                 </div>
@@ -88,14 +88,13 @@
                     </nav>
                     <p class="destination-subtitle mb-0">Discover, organize, and manage tourist destinations across Sri Lanka.</p>
                 </div>
-                <button class="btn btn-emerald destination-add-button" type="button" id="addDestinationButton">
+                <button class="btn btn-emerald destination-add-button d-none" type="button" id="addDestinationButton">
                     <i class="bi bi-plus-lg me-2"></i>Add New Destination
                 </button>
             </div>
 
-            <div class="alert alert-success-subtle border-0 rounded-3 small destination-demo-note" role="note">
-                <i class="bi bi-info-circle me-1"></i>
-                Demonstration destinations and estimated entry fees only. Records are stored in this browser's localStorage; no backend or file handling is connected.
+            <div class="alert alert-info border-0 rounded-3 small destination-page-status" id="destinationPageStatus" role="status" aria-live="polite">
+                Loading destinations from the backend...
             </div>
 
             <section class="stats-grid destination-stats" aria-label="Destination statistics">
@@ -113,7 +112,7 @@
                 </article>
                 <article class="stat-card">
                     <span class="stat-icon rose"><i class="bi bi-cash-coin"></i></span>
-                    <div><span class="stat-label">Average Entry Fee</span><strong class="stat-value stat-currency" id="averageEntryFee">LKR 0</strong><span class="stat-trend neutral">Estimated per destination</span></div>
+                    <div><span class="stat-label">Average Entry Fee</span><strong class="stat-value stat-currency" id="averageEntryFee">LKR 0</strong><span class="stat-trend neutral">Across listed destinations</span></div>
                 </article>
             </section>
 
@@ -121,7 +120,7 @@
                 <div class="destination-search-wrap">
                     <label class="visually-hidden" for="destinationSearch">Search destinations</label>
                     <i class="bi bi-search" aria-hidden="true"></i>
-                    <input id="destinationSearch" type="search" placeholder="Search name, district, province, or description..." autocomplete="off">
+                    <input id="destinationSearch" type="search" placeholder="Search name, district, province, location, or description..." autocomplete="off">
                 </div>
                 <div class="destination-filters">
                     <div class="filter-control">
@@ -197,11 +196,11 @@
                             <div class="col-md-4">
                                 <label class="form-label" for="destinationId">Destination ID</label>
                                 <input class="form-control" id="destinationId" name="id" type="text" readonly>
-                                <div class="form-text">Generated automatically and kept unchanged.</div>
+                                <div class="form-text">Assigned by the database when saved and kept unchanged.</div>
                             </div>
                             <div class="col-md-8">
                                 <label class="form-label" for="destinationName">Destination Name <span class="required-mark">*</span></label>
-                                <input class="form-control" id="destinationName" name="name" type="text" maxlength="100" required>
+                                <input class="form-control" id="destinationName" name="name" type="text" maxlength="120" required>
                                 <div class="invalid-feedback">Enter a destination name.</div>
                             </div>
                             <div class="col-md-6">

@@ -1,10 +1,12 @@
 /**
  * Ceylon Explore - Tour Guide Management
- * Browser storage is isolated behind GuideStore so it can later be replaced by a REST adapter.
+ * Guide records are managed by the Spring Boot API. Older browser-only records remain available for recovery.
  */
 document.addEventListener('DOMContentLoaded', function () {
     'use strict';
 
+    const API_BASE_URL = (window.location.protocol === 'file:' ? 'http:' : window.location.protocol) +
+        '//' + (window.location.hostname || 'localhost') + ':8080';
     const STORAGE_KEY = 'ceylonExploreTourGuides';
     const FALLBACK_IMAGE = 'assets/images/hero-bg.jpg';
     const PAGE_SIZE = 5;
@@ -165,6 +167,11 @@ document.addEventListener('DOMContentLoaded', function () {
         pagination: document.getElementById('guidePagination'),
         paginationSummary: document.getElementById('guidePaginationSummary'),
         form: document.getElementById('guideForm'),
+        pageStatus: document.getElementById('guidePageStatus'),
+        pageStatusText: document.getElementById('guidePageStatusText'),
+        addButton: document.getElementById('addGuideButton'),
+        recoverButton: document.getElementById('recoverLocalGuideButton'),
+        loginLink: document.getElementById('guideLoginLink'),
         formModal: bootstrap.Modal.getOrCreateInstance(document.getElementById('guideFormModal')),
         detailsModal: bootstrap.Modal.getOrCreateInstance(document.getElementById('guideDetailsModal')),
         deleteModal: bootstrap.Modal.getOrCreateInstance(document.getElementById('deleteGuideModal')),
@@ -173,94 +180,195 @@ document.addEventListener('DOMContentLoaded', function () {
         formError: document.getElementById('guideFormError')
     };
 
-    function cloneSamples() {
-        return sampleGuides.map(function (guide) {
-            return Object.assign({}, guide, {
-                languages: guide.languages ? guide.languages.slice() : [],
-                workingDays: guide.workingDays ? guide.workingDays.slice() : [],
-                preferredTourTypes: guide.preferredTourTypes ? guide.preferredTourTypes.slice() : []
-            });
-        });
-    }
-
-    function isValidGuideList(value) {
-        return Array.isArray(value) && value.every(function (guide) {
-            return guide && typeof guide === 'object' && typeof guide.id === 'string' && typeof guide.fullName === 'string';
-        });
-    }
-
     function showToast(message) {
         elements.toastBody.textContent = message;
         elements.toast.show();
     }
 
-    function loadInitialGuides() {
+    function setPageStatus(message, state) {
+        elements.pageStatus.classList.remove('alert-info', 'alert-success', 'alert-danger');
+        elements.pageStatus.classList.add('alert-' + state);
+        elements.pageStatusText.textContent = message;
+    }
+
+    function readLegacyGuides() {
         try {
             const stored = localStorage.getItem(STORAGE_KEY);
-            if (stored === null) {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(cloneSamples()));
-                return cloneSamples();
-            }
-            const parsed = JSON.parse(stored);
-            if (!isValidGuideList(parsed)) {
-                throw new Error('Stored guide data has an invalid structure.');
-            }
-            return parsed;
+            const parsed = stored === null ? [] : JSON.parse(stored);
+            if (!Array.isArray(parsed)) return [];
+            return parsed.filter(function (guide) {
+                return guide && typeof guide === 'object' && typeof guide.fullName === 'string' &&
+                    !sampleGuides.some(function (sample) { return sample.id === guide.id; });
+            });
         } catch (error) {
-            showToast('Guide storage could not be read. Demonstration records are shown without replacing the saved value.');
-            return cloneSamples();
+            showToast('Older browser-only guide data could not be read. The saved browser value was left unchanged.');
+            return [];
         }
     }
 
+    async function apiRequest(path, options) {
+        const response = await fetch(API_BASE_URL + path, Object.assign({
+            credentials: 'include'
+        }, options || {}));
+        let body = null;
+        try {
+            body = await response.json();
+        } catch (error) {
+            if (response.status !== 204) {
+                throw new Error('The tour guide service returned an unreadable response.');
+            }
+        }
+
+        if (!response.ok) {
+            const fieldErrors = body && body.errors ? Object.values(body.errors).join(' ') : '';
+            const message = response.status === 401
+                ? 'Sign in as an administrator before saving tour guides.'
+                : response.status === 403
+                    ? 'Your account does not have permission to manage tour guides. Sign in as an administrator.'
+                    : fieldErrors || (body && body.message) || 'The request could not be completed.';
+            const error = new Error(message);
+            error.status = response.status;
+            throw error;
+        }
+        return body;
+    }
+
+    function availabilityToApi(value) {
+        return value === 'Busy' ? 'ON_TOUR' : value === 'Unavailable' ? 'UNAVAILABLE' : 'AVAILABLE';
+    }
+
+    function availabilityFromApi(value) {
+        return value === 'ON_TOUR' ? 'Busy' : value === 'UNAVAILABLE' ? 'Unavailable' : 'Available';
+    }
+
+    function guideFromApi(guide) {
+        return {
+            id: 'GUIDE-' + String(guide.id).padStart(4, '0'),
+            apiId: guide.id,
+            fullName: guide.fullName,
+            profilePhoto: guide.profileImage || '',
+            dob: guide.dateOfBirth,
+            gender: guide.gender,
+            nationality: guide.nationality,
+            nicNumber: guide.nicNumber,
+            contact: guide.phoneNumber,
+            email: guide.email,
+            address: guide.address,
+            city: guide.city,
+            district: guide.district,
+            licenseNumber: guide.licenseNumber,
+            yearsOfExperience: guide.experienceYears,
+            qualification: guide.qualification,
+            specialization: guide.specialization,
+            languages: guide.languages || [],
+            dailyRate: guide.dailyRate,
+            biography: guide.description || '',
+            certifications: guide.certifications || '',
+            availability: availabilityFromApi(guide.availabilityStatus),
+            employmentStatus: guide.employmentStatus,
+            workingDays: guide.workingDays || [],
+            preferredTourTypes: guide.preferredTourTypes || [],
+            maxGroupSize: guide.maxGroupSize,
+            rating: guide.rating
+        };
+    }
+
+    function guideToApi(guide) {
+        return {
+            fullName: guide.fullName,
+            email: guide.email,
+            phoneNumber: guide.contact,
+            address: guide.address,
+            city: guide.city,
+            district: guide.district,
+            nationality: guide.nationality,
+            nicNumber: guide.nicNumber,
+            gender: guide.gender,
+            dateOfBirth: guide.dob,
+            licenseNumber: guide.licenseNumber,
+            qualification: guide.qualification,
+            languages: guide.languages,
+            workingDays: guide.workingDays,
+            preferredTourTypes: guide.preferredTourTypes,
+            specialization: guide.specialization,
+            experienceYears: guide.yearsOfExperience,
+            dailyRate: guide.dailyRate,
+            profileImage: guide.profilePhoto || null,
+            availabilityStatus: availabilityToApi(guide.availability),
+            employmentStatus: guide.employmentStatus,
+            maxGroupSize: guide.maxGroupSize,
+            rating: guide.rating,
+            certifications: guide.certifications || null,
+            description: guide.biography
+        };
+    }
+
+    async function getCsrfToken() {
+        const response = await apiRequest('/api/auth/csrf');
+        if (!response || !response.csrfToken) {
+            throw new Error('Unable to initialize a secure request. Please refresh the page and try again.');
+        }
+        return response.csrfToken;
+    }
+
     const GuideStore = {
-        records: loadInitialGuides(),
+        records: [],
 
         getAll: function () {
             return this.records.slice();
         },
 
-        saveAll: function (records) {
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-                this.records = records;
-                return true;
-            } catch (error) {
-                showToast('Could not save to browser storage. Your changes were not applied.');
-                return false;
+        load: async function () {
+            const records = await apiRequest('/api/tour-guides');
+            if (!Array.isArray(records)) {
+                throw new Error('The tour guide service returned an invalid list.');
             }
+            this.records = records.map(guideFromApi);
         },
 
-        create: function (guide) {
-            if (this.records.some(function (record) { return record.id === guide.id; })) {
-                throw new Error('This guide ID is already in use. Please try again.');
-            }
-            const updated = this.getAll();
-            updated.push(guide);
-            return this.saveAll(updated);
+        create: async function (guide) {
+            const token = await getCsrfToken();
+            const created = await apiRequest('/api/tour-guides', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token },
+                body: JSON.stringify(guideToApi(guide))
+            });
+            this.records.push(guideFromApi(created));
         },
 
-        update: function (id, guide) {
-            const index = this.records.findIndex(function (record) { return record.id === id; });
+        update: async function (guide, updatedGuide) {
+            const index = this.records.findIndex(function (record) { return record.id === guide.id; });
             if (index === -1) {
                 throw new Error('This guide could not be found. Refresh the page and try again.');
             }
-            const updated = this.getAll();
-            updated[index] = Object.assign({}, guide, { id: id });
-            return this.saveAll(updated);
+            const token = await getCsrfToken();
+            const updated = await apiRequest('/api/tour-guides/' + encodeURIComponent(guide.apiId), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token },
+                body: JSON.stringify(guideToApi(updatedGuide))
+            });
+            this.records[index] = guideFromApi(updated);
         },
 
-        remove: function (id) {
-            const updated = this.records.filter(function (record) { return record.id !== id; });
-            if (updated.length === this.records.length) {
+        remove: async function (guide) {
+            const index = this.records.findIndex(function (record) { return record.id === guide.id; });
+            if (index === -1) {
                 throw new Error('This guide could not be found. Refresh the page and try again.');
             }
-            return this.saveAll(updated);
+            const token = await getCsrfToken();
+            await apiRequest('/api/tour-guides/' + encodeURIComponent(guide.apiId), {
+                method: 'DELETE',
+                headers: { 'X-CSRF-TOKEN': token }
+            });
+            this.records.splice(index, 1);
         }
     };
 
+    const legacyGuides = readLegacyGuides();
     let editingId = null;
     let deletingId = null;
     let currentPage = 1;
+    let isAdmin = false;
 
     function escapeHtml(value) {
         return String(value == null ? '' : value).replace(/[&<>"']/g, function (character) {
@@ -451,8 +559,8 @@ document.addEventListener('DOMContentLoaded', function () {
             '<td>' + statusBadge(guide.employmentStatus) + '</td>' +
             '<td><div class="guide-actions">' +
                 '<button class="btn btn-outline-secondary" type="button" data-action="view" data-id="' + escapeHtml(guide.id) + '" aria-label="View ' + escapeHtml(guide.fullName) + '" title="View"><i class="bi bi-eye"></i></button>' +
-                '<button class="btn btn-outline-success" type="button" data-action="edit" data-id="' + escapeHtml(guide.id) + '" aria-label="Edit ' + escapeHtml(guide.fullName) + '" title="Edit"><i class="bi bi-pencil"></i></button>' +
-                '<button class="btn btn-outline-danger" type="button" data-action="delete" data-id="' + escapeHtml(guide.id) + '" aria-label="Delete ' + escapeHtml(guide.fullName) + '" title="Delete"><i class="bi bi-trash3"></i></button>' +
+                '<button class="btn btn-outline-success" type="button" data-action="edit" data-id="' + escapeHtml(guide.id) + '" aria-label="Edit ' + escapeHtml(guide.fullName) + '" title="Edit"' + (isAdmin ? '' : ' disabled') + '><i class="bi bi-pencil"></i></button>' +
+                '<button class="btn btn-outline-danger" type="button" data-action="delete" data-id="' + escapeHtml(guide.id) + '" aria-label="Delete ' + escapeHtml(guide.fullName) + '" title="Delete"' + (isAdmin ? '' : ' disabled') + '><i class="bi bi-trash3"></i></button>' +
             '</div></td></tr>';
     }
 
@@ -508,14 +616,18 @@ document.addEventListener('DOMContentLoaded', function () {
         elements.sidebarToggle.setAttribute('aria-expanded', 'false');
     }
 
-    function showForm(guide) {
-        editingId = guide ? guide.id : null;
+    function showForm(guide, asDraft) {
+        if (!isAdmin) {
+            showToast('Sign in as an administrator to add, edit, or recover tour guides.');
+            return;
+        }
+        editingId = guide && !asDraft ? guide.id : null;
         elements.form.reset();
         elements.form.classList.remove('was-validated');
         elements.formError.classList.add('d-none');
         elements.formError.textContent = '';
-        document.getElementById('guideFormTitle').textContent = guide ? 'Edit Guide' : 'Add New Guide';
-        document.getElementById('saveGuideLabel').textContent = guide ? 'Save Changes' : 'Save Guide';
+        document.getElementById('guideFormTitle').textContent = editingId ? 'Edit Guide' : 'Add New Guide';
+        document.getElementById('saveGuideLabel').textContent = editingId ? 'Save Changes' : 'Save Guide';
         document.getElementById('guideId').value = guide ? guide.id : generateGuideId();
 
         if (guide) {
@@ -524,6 +636,7 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('guideDob').value = guide.dob || '';
             document.getElementById('guideGender').value = guide.gender || '';
             document.getElementById('guideNationality').value = guide.nationality || '';
+            document.getElementById('guideNicNumber').value = guide.nicNumber || '';
             document.getElementById('guideContact').value = guide.contact || '';
             document.getElementById('guideEmail').value = guide.email || '';
             document.getElementById('guideAddress').value = guide.address || '';
@@ -566,6 +679,7 @@ document.addEventListener('DOMContentLoaded', function () {
             dob: document.getElementById('guideDob').value,
             gender: document.getElementById('guideGender').value,
             nationality: document.getElementById('guideNationality').value.trim(),
+            nicNumber: document.getElementById('guideNicNumber').value.trim(),
             contact: document.getElementById('guideContact').value.trim(),
             email: document.getElementById('guideEmail').value.trim(),
             address: document.getElementById('guideAddress').value.trim(),
@@ -591,6 +705,9 @@ document.addEventListener('DOMContentLoaded', function () {
     function validateGuideForm(guide) {
         const profilePhoto = document.getElementById('guideProfilePhoto');
         const email = document.getElementById('guideEmail');
+        const nicNumber = document.getElementById('guideNicNumber');
+        const dateOfBirth = document.getElementById('guideDob');
+        const gender = document.getElementById('guideGender');
         const years = document.getElementById('guideYearsExperience');
         const dailyRate = document.getElementById('guideDailyRate');
         const maxGroupSize = document.getElementById('guideMaxGroupSize');
@@ -600,8 +717,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (!guide.fullName) {
             errorMessage = 'Full name is required.';
+        } else if (!guide.dob || guide.dob >= new Date().toISOString().slice(0, 10)) {
+            errorMessage = 'Enter a date of birth in the past.';
+        } else if (!guide.gender) {
+            errorMessage = 'Select a gender.';
         } else if (!guide.nationality) {
             errorMessage = 'Nationality is required.';
+        } else if (!guide.nicNumber) {
+            errorMessage = 'NIC or national identity number is required.';
         } else if (!guide.contact) {
             errorMessage = 'Contact number is required.';
         } else if (!guide.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guide.email)) {
@@ -640,8 +763,6 @@ document.addEventListener('DOMContentLoaded', function () {
             errorMessage = 'Enter a valid HTTP or HTTPS profile image URL.';
         } else if (guide.rating !== null && (!Number.isFinite(guide.rating) || guide.rating < 1 || guide.rating > 5)) {
             errorMessage = 'Rating must be between 1 and 5.';
-        } else if (GuideStore.getAll().some(function (record) { return record.id !== editingId && record.id === guide.id; })) {
-            errorMessage = 'This guide ID is already in use.';
         } else if (GuideStore.getAll().some(function (record) {
             return record.id !== editingId && String(record.licenseNumber || '').trim().toLowerCase() === String(guide.licenseNumber || '').trim().toLowerCase();
         })) {
@@ -650,6 +771,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         profilePhoto.setCustomValidity(guide.profilePhoto && !isAllowedUrl(guide.profilePhoto) ? 'Invalid URL' : '');
         email.setCustomValidity(!guide.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guide.email) ? 'Invalid email' : '');
+        nicNumber.setCustomValidity(guide.nicNumber ? '' : 'NIC number is required');
+        dateOfBirth.setCustomValidity(!guide.dob || guide.dob >= new Date().toISOString().slice(0, 10) ? 'Invalid date of birth' : '');
+        gender.setCustomValidity(guide.gender ? '' : 'Gender is required');
         years.setCustomValidity(!Number.isFinite(guide.yearsOfExperience) || guide.yearsOfExperience < 0 ? 'Invalid experience' : '');
         dailyRate.setCustomValidity(!Number.isFinite(guide.dailyRate) || guide.dailyRate <= 0 ? 'Invalid rate' : '');
         maxGroupSize.setCustomValidity(!Number.isFinite(guide.maxGroupSize) || guide.maxGroupSize <= 0 ? 'Invalid group size' : '');
@@ -674,30 +798,32 @@ document.addEventListener('DOMContentLoaded', function () {
         return true;
     }
 
-    function handleFormSubmit(event) {
+    async function handleFormSubmit(event) {
         event.preventDefault();
         const guide = readGuideForm();
         if (!validateGuideForm(guide)) return;
 
+        const saveButton = elements.form.querySelector('[type="submit"]');
+        saveButton.disabled = true;
         try {
             if (editingId) {
-                guide.id = editingId;
-                if (GuideStore.update(editingId, guide)) {
-                    elements.formModal.hide();
-                    refreshPage(true);
-                    showToast(guide.fullName + ' was updated successfully.');
-                }
+                const existing = GuideStore.getAll().find(function (record) { return record.id === editingId; });
+                if (!existing) throw new Error('This guide could not be found. Refresh the page and try again.');
+                await GuideStore.update(existing, guide);
+                elements.formModal.hide();
+                refreshPage(true);
+                showToast(guide.fullName + ' was updated successfully.');
             } else {
-                guide.id = generateGuideId();
-                if (GuideStore.create(guide)) {
-                    elements.formModal.hide();
-                    refreshPage(true);
-                    showToast(guide.fullName + ' was added successfully.');
-                }
+                await GuideStore.create(guide);
+                elements.formModal.hide();
+                refreshPage(true);
+                showToast(guide.fullName + ' was added to the database successfully.');
             }
         } catch (error) {
             elements.formError.textContent = error.message;
             elements.formError.classList.remove('d-none');
+        } finally {
+            saveButton.disabled = false;
         }
     }
 
@@ -766,16 +892,19 @@ document.addEventListener('DOMContentLoaded', function () {
         elements.deleteModal.show();
     }
 
-    function confirmDelete() {
+    async function confirmDelete() {
         if (!deletingId) return;
         const guide = GuideStore.getAll().find(function (record) { return record.id === deletingId; });
+        if (!guide) {
+            showToast('This guide could not be found. Refresh the page and try again.');
+            return;
+        }
         try {
-            if (GuideStore.remove(deletingId)) {
-                elements.deleteModal.hide();
-                refreshPage(true);
-                showToast((guide ? guide.fullName : 'Guide') + ' was deleted.');
-                deletingId = null;
-            }
+            await GuideStore.remove(guide);
+            elements.deleteModal.hide();
+            refreshPage(true);
+            showToast(guide.fullName + ' was deleted from the database.');
+            deletingId = null;
         } catch (error) {
             showToast(error.message);
         }
@@ -795,7 +924,13 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    document.getElementById('addGuideButton').addEventListener('click', function () { showForm(null); });
+    elements.addButton.addEventListener('click', function () { showForm(null); });
+    elements.recoverButton.addEventListener('click', function () {
+        const draft = legacyGuides.find(function (guide) { return guide.id === 'GUIDE-0006'; }) || legacyGuides[0];
+        if (!draft) return;
+        showForm(draft, true);
+        showToast('Review the browser-only guide and enter its missing NIC number before saving it to the database.');
+    });
     document.getElementById('resetFiltersButton').addEventListener('click', function () {
         elements.search.value = '';
         elements.districtFilter.value = '';
@@ -815,7 +950,7 @@ document.addEventListener('DOMContentLoaded', function () {
         control.addEventListener('change', function () { refreshPage(true); });
     });
     elements.form.addEventListener('submit', handleFormSubmit);
-    ['guideProfilePhoto', 'guideYearsExperience', 'guideDailyRate', 'guideMaxGroupSize', 'guideRating'].forEach(function (id) {
+    ['guideProfilePhoto', 'guideNicNumber', 'guideDob', 'guideGender', 'guideYearsExperience', 'guideDailyRate', 'guideMaxGroupSize', 'guideRating'].forEach(function (id) {
         document.getElementById(id).addEventListener('input', function () { this.setCustomValidity(''); });
     });
     elements.tableBody.addEventListener('click', function (event) {
@@ -845,5 +980,48 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('confirmDeleteGuideButton').addEventListener('click', confirmDelete);
     document.getElementById('deleteGuideModal').addEventListener('hidden.bs.modal', function () { deletingId = null; });
 
-    refreshPage(true);
+    async function initializePage() {
+        try {
+            const account = await apiRequest('/api/auth/me');
+            const user = account && account.user;
+            isAdmin = Boolean(user && user.role === 'ADMIN');
+            if (user) {
+                document.querySelector('.profile-name').textContent = user.fullName || user.name || 'Administrator';
+                document.querySelector('.profile-avatar').textContent = (user.fullName || user.name || 'A').charAt(0).toUpperCase();
+                document.querySelector('.profile-role').textContent = isAdmin ? 'Administrator' : 'Signed in';
+            }
+        } catch (error) {
+            if (error.status !== 401) {
+                setPageStatus('Could not verify the administrator session. ' + error.message, 'danger');
+            }
+            document.querySelector('.profile-role').textContent = 'Not signed in';
+        }
+
+        elements.addButton.disabled = !isAdmin;
+        elements.recoverButton.classList.toggle('d-none', legacyGuides.length === 0);
+        elements.loginLink.classList.toggle('d-none', isAdmin);
+
+        try {
+            await GuideStore.load();
+            refreshPage(true);
+            if (isAdmin) {
+                setPageStatus('Tour guides are loaded from the backend database.', 'success');
+            } else {
+                setPageStatus('Tour guides are read from the database. Sign in as an administrator to manage records.', 'info');
+            }
+            if (legacyGuides.length) {
+                elements.pageStatusText.textContent +=
+                    ' Unsaved browser-only records remain untouched; review them below and enter each missing NIC to save one.';
+            }
+        } catch (error) {
+            const details = error instanceof TypeError
+                ? 'Cannot connect to the backend at ' + API_BASE_URL + '. Start Spring Boot and try again.'
+                : error.message;
+            setPageStatus('Tour guides could not be loaded. ' + details, 'danger');
+            showToast('The database list is unavailable. No browser demo records were substituted.');
+        }
+    }
+
+    document.getElementById('guideDob').max = new Date().toISOString().slice(0, 10);
+    initializePage();
 });

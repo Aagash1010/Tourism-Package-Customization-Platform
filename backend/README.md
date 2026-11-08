@@ -1,8 +1,8 @@
 # Ceylon Explore Backend
 
-This folder contains the Spring Boot backend, Tourist Management CRUD module,
-and session-based account authentication. Other tourism CRUD modules have not
-been implemented.
+This folder contains the Spring Boot backend, Tourist, Destination, and Tour
+Guide Management CRUD modules, and session-based account authentication.
+Tour-package and booking management are also available.
 
 ## Requirements
 
@@ -41,6 +41,23 @@ variables after initialization. Public registration always creates a `USER`.
 - `POST http://localhost:8080/api/tourists` — create a tourist.
 - `PUT http://localhost:8080/api/tourists/{id}` — update a tourist.
 - `DELETE http://localhost:8080/api/tourists/{id}` — delete a tourist.
+- `GET http://localhost:8080/api/destinations` — public destination listing.
+- `GET http://localhost:8080/api/destinations/{id}` — public destination details.
+- `GET http://localhost:8080/api/destinations/search?keyword=sigiriya` — search by name, location, category, or description.
+- `GET http://localhost:8080/api/destinations/category/{category}` — filter by category.
+- `GET http://localhost:8080/api/destinations/active` — list active destinations.
+- `POST http://localhost:8080/api/destinations` — create a destination (ADMIN).
+- `PUT http://localhost:8080/api/destinations/{id}` — update a destination (ADMIN).
+- `DELETE http://localhost:8080/api/destinations/{id}` — delete a destination (ADMIN).
+- `GET http://localhost:8080/api/tour-guides` — public tour-guide listing.
+- `GET http://localhost:8080/api/tour-guides/{id}` — public tour-guide details.
+- `GET http://localhost:8080/api/tour-guides/search?name=nimal` — search guides by name.
+- `GET http://localhost:8080/api/tour-guides/availability/{status}` — filter by `AVAILABLE`, `UNAVAILABLE`, or `ON_TOUR`.
+- `GET http://localhost:8080/api/tour-guides/specialization/{specialization}` — filter by specialization.
+- `GET http://localhost:8080/api/tour-guides/available` — list available guides.
+- `POST http://localhost:8080/api/tour-guides` — create a guide (ADMIN).
+- `PUT http://localhost:8080/api/tour-guides/{id}` — update a guide (ADMIN).
+- `DELETE http://localhost:8080/api/tour-guides/{id}` — delete a guide (ADMIN).
 - `GET http://localhost:8080/api/auth/csrf` — obtain a session CSRF token.
 - `POST http://localhost:8080/api/auth/register` — register a normal user.
 - `POST http://localhost:8080/api/auth/login` — login and establish a session.
@@ -54,10 +71,39 @@ Successful creation returns HTTP 201; deletion returns HTTP 204. Validation
 errors return HTTP 400, missing IDs return HTTP 404, and duplicate emails
 return HTTP 409.
 
+Tour-guide create/update requests accept the complete management form:
+`fullName`, `email`, `phoneNumber`, `address`, `city`, `district`,
+`nationality`, `nicNumber`, `gender`, `dateOfBirth`, `licenseNumber`,
+`qualification`, `languages`, `workingDays`, `preferredTourTypes`,
+`specialization`, `experienceYears`, `dailyRate`, `profileImage`,
+`availabilityStatus`, `employmentStatus`, `maxGroupSize`, `rating`,
+`certifications`, and `description`. Languages, working days, and preferred
+tour types are persisted in separate collection tables. Email, NIC, and license
+number values are unique. Availability defaults to `AVAILABLE` on creation.
+Profile images are optional HTTP(S) URLs or filenames under `assets/images`.
+Guide reads are public; mutations require an ADMIN session and a valid CSRF
+token. Creation returns HTTP 201, deletion returns HTTP 204, invalid requests
+return HTTP 400, missing IDs return HTTP 404, and duplicate email/NIC/license
+values return HTTP 409.
+
+Destination create/update JSON uses `name`, `district`, `province`, `category`,
+`shortDescription`, `fullDescription`, `entryFee`, `bestTime`, `duration`,
+`openingHours`, `address`, `latitude`, `longitude`, `featured`, `status`, and
+`imageUrl`. The numeric database ID and `createdAt`/`updatedAt` timestamps are
+managed by the backend. Entry fees are non-negative decimal values in LKR;
+coordinates are optional and range-validated. Destination names are
+case-insensitively unique. Deletion and renaming are rejected with HTTP 409
+when a tour package references the destination. Public clients may browse
+destinations, while all destination mutations require an authenticated ADMIN
+session and a valid CSRF token. Creation returns HTTP 201 and deletion returns
+HTTP 204.
+
 Hibernate uses the non-drop `update` schema mode to create/update mapped tables.
 It does not issue a drop for existing tables or delete their records. The
-Tourist table is created when the application starts successfully with a valid
-database connection.
+Tourist and Destination tables are created when the application starts
+successfully with a valid database connection.
+The Tour Guide and Tour Guide Languages tables are also created or updated
+without dropping existing tables or records.
 
 ## Frontend CORS
 
@@ -73,14 +119,18 @@ set to the deployed frontend origin or origins. Wildcard origins are not used.
 ## Package structure
 
 Java base package: `com.ceylonexplore.backend`. Tourist code is organized into
-`controller`, `service`, `repository`, and `entity`; shared CORS configuration
-and API error handling are in `config` and `exception`.
+`controller`, `service`, `repository`, and `entity`; Tour Guide Management
+follows the same structure and uses request/response DTOs. Shared CORS
+configuration and API error handling are in `config` and `exception`.
 
-The current static frontend has no Tourist Management form/table page yet.
-Its booking demo reads tourist records from browser `localStorage`; that data
-is separate from this API and is not synchronized. A later frontend integration
-should fetch the API endpoints and map the numeric `id` and `fullName` fields
-into the booking UI's tourist lookup format.
+The Destination and Tour Guide Management frontends load records from these
+endpoints using credentialed `fetch` requests and send the session CSRF token
+for mutations. Serve the frontend over HTTP from an allowed CORS origin (Live
+Server defaults to port 5500). Tour-guide records are stored in the database;
+older browser-only tour-guide records are not imported automatically. The page
+can reopen a non-demo local guide for review, but the ADMIN must provide its
+missing NIC number before saving it. Tourist records likewise remain separate
+from browser demo data.
 
 ## Authentication and sessions
 
@@ -96,7 +146,8 @@ based on the role returned by the server. The small `user-dashboard.html` page
 provides a signed-in landing page for regular accounts. No registration form
 existed in the frontend, so registration is currently available through the
 API. Spring Security enforces roles independently of the frontend; Tourist
-endpoints require `ADMIN`.
+endpoints and destination mutations require `ADMIN`, while destination GET
+endpoints are public.
 
 Sessions use HTTP-only cookies. Development uses `Secure=false` and
 `SameSite=Lax`; the production profile forces secure cookies. Production CORS
