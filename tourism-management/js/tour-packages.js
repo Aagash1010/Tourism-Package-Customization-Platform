@@ -11,6 +11,9 @@ document.addEventListener('DOMContentLoaded', function () {
         'Cultural Heritage', 'Beach Holiday', 'Hill Country',
         'Wildlife Adventure', 'Nature and Adventure', 'Family Holiday'
     ];
+    const fallbackDestinations = Object.freeze([
+        'Sigiriya', 'Ella', 'Galle', 'Nuwara Eliya', 'Trincomalee', 'Yala'
+    ]);
     const fallbackImage = 'assets/images/sigiriya.jpg';
     const placeholderImage = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(
         '<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520"><rect width="900" height="520" fill="#e7f0eb"/><path d="M0 390 240 190l145 125 150-190 365 265v130H0z" fill="#7aa38c"/><circle cx="700" cy="115" r="52" fill="#f1d889"/><text x="450" y="470" text-anchor="middle" font-family="Arial,sans-serif" font-size="25" fill="#1b4332">Ceylon Explore</text></svg>'
@@ -171,6 +174,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 escapeHtml(destination.name + ' — ' + destination.district + ', ' + destination.province) + '</option>';
         }).join('');
         destinationSelect.innerHTML = '<option value="">Select a destination</option>' + options;
+        if (!destinations.length) {
+            destinationSelect.innerHTML = '<option value="">Select a destination</option>' +
+                fallbackDestinations.map(function (destination) {
+                    return '<option value="legacy:' + escapeHtml(destination) + '">' +
+                        escapeHtml(destination) + '</option>';
+                }).join('');
+        }
+        document.getElementById('destinationFallbackHint').classList.toggle('d-none', destinations.length !== 0);
         elements.destinationFilter.innerHTML = '<option value="">All destinations</option>' +
             destinations.map(function (destination) {
                 return '<option value="' + escapeHtml(destination.id) + '">' + escapeHtml(destination.name) + '</option>';

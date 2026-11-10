@@ -42,7 +42,6 @@ public class BookingController {
     }
 
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<BookingResponse> createBooking(@Valid @RequestBody BookingRequest request) {
         BookingResponse created = bookingService.createBooking(request);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()

@@ -226,6 +226,7 @@
                                 <label for="destination" class="form-label fw-semibold">Destination <span class="text-danger">*</span></label>
                                 <select class="form-select" id="destination" name="destinationId" required><option value="">Loading destinations…</option></select>
                                 <div class="invalid-feedback"></div>
+                                <div class="form-text d-none" id="destinationFallbackHint" aria-live="polite">Suggested destinations are shown because no managed destinations are available. Add a destination later to enable a linked destination record.</div>
                             </div>
                             <div class="col-12">
                                 <label for="description" class="form-label fw-semibold">Short Description <span class="text-danger">*</span></label>

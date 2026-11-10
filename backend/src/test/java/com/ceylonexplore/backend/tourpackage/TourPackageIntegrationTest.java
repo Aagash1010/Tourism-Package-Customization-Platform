@@ -21,6 +21,8 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -126,6 +128,116 @@ class TourPackageIntegrationTest {
                 .andExpect(status().isNoContent());
         mockMvc.perform(get("/api/packages/{id}", packageId))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void packageListIncludesLegacyPackagesAndDestinationFilterReturnsOnlyLinkedPackages() throws Exception {
+        MockHttpSession session = login();
+        String suffix = UUID.randomUUID().toString();
+        String legacyName = "Legacy package " + suffix;
+        long legacyPackageId = createPackage(session, legacyName, "Ella", null);
+
+        mockMvc.perform(get("/api/packages/{id}", legacyPackageId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.destination").value("Ella"))
+                .andExpect(jsonPath("$.itinerary[0].dayNumber").value(1))
+                .andExpect(jsonPath("$.itinerary[0].title").value("Legacy package day one"));
+
+        String managedDestinationName = "Managed destination " + suffix;
+        long managedDestinationId = createDestination(session, managedDestinationName);
+        String linkedName = "Linked package " + suffix;
+        long linkedPackageId = createPackage(session, linkedName, managedDestinationName, managedDestinationId);
+
+        JsonNode allPackages = responseBody(mockMvc.perform(get("/api/packages"))
+                .andExpect(status().isOk())
+                .andReturn());
+        assertContainsPackage(allPackages, legacyPackageId);
+        assertContainsPackage(allPackages, linkedPackageId);
+
+        JsonNode legacyKeywordResults = responseBody(mockMvc.perform(get("/api/packages")
+                        .param("keyword", "Ella"))
+                .andExpect(status().isOk())
+                .andReturn());
+        assertContainsPackage(legacyKeywordResults, legacyPackageId);
+
+        JsonNode managedDestinationKeywordResults = responseBody(mockMvc.perform(get("/api/packages")
+                        .param("keyword", managedDestinationName))
+                .andExpect(status().isOk())
+                .andReturn());
+        assertContainsPackage(managedDestinationKeywordResults, linkedPackageId);
+
+        JsonNode filteredPackages = responseBody(mockMvc.perform(get("/api/packages")
+                        .param("destinationId", Long.toString(managedDestinationId)))
+                .andExpect(status().isOk())
+                .andReturn());
+        assertEquals(1, filteredPackages.size());
+        assertEquals(linkedPackageId, filteredPackages.get(0).get("id").asLong());
+    }
+
+    private long createPackage(MockHttpSession session, String name, String destination, Long destinationId) throws Exception {
+        ObjectNode request = objectMapper.createObjectNode();
+        request.put("name", name);
+        request.put("destination", destination);
+        if (destinationId != null) {
+            request.put("destinationId", destinationId);
+        }
+        request.put("description", "A package listing regression test");
+        request.put("duration", "2 days / 1 night");
+        request.put("durationDays", 2);
+        request.put("durationNights", 1);
+        request.put("price", 12500.00);
+        request.put("minTravelers", 1);
+        request.put("maxTravelers", 8);
+        request.put("category", "Cultural Heritage");
+        request.put("status", "Active");
+        request.putArray("itinerary")
+                .addObject()
+                .put("dayNumber", 1)
+                .put("title", "Legacy package day one")
+                .put("description", "A regression-test itinerary day");
+
+        TokenAndSession token = csrfToken(session);
+        MvcResult created = mockMvc.perform(post("/api/packages")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+                        .header("X-CSRF-TOKEN", token.token())
+                        .session(token.session()))
+                .andExpect(status().isCreated())
+                .andReturn();
+        return responseBody(created).get("id").asLong();
+    }
+
+    private long createDestination(MockHttpSession session, String name) throws Exception {
+        ObjectNode request = objectMapper.createObjectNode();
+        request.put("name", name);
+        request.put("district", "Kandy");
+        request.put("province", "Central");
+        request.put("category", "Historical and Cultural");
+        request.put("shortDescription", "A managed destination used to test package filtering.");
+        request.put("entryFee", 0);
+        request.put("bestTime", "All year");
+        request.put("duration", "One day");
+        request.put("address", "Kandy, Sri Lanka");
+        request.put("featured", false);
+        request.put("status", "Active");
+
+        TokenAndSession token = csrfToken(session);
+        MvcResult created = mockMvc.perform(post("/api/destinations")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+                        .header("X-CSRF-TOKEN", token.token())
+                        .session(token.session()))
+                .andExpect(status().isCreated())
+                .andReturn();
+        return responseBody(created).get("id").asLong();
+    }
+
+    private JsonNode responseBody(MvcResult result) throws Exception {
+        return objectMapper.readTree(result.getResponse().getContentAsString());
+    }
+
+    private void assertContainsPackage(JsonNode packages, long packageId) {
+        assertTrue(packages.findValues("id").stream().anyMatch(id -> id.asLong() == packageId));
     }
 
     private MockHttpSession login() throws Exception {

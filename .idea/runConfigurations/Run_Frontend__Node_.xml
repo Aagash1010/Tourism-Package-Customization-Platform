@@ -1,0 +1,6 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Run Frontend (Node)" type="NodeJSConfigurationType" path-to-js-file="local-server.js" working-dir="$PROJECT_DIR$/tourism-management">
+    <method v="2" />
+  </configuration>
+</component>
+

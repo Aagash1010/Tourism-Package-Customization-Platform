@@ -95,9 +95,9 @@
                 </div>
             </header>
 
-            <div class="demo-note alert alert-success-subtle text-emerald border-0 rounded-3 small mb-4" role="note">
+            <div class="demo-note alert alert-info border-0 rounded-3 small mb-4" id="bookingPageStatus" role="status">
                 <i class="bi bi-info-circle me-1"></i>
-                Booking records are saved in this browser's localStorage for demonstration only. No Java file handling or database persistence is connected.
+                Connecting to the Ceylon Explore booking service...
             </div>
 
             <section class="stats-grid booking-stats-grid" aria-label="Booking statistics overview">
@@ -138,7 +138,7 @@
             <section class="dashboard-panel booking-panel" aria-labelledby="bookingListingTitle">
                 <div class="panel-header booking-panel-header">
                     <div>
-                        <span class="panel-eyebrow">Frontend CRUD Demo</span>
+                        <span class="panel-eyebrow">Reservation Management</span>
                         <h2 id="bookingListingTitle">Bookings</h2>
                         <p class="mb-0 booking-panel-description">Review reservation details, payment progress, and travel activity.</p>
                     </div>
@@ -206,7 +206,7 @@
 
                 <div class="booking-results-line">
                     <span id="bookingResultsSummary" aria-live="polite">Showing 0 bookings</span>
-                    <span class="booking-storage-hint"><i class="bi bi-hdd me-1"></i>Browser demo storage</span>
+                    <span class="booking-storage-hint" id="bookingStorageHint"><i class="bi bi-database-check me-1"></i>Database Persistence</span>
                 </div>
 
                 <div class="table-responsive">
@@ -252,6 +252,7 @@
 
                 <form id="bookingForm" novalidate>
                     <div class="modal-body p-4">
+                        <div class="alert alert-danger d-none" id="bookingFormError" role="alert"></div>
                         <div class="alert alert-warning d-none" id="touristDataAlert" role="alert"></div>
                         <div class="alert alert-warning d-none" id="packageDataAlert" role="alert"></div>
 

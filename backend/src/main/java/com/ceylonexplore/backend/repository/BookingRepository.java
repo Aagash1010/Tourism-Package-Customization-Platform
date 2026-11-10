@@ -30,6 +30,14 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             select b from Booking b
             join fetch b.tourist t
             join fetch b.tourPackage p
+            order by b.id desc
+            """)
+    List<Booking> findAllWithDetails();
+
+    @Query("""
+            select b from Booking b
+            join fetch b.tourist t
+            join fetch b.tourPackage p
             left join fetch p.destinationEntity
             left join t.userAccount account
             where account.id = :userId

@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -46,7 +47,7 @@ public class BookingService {
     }
 
     public List<BookingResponse> getAllBookings() {
-        List<Booking> bookings = bookingRepository.findAll();
+        List<Booking> bookings = bookingRepository.findAllWithDetails();
         List<BookingResponse> responses = new ArrayList<>();
         for (Booking booking : bookings) {
             responses.add(toResponse(booking));
@@ -84,19 +85,26 @@ public class BookingService {
     }
 
     public List<BookingResponse> searchBookings(String keyword) {
-        String normalized = keyword == null ? "" : keyword.trim();
+        String normalized = keyword == null ? "" : keyword.trim().toLowerCase(Locale.ROOT);
         if (normalized.isEmpty()) {
             return getAllBookings();
         }
-        return bookingRepository.findAll().stream()
-                .filter(booking -> booking.getBookingReference() != null && booking.getBookingReference().toLowerCase(Locale.ROOT).contains(normalized.toLowerCase(Locale.ROOT)))
+        return bookingRepository.findAllWithDetails().stream()
+                .filter(booking -> {
+                    String reference = booking.getBookingReference() != null ? booking.getBookingReference().toLowerCase(Locale.ROOT) : "";
+                    String touristName = booking.getTourist() != null && booking.getTourist().getFullName() != null
+                            ? booking.getTourist().getFullName().toLowerCase(Locale.ROOT) : "";
+                    String packageName = booking.getTourPackage() != null && booking.getTourPackage().getName() != null
+                            ? booking.getTourPackage().getName().toLowerCase(Locale.ROOT) : "";
+                    return reference.contains(normalized) || touristName.contains(normalized) || packageName.contains(normalized);
+                })
                 .map(this::toResponse)
                 .toList();
     }
 
     @Transactional
     public BookingResponse createBooking(BookingRequest request) {
-        validateRequest(request);
+        validateRequest(request, true);
 
         Tourist tourist = touristRepository.findById(request.touristId())
                 .orElseThrow(() -> new TouristNotFoundException(request.touristId()));
@@ -110,18 +118,25 @@ public class BookingService {
             throw new InvalidBookingException("Total amount cannot be negative.");
         }
 
+        BigDecimal discount = request.discount() != null ? request.discount() : BigDecimal.ZERO;
+        BigDecimal amountPaid = request.amountPaid() != null ? request.amountPaid() : BigDecimal.ZERO;
+
         Booking booking = new Booking();
         booking.setBookingReference(generateUniqueBookingReference());
         booking.setTourist(tourist);
         booking.setTourPackage(tourPackage);
         booking.setNumberOfPeople(request.numberOfPeople());
-        booking.setBookingDate(LocalDateTime.now());
+        booking.setBookingDate(request.bookingDate() != null ? request.bookingDate() : LocalDateTime.now());
         booking.setTravelDate(request.travelDate());
         booking.setTotalAmount(totalAmount);
-        booking.setDiscount(BigDecimal.ZERO);
-        booking.setAmountPaid(BigDecimal.ZERO);
-        booking.setBookingStatus(BookingStatus.PENDING);
-        booking.setPaymentStatus(PaymentStatus.UNPAID);
+        booking.setDiscount(discount);
+        booking.setAmountPaid(amountPaid);
+        booking.setBookingStatus(request.bookingStatus() != null && !request.bookingStatus().isBlank()
+                ? parseBookingStatus(request.bookingStatus())
+                : BookingStatus.PENDING);
+        booking.setPaymentStatus(request.paymentStatus() != null && !request.paymentStatus().isBlank()
+                ? parsePaymentStatus(request.paymentStatus())
+                : PaymentStatus.UNPAID);
         booking.setSpecialRequests(normalizeOptionalText(request.specialRequests()));
 
         return toResponse(bookingRepository.save(booking));
@@ -130,7 +145,7 @@ public class BookingService {
     @Transactional
     public BookingResponse updateBooking(Long id, BookingRequest request) {
         Booking existingBooking = findBookingEntityById(id);
-        validateRequest(request);
+        validateRequest(request, false);
 
         Tourist tourist = touristRepository.findById(request.touristId())
                 .orElseThrow(() -> new TouristNotFoundException(request.touristId()));
@@ -139,19 +154,28 @@ public class BookingService {
 
         validatePackageBooking(tourPackage, request);
 
-        if (existingBooking.getBookingStatus() == BookingStatus.COMPLETED) {
-            throw new BookingConflictException("Completed bookings cannot be modified without appropriate authorization.");
-        }
-        if (existingBooking.getBookingStatus() == BookingStatus.CANCELLED) {
-            throw new BookingConflictException("Cancelled bookings cannot be modified through a normal update.");
-        }
-
         BigDecimal totalAmount = calculateTotalAmount(tourPackage.getPrice(), request.numberOfPeople());
+        BigDecimal discount = request.discount() != null ? request.discount() : existingBooking.getDiscount();
+        BigDecimal amountPaid = request.amountPaid() != null ? request.amountPaid() : existingBooking.getAmountPaid();
+
         existingBooking.setTourist(tourist);
         existingBooking.setTourPackage(tourPackage);
         existingBooking.setNumberOfPeople(request.numberOfPeople());
+        if (request.bookingDate() != null) {
+            existingBooking.setBookingDate(request.bookingDate());
+        }
         existingBooking.setTravelDate(request.travelDate());
         existingBooking.setTotalAmount(totalAmount);
+        existingBooking.setDiscount(discount != null ? discount : BigDecimal.ZERO);
+        existingBooking.setAmountPaid(amountPaid != null ? amountPaid : BigDecimal.ZERO);
+
+        if (request.bookingStatus() != null && !request.bookingStatus().isBlank()) {
+            existingBooking.setBookingStatus(parseBookingStatus(request.bookingStatus()));
+        }
+        if (request.paymentStatus() != null && !request.paymentStatus().isBlank()) {
+            existingBooking.setPaymentStatus(parsePaymentStatus(request.paymentStatus()));
+        }
+
         existingBooking.setSpecialRequests(normalizeOptionalText(request.specialRequests()));
         existingBooking.setUpdatedAt(LocalDateTime.now());
 
@@ -161,9 +185,6 @@ public class BookingService {
     @Transactional
     public void deleteBooking(Long id) {
         Booking booking = findBookingEntityById(id);
-        if (booking.getBookingStatus() == BookingStatus.COMPLETED || booking.getPaymentStatus() == PaymentStatus.PAID) {
-            throw new BookingConflictException("Completed or paid bookings cannot be deleted.");
-        }
         bookingRepository.delete(booking);
     }
 
@@ -172,7 +193,7 @@ public class BookingService {
                 .orElseThrow(() -> new BookingNotFoundException(id));
     }
 
-    private void validateRequest(BookingRequest request) {
+    private void validateRequest(BookingRequest request, boolean isNew) {
         if (request == null) {
             throw new InvalidBookingException("Booking request body is required.");
         }
@@ -189,13 +210,10 @@ public class BookingService {
         if (request.travelDate() == null) {
             throw new InvalidBookingException("Travel date is required.");
         }
-        if (request.bookingDate() == null) {
-            throw new InvalidBookingException("Booking date is required.");
+        if (isNew && request.travelDate().isBefore(LocalDate.now())) {
+            throw new InvalidBookingException("Travel date cannot be in the past.");
         }
-        if (request.travelDate().isBefore(LocalDate.now()) || request.travelDate().isEqual(LocalDate.now())) {
-            throw new InvalidBookingException("Travel date must be in the future.");
-        }
-        if (request.bookingDate().toLocalDate().isAfter(request.travelDate())) {
+        if (request.bookingDate() != null && request.bookingDate().toLocalDate().isAfter(request.travelDate())) {
             throw new InvalidBookingException("Travel date cannot be earlier than the booking date.");
         }
     }
@@ -208,7 +226,7 @@ public class BookingService {
         if (request.numberOfPeople() < minimumTravelers) {
             throw new BookingConflictException("Number of people is below the package minimum of " + minimumTravelers + ".");
         }
-        if (request.numberOfPeople() > tourPackage.getMaxTravelers()) {
+        if (tourPackage.getMaxTravelers() != null && request.numberOfPeople() > tourPackage.getMaxTravelers()) {
             throw new BookingConflictException("Number of people exceeds the package capacity of " + tourPackage.getMaxTravelers() + ".");
         }
         if (tourPackage.getStartDate() != null && request.travelDate().isBefore(tourPackage.getStartDate())) {
@@ -219,14 +237,27 @@ public class BookingService {
         }
     }
 
-    private BookingStatus parseBookingStatus(String statusText) {
+    public BookingStatus parseBookingStatus(String statusText) {
         if (statusText == null || statusText.isBlank()) {
-            throw new InvalidBookingException("Booking status is required.");
+            return BookingStatus.PENDING;
         }
+        String normalized = statusText.trim().replace(' ', '_').toUpperCase(Locale.ROOT);
         try {
-            return BookingStatus.valueOf(statusText.trim().toUpperCase(Locale.ROOT));
+            return BookingStatus.valueOf(normalized);
         } catch (IllegalArgumentException exception) {
             throw new InvalidBookingException("Invalid booking status: " + statusText);
+        }
+    }
+
+    public PaymentStatus parsePaymentStatus(String statusText) {
+        if (statusText == null || statusText.isBlank()) {
+            return PaymentStatus.UNPAID;
+        }
+        String normalized = statusText.trim().replace(' ', '_').toUpperCase(Locale.ROOT);
+        try {
+            return PaymentStatus.valueOf(normalized);
+        } catch (IllegalArgumentException exception) {
+            throw new InvalidBookingException("Invalid payment status: " + statusText);
         }
     }
 
@@ -243,7 +274,7 @@ public class BookingService {
         if (packagePrice == null) {
             packagePrice = BigDecimal.ZERO;
         }
-        return packagePrice.multiply(BigDecimal.valueOf(numberOfPeople)).setScale(2);
+        return packagePrice.multiply(BigDecimal.valueOf(numberOfPeople)).setScale(2, RoundingMode.HALF_UP);
     }
 
     private String normalizeOptionalText(String value) {
@@ -263,8 +294,8 @@ public class BookingService {
                 booking.getBookingDate(),
                 booking.getTravelDate(),
                 booking.getTotalAmount(),
-                BigDecimal.ZERO,
-                BigDecimal.ZERO,
+                booking.getDiscount() != null ? booking.getDiscount() : BigDecimal.ZERO,
+                booking.getAmountPaid() != null ? booking.getAmountPaid() : BigDecimal.ZERO,
                 booking.getBookingStatus() != null ? booking.getBookingStatus().name() : null,
                 booking.getPaymentStatus() != null ? booking.getPaymentStatus().name() : null,
                 booking.getSpecialRequests(),

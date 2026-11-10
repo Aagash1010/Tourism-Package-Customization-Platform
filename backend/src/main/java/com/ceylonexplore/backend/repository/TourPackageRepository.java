@@ -15,12 +15,13 @@ public interface TourPackageRepository extends JpaRepository<TourPackage, Long> 
 
     @Query("""
             select tp from TourPackage tp
+            left join tp.destinationEntity destination
             where (:keyword is null
                 or lower(tp.name) like lower(concat('%', :keyword, '%'))
                 or lower(coalesce(tp.description, '')) like lower(concat('%', :keyword, '%'))
                 or lower(tp.destination) like lower(concat('%', :keyword, '%'))
-                or lower(coalesce(tp.destinationEntity.name, '')) like lower(concat('%', :keyword, '%')))
-              and (:destinationId is null or tp.destinationEntity.id = :destinationId)
+                or lower(coalesce(destination.name, '')) like lower(concat('%', :keyword, '%')))
+              and (:destinationId is null or destination.id = :destinationId)
               and (:category is null or lower(coalesce(tp.category, '')) = lower(:category))
               and (:status is null or lower(tp.status) = lower(:status))
               and (:minPrice is null or tp.price >= :minPrice)

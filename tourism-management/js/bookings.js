@@ -1,15 +1,20 @@
 /**
  * Ceylon Explore - Booking Management
- * Browser demo storage is isolated behind bookingRepository for future API replacement.
+ * Bookings are loaded from and persisted by the Ceylon Explore Spring Boot API.
  */
 
 document.addEventListener('DOMContentLoaded', function () {
+    'use strict';
+
     const STORAGE_KEY = 'ceylonExploreBookings';
     const PACKAGE_KEYS = ['ceylonExplorePackages', 'ceylonExplorePackageManagement', 'ceylonExplorePackagesV1'];
     const TOURIST_KEYS = ['ceylonExploreTourists', 'ceylonExplore.tourists.v1', 'ceylonExploreTouristsV1', 'ceylonExploreTouristManagement'];
-    const PAYMENT_STATUS_OPTIONS = ['Unpaid', 'Partially Paid', 'Paid'];
+    const PAYMENT_STATUS_OPTIONS = ['Unpaid', 'Partially Paid', 'Paid', 'Refunded'];
     const BOOKING_STATUS_OPTIONS = ['Pending', 'Confirmed', 'Cancelled', 'Completed'];
-    const API_BASE_URL = 'http://' + window.location.hostname + ':8080';
+
+    const API_BASE_URL = (window.location.protocol === 'file:' ? 'http:' : window.location.protocol) +
+        '//' + (window.location.hostname || 'localhost') + ':8080';
+
     const bookingFormModal = new bootstrap.Modal(document.getElementById('bookingFormModal'));
     const bookingDetailsModal = new bootstrap.Modal(document.getElementById('bookingDetailsModal'));
     const deleteBookingModal = new bootstrap.Modal(document.getElementById('deleteBookingModal'));
@@ -28,11 +33,14 @@ document.addEventListener('DOMContentLoaded', function () {
         touristFilter: document.getElementById('touristFilter'),
         sortSelect: document.getElementById('sortSelect'),
         resultsSummary: document.getElementById('bookingResultsSummary'),
+        storageHint: document.getElementById('bookingStorageHint'),
         bookingTableBody: document.getElementById('bookingTableBody'),
         bookingEmptyState: document.getElementById('bookingEmptyState'),
         addBookingButton: document.getElementById('addBookingButton'),
         bookingForm: document.getElementById('bookingForm'),
         bookingFormTitle: document.getElementById('bookingFormTitle'),
+        bookingFormError: document.getElementById('bookingFormError'),
+        pageStatus: document.getElementById('bookingPageStatus'),
         bookingId: document.getElementById('bookingId'),
         touristSelect: document.getElementById('touristSelect'),
         packageSelect: document.getElementById('packageSelect'),
@@ -54,7 +62,10 @@ document.addEventListener('DOMContentLoaded', function () {
         deleteBookingIdText: document.getElementById('deleteBookingIdText'),
         deleteBookingTouristText: document.getElementById('deleteBookingTouristText'),
         bookingDetailsSummary: document.getElementById('bookingDetailsSummary'),
-        bookingDetailContent: document.getElementById('bookingDetailContent')
+        bookingDetailContent: document.getElementById('bookingDetailContent'),
+        profileAvatar: document.querySelector('.profile-avatar'),
+        profileName: document.querySelector('.profile-name'),
+        profileRole: document.querySelector('.profile-role')
     };
 
     const packageCatalog = [];
@@ -64,96 +75,225 @@ document.addEventListener('DOMContentLoaded', function () {
     let editingBookingId = null;
     let detailsBookingId = null;
     let pendingDeleteBookingId = null;
+    let isConnectedToBackend = false;
 
     bindEvents();
     initializeDashboardData();
 
-    async function initializeDashboardData() {
+    async function apiRequest(path, options) {
+        const response = await fetch(API_BASE_URL + path, Object.assign({
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json'
+            }
+        }, options || {}));
+
+        let body = null;
         try {
-            const [tourists, packages, fetchedBookings] = await Promise.all([
-                fetchBackendData('/api/tourists'),
-                fetchBackendData('/api/tour-packages/active'),
-                fetchBackendData('/api/bookings')
-            ]);
+            body = await response.json();
+        } catch (error) {
+            if (response.status !== 204) {
+                throw new Error('The booking service returned an unreadable response.');
+            }
+        }
+
+        if (!response.ok) {
+            const fieldErrors = body && body.errors ? Object.values(body.errors).join(' ') : '';
+            const error = new Error(fieldErrors || (body && body.message) || 'The request could not be completed.');
+            error.status = response.status;
+            throw error;
+        }
+
+        return body;
+    }
+
+    async function getCsrfToken() {
+        try {
+            const response = await fetch(API_BASE_URL + '/api/auth/csrf', {
+                method: 'GET',
+                credentials: 'include'
+            });
+            const data = await response.json().catch(function () { return {}; });
+            return (response.ok && data && data.csrfToken) ? data.csrfToken : '';
+        } catch (error) {
+            return '';
+        }
+    }
+
+    async function initializeDashboardData() {
+        if (elements.pageStatus) {
+            elements.pageStatus.textContent = 'Connecting to Ceylon Explore API and loading bookings...';
+            elements.pageStatus.className = 'demo-note alert alert-info border-0 rounded-3 small mb-4';
+        }
+
+        // Try to fetch current user profile
+        try {
+            const account = await apiRequest('/api/auth/me');
+            const user = account && account.user;
+            if (user) {
+                if (elements.profileName) elements.profileName.textContent = user.fullName || user.name || 'Administrator';
+                if (elements.profileAvatar) elements.profileAvatar.textContent = (user.fullName || user.name || 'A').charAt(0).toUpperCase();
+                if (elements.profileRole) elements.profileRole.textContent = user.role === 'ADMIN' ? 'Administrator' : 'User';
+            }
+        } catch (e) {
+            // Unauthenticated or network error; keep demo profile fallback
+        }
+
+        try {
+            // Load tourists, packages, and bookings
+            let fetchedTourists = [];
+            let fetchedPackages = [];
+            let fetchedBookings = [];
+
+            try {
+                fetchedTourists = await apiRequest('/api/tourists');
+            } catch (err) {
+                console.warn('Could not load tourists from API:', err.message);
+                fetchedTourists = getTouristCatalog();
+            }
+
+            try {
+                // Try active packages first; if empty try all packages
+                fetchedPackages = await apiRequest('/api/tour-packages/active');
+                if (!Array.isArray(fetchedPackages) || fetchedPackages.length === 0) {
+                    fetchedPackages = await apiRequest('/api/tour-packages');
+                }
+            } catch (err) {
+                try {
+                    fetchedPackages = await apiRequest('/api/packages');
+                } catch (pkgErr) {
+                    console.warn('Could not load packages from API:', pkgErr.message);
+                    fetchedPackages = getPackageCatalog();
+                }
+            }
+
+            try {
+                fetchedBookings = await apiRequest('/api/bookings');
+                isConnectedToBackend = true;
+            } catch (bErr) {
+                console.warn('Could not load bookings from API:', bErr.message);
+                fetchedBookings = bookingRepository.load();
+                isConnectedToBackend = false;
+            }
 
             touristCatalog.length = 0;
             packageCatalog.length = 0;
+
+            if (Array.isArray(fetchedTourists)) {
+                fetchedTourists.forEach(function (tourist) {
+                    touristCatalog.push({
+                        id: String(tourist.id),
+                        name: tourist.fullName || tourist.name || 'Unnamed tourist',
+                        phone: tourist.phone || tourist.contact || '',
+                        email: tourist.email || '',
+                        contact: tourist.phone || tourist.email || tourist.contact || ''
+                    });
+                });
+            }
+
+            if (Array.isArray(fetchedPackages)) {
+                fetchedPackages.forEach(function (pkg) {
+                    packageCatalog.push({
+                        id: String(pkg.id),
+                        name: pkg.name || 'Unnamed package',
+                        price: Number(pkg.price || 0),
+                        maxTravelers: Number(pkg.maxTravelers || pkg.capacity || 0),
+                        status: pkg.status || 'Active'
+                    });
+                });
+            }
+
             bookings = Array.isArray(fetchedBookings) ? fetchedBookings.map(normalizeBookingRecord) : [];
-
-            tourists.forEach(function (tourist) {
-                touristCatalog.push({
-                    id: String(tourist.id),
-                    name: tourist.fullName || tourist.name || 'Unnamed tourist',
-                    phone: tourist.phone || tourist.contact || '',
-                    email: tourist.email || '',
-                    contact: tourist.contact || ''
-                });
-            });
-
-            packages.forEach(function (pkg) {
-                packageCatalog.push({
-                    id: String(pkg.id),
-                    name: pkg.name || 'Unnamed package',
-                    price: Number(pkg.price || 0),
-                    maxTravelers: Number(pkg.maxTravelers || pkg.capacity || 0),
-                    status: pkg.status || 'Active'
-                });
-            });
 
             populateLookupOptions();
             renderAll();
+
+            if (elements.pageStatus) {
+                if (isConnectedToBackend) {
+                    elements.pageStatus.innerHTML = '<i class="bi bi-check-circle-fill me-1 text-success"></i> Connected to Spring Boot API. Booking records are synchronized with MySQL database.';
+                    elements.pageStatus.className = 'demo-note alert alert-success-subtle text-emerald border-0 rounded-3 small mb-4';
+                } else {
+                    elements.pageStatus.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1 text-warning"></i> Showing local fallback data. Sign in as Admin on port 8080 to synchronize with the backend.';
+                    elements.pageStatus.className = 'demo-note alert alert-warning border-0 rounded-3 small mb-4';
+                }
+            }
+
+            if (elements.storageHint) {
+                elements.storageHint.innerHTML = isConnectedToBackend
+                    ? '<i class="bi bi-database-check me-1 text-success"></i>Database Persistence'
+                    : '<i class="bi bi-hdd me-1"></i>Browser local storage';
+            }
         } catch (error) {
-            console.error('Unable to load backend data for bookings page.', error);
+            console.error('Unable to load dashboard data for bookings page:', error);
             bookings = bookingRepository.load();
             populateLookupOptions();
             renderAll();
-            showToast('Unable to connect to the backend. Showing the saved local fallback data.');
+            showToast('Unable to load data from backend. Showing local fallback data.');
         }
     }
 
     function bindEvents() {
-        elements.sidebarToggle.addEventListener('click', function () {
-            const isOpen = elements.sidebar.classList.toggle('is-open');
-            elements.sidebarBackdrop.classList.toggle('is-visible', isOpen);
-            elements.sidebarToggle.setAttribute('aria-expanded', String(isOpen));
-        });
+        if (elements.sidebarToggle && elements.sidebar) {
+            elements.sidebarToggle.addEventListener('click', function () {
+                const isOpen = elements.sidebar.classList.toggle('is-open');
+                if (elements.sidebarBackdrop) elements.sidebarBackdrop.classList.toggle('is-visible', isOpen);
+                elements.sidebarToggle.setAttribute('aria-expanded', String(isOpen));
+            });
+        }
 
-        elements.sidebarBackdrop.addEventListener('click', function () {
-            elements.sidebar.classList.remove('is-open');
-            elements.sidebarBackdrop.classList.remove('is-visible');
-            elements.sidebarToggle.setAttribute('aria-expanded', 'false');
-        });
+        if (elements.sidebarBackdrop && elements.sidebar) {
+            elements.sidebarBackdrop.addEventListener('click', function () {
+                elements.sidebar.classList.remove('is-open');
+                elements.sidebarBackdrop.classList.remove('is-visible');
+                if (elements.sidebarToggle) elements.sidebarToggle.setAttribute('aria-expanded', 'false');
+            });
+        }
 
         document.querySelectorAll('.module-placeholder').forEach(function (link) {
             link.addEventListener('click', function (event) {
                 event.preventDefault();
-                elements.sidebar.classList.remove('is-open');
-                elements.sidebarBackdrop.classList.remove('is-visible');
-                elements.sidebarToggle.setAttribute('aria-expanded', 'false');
+                if (elements.sidebar) elements.sidebar.classList.remove('is-open');
+                if (elements.sidebarBackdrop) elements.sidebarBackdrop.classList.remove('is-visible');
+                if (elements.sidebarToggle) elements.sidebarToggle.setAttribute('aria-expanded', 'false');
                 showToast(link.dataset.module + ' is prepared as a future CRUD module.');
             });
         });
 
-        document.getElementById('notificationButton').addEventListener('click', function () {
-            showToast('Notifications are interface placeholders for the admin dashboard.');
-        });
+        const notifButton = document.getElementById('notificationButton');
+        if (notifButton) {
+            notifButton.addEventListener('click', function () {
+                showToast('Notifications are interface placeholders for the admin dashboard.');
+            });
+        }
 
-        elements.addBookingButton.addEventListener('click', openCreateBookingModal);
-        elements.bookingForm.addEventListener('submit', handleBookingSubmit);
-        elements.bookingTableBody.addEventListener('click', handleTableAction);
-        elements.bookingDetailsModal = document.getElementById('bookingDetailsModal');
-        document.getElementById('editFromDetailsButton').addEventListener('click', function () {
-            if (!detailsBookingId) {
-                return;
-            }
-            const hiddenHandler = function () {
-                openEditBookingModal(detailsBookingId);
-            };
-            document.getElementById('bookingDetailsModal').addEventListener('hidden.bs.modal', hiddenHandler, { once: true });
-            bookingDetailsModal.hide();
-        });
+        if (elements.addBookingButton) {
+            elements.addBookingButton.addEventListener('click', openCreateBookingModal);
+        }
+        if (elements.bookingForm) {
+            elements.bookingForm.addEventListener('submit', handleBookingSubmit);
+        }
+        if (elements.bookingTableBody) {
+            elements.bookingTableBody.addEventListener('click', handleTableAction);
+        }
 
-        document.getElementById('confirmDeleteBookingButton').addEventListener('click', confirmDeleteBooking);
+        const editFromDetails = document.getElementById('editFromDetailsButton');
+        if (editFromDetails) {
+            editFromDetails.addEventListener('click', function () {
+                if (!detailsBookingId) return;
+                const targetId = detailsBookingId;
+                const modalEl = document.getElementById('bookingDetailsModal');
+                const hiddenHandler = function () {
+                    openEditBookingModal(targetId);
+                };
+                if (modalEl) modalEl.addEventListener('hidden.bs.modal', hiddenHandler, { once: true });
+                bookingDetailsModal.hide();
+            });
+        }
+
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBookingButton');
+        if (confirmDeleteBtn) {
+            confirmDeleteBtn.addEventListener('click', confirmDeleteBooking);
+        }
 
         [
             elements.searchInput,
@@ -165,38 +305,45 @@ document.addEventListener('DOMContentLoaded', function () {
             elements.touristFilter,
             elements.sortSelect
         ].forEach(function (control) {
-            control.addEventListener(control === elements.searchInput ? 'input' : 'change', renderBookings);
-        });
-
-        document.getElementById('resetFiltersButton').addEventListener('click', resetFilters);
-        document.getElementById('emptyResetButton').addEventListener('click', resetFilters);
-
-        elements.packageSelect.addEventListener('change', function () {
-            const selectedPackage = getSelectedPackage();
-            if (selectedPackage) {
-                elements.pricePerPerson.value = String(Number(selectedPackage.price || 0));
-                if (selectedPackage.status && selectedPackage.status.toLowerCase() === 'inactive') {
-                    elements.packageSelect.classList.add('is-invalid');
-                    showToast('Selected package is inactive. New bookings cannot be created for inactive packages.');
-                } else {
-                    elements.packageSelect.classList.remove('is-invalid');
-                }
-            } else {
-                elements.pricePerPerson.value = '0';
+            if (control) {
+                control.addEventListener(control === elements.searchInput ? 'input' : 'change', renderBookings);
             }
-            recalculateBookingTotals();
         });
 
-        elements.numberOfTravelers.addEventListener('input', recalculateBookingTotals);
-        elements.discount.addEventListener('input', recalculateBookingTotals);
-        elements.amountPaid.addEventListener('input', recalculateBookingTotals);
-        elements.paymentStatus.addEventListener('change', recalculateBookingTotals);
+        const resetFiltersBtn = document.getElementById('resetFiltersButton');
+        if (resetFiltersBtn) resetFiltersBtn.addEventListener('click', resetFilters);
 
-        elements.bookingDate.addEventListener('input', clearFieldError);
-        elements.travelDate.addEventListener('input', clearFieldError);
-        elements.numberOfTravelers.addEventListener('input', clearFieldError);
-        elements.discount.addEventListener('input', clearFieldError);
-        elements.amountPaid.addEventListener('input', clearFieldError);
+        const emptyResetBtn = document.getElementById('emptyResetButton');
+        if (emptyResetBtn) emptyResetBtn.addEventListener('click', resetFilters);
+
+        if (elements.packageSelect) {
+            elements.packageSelect.addEventListener('change', function () {
+                const selectedPackage = getSelectedPackage();
+                if (selectedPackage) {
+                    elements.pricePerPerson.value = String(Number(selectedPackage.price || 0));
+                    if (selectedPackage.status && selectedPackage.status.toLowerCase() === 'inactive') {
+                        elements.packageSelect.classList.add('is-invalid');
+                        showToast('Selected package is inactive. New bookings cannot be created for inactive packages.');
+                    } else {
+                        elements.packageSelect.classList.remove('is-invalid');
+                    }
+                } else {
+                    elements.pricePerPerson.value = '0';
+                }
+                recalculateBookingTotals();
+            });
+        }
+
+        if (elements.numberOfTravelers) elements.numberOfTravelers.addEventListener('input', recalculateBookingTotals);
+        if (elements.discount) elements.discount.addEventListener('input', recalculateBookingTotals);
+        if (elements.amountPaid) elements.amountPaid.addEventListener('input', recalculateBookingTotals);
+        if (elements.paymentStatus) elements.paymentStatus.addEventListener('change', recalculateBookingTotals);
+
+        if (elements.bookingDate) elements.bookingDate.addEventListener('input', clearFieldError);
+        if (elements.travelDate) elements.travelDate.addEventListener('input', clearFieldError);
+        if (elements.numberOfTravelers) elements.numberOfTravelers.addEventListener('input', clearFieldError);
+        if (elements.discount) elements.discount.addEventListener('input', clearFieldError);
+        if (elements.amountPaid) elements.amountPaid.addEventListener('input', clearFieldError);
 
         Array.prototype.slice.call(document.querySelectorAll('#bookingForm select, #bookingForm input, #bookingForm textarea')).forEach(function (control) {
             control.addEventListener('input', function () {
@@ -204,24 +351,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     control.classList.remove('is-invalid');
                 }
                 const feedback = control.parentElement && control.parentElement.querySelector('.invalid-feedback');
-                if (feedback) {
-                    feedback.textContent = '';
-                }
+                if (feedback) feedback.textContent = '';
+                if (elements.bookingFormError) elements.bookingFormError.classList.add('d-none');
             });
         });
-    }
-
-    function isValidBookingRecord(item) {
-        return !!item && typeof item === 'object'
-            && typeof item.id === 'string' && /^BOOK-\d{4,}$/.test(item.id)
-            && typeof item.touristId === 'string' && item.touristId.trim() !== ''
-            && typeof item.packageId === 'string' && item.packageId.trim() !== ''
-            && typeof item.bookingDate === 'string' && item.bookingDate.trim() !== ''
-            && typeof item.travelDate === 'string' && item.travelDate.trim() !== ''
-            && Number.isFinite(Number(item.numberOfTravelers)) && Number(item.numberOfTravelers) > 0
-            && Number.isFinite(Number(item.finalTotal)) && Number(item.finalTotal) >= 0
-            && BOOKING_STATUS_OPTIONS.includes(item.bookingStatus || '')
-            && PAYMENT_STATUS_OPTIONS.includes(item.paymentStatus || '');
     }
 
     function renderAll() {
@@ -232,44 +365,60 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function renderStatistics() {
         const total = bookings.length;
-        const confirmed = bookings.filter(function (booking) { return booking.bookingStatus === 'Confirmed'; }).length;
-        const pending = bookings.filter(function (booking) { return booking.bookingStatus === 'Pending'; }).length;
-        const revenue = bookings.filter(function (booking) { return booking.bookingStatus !== 'Cancelled'; }).reduce(function (sum, booking) {
+        const confirmed = bookings.filter(function (booking) {
+            return (booking.bookingStatus || '').toLowerCase() === 'confirmed';
+        }).length;
+        const pending = bookings.filter(function (booking) {
+            return (booking.bookingStatus || '').toLowerCase() === 'pending';
+        }).length;
+        const revenue = bookings.filter(function (booking) {
+            return (booking.bookingStatus || '').toLowerCase() !== 'cancelled';
+        }).reduce(function (sum, booking) {
             return sum + Number(booking.finalTotal || 0);
         }, 0);
 
-        document.getElementById('totalBookingsStat').textContent = String(total);
-        document.getElementById('confirmedBookingsStat').textContent = String(confirmed);
-        document.getElementById('pendingBookingsStat').textContent = String(pending);
-        document.getElementById('totalRevenueStat').textContent = formatCurrency(revenue);
+        const totalEl = document.getElementById('totalBookingsStat');
+        const confirmedEl = document.getElementById('confirmedBookingsStat');
+        const pendingEl = document.getElementById('pendingBookingsStat');
+        const revenueEl = document.getElementById('totalRevenueStat');
+
+        if (totalEl) totalEl.textContent = String(total);
+        if (confirmedEl) confirmedEl.textContent = String(confirmed);
+        if (pendingEl) pendingEl.textContent = String(pending);
+        if (revenueEl) revenueEl.textContent = formatCurrency(revenue);
     }
 
     function renderBookings() {
         const filteredBookings = getFilteredBookings();
         const tbody = elements.bookingTableBody;
+        if (!tbody) return;
 
         if (!filteredBookings.length) {
             tbody.innerHTML = '';
-            elements.bookingEmptyState.classList.remove('d-none');
-            elements.resultsSummary.textContent = 'Showing 0 bookings';
+            if (elements.bookingEmptyState) elements.bookingEmptyState.classList.remove('d-none');
+            if (elements.resultsSummary) elements.resultsSummary.textContent = 'Showing 0 bookings';
             return;
         }
 
-        elements.bookingEmptyState.classList.add('d-none');
-        elements.resultsSummary.textContent = 'Showing ' + filteredBookings.length + ' booking' + (filteredBookings.length === 1 ? '' : 's');
+        if (elements.bookingEmptyState) elements.bookingEmptyState.classList.add('d-none');
+        if (elements.resultsSummary) {
+            elements.resultsSummary.textContent = 'Showing ' + filteredBookings.length + ' booking' + (filteredBookings.length === 1 ? '' : 's');
+        }
 
         tbody.innerHTML = filteredBookings.map(function (booking) {
             const paymentCss = getPaymentBadgeClass(booking.paymentStatus);
             const statusCss = getStatusBadgeClass(booking.bookingStatus);
+            const displayId = booking.bookingReference || booking.id;
+
             return '<tr>' +
-                '<td><strong>' + escapeHtml(booking.id) + '</strong></td>' +
+                '<td><strong>' + escapeHtml(displayId) + '</strong></td>' +
                 '<td>' +
                     '<div class="fw-semibold">' + escapeHtml(booking.touristName || 'Unknown tourist') + '</div>' +
-                    '<small class="text-muted">' + escapeHtml(booking.touristId || 'Tourist ID unavailable') + '</small>' +
+                    '<small class="text-muted">' + escapeHtml(booking.touristContact || ('ID: ' + booking.touristId)) + '</small>' +
                 '</td>' +
                 '<td>' +
                     '<div class="fw-semibold">' + escapeHtml(booking.packageName || 'Unknown package') + '</div>' +
-                    '<small class="text-muted">' + escapeHtml(booking.packageId || 'Package ID unavailable') + '</small>' +
+                    '<small class="text-muted">' + escapeHtml('ID: ' + booking.packageId) + '</small>' +
                 '</td>' +
                 '<td>' + formatDate(booking.bookingDate) + '</td>' +
                 '<td>' + formatDate(booking.travelDate) + '</td>' +
@@ -279,9 +428,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 '<td><span class="status-badge ' + statusCss + '">' + escapeHtml(booking.bookingStatus || 'Pending') + '</span></td>' +
                 '<td class="text-center">' +
                     '<div class="d-flex justify-content-center gap-2">' +
-                        '<button class="table-action" type="button" data-action="view" data-id="' + escapeAttribute(booking.id) + '" aria-label="View booking ' + escapeAttribute(booking.id) + '"><i class="bi bi-eye"></i></button>' +
-                        '<button class="table-action" type="button" data-action="edit" data-id="' + escapeAttribute(booking.id) + '" aria-label="Edit booking ' + escapeAttribute(booking.id) + '"><i class="bi bi-pencil-square"></i></button>' +
-                        '<button class="table-action delete-action" type="button" data-action="delete" data-id="' + escapeAttribute(booking.id) + '" aria-label="Delete booking ' + escapeAttribute(booking.id) + '"><i class="bi bi-trash"></i></button>' +
+                        '<button class="table-action" type="button" data-action="view" data-id="' + escapeAttribute(booking.id) + '" title="View booking details" aria-label="View booking ' + escapeAttribute(displayId) + '"><i class="bi bi-eye"></i></button>' +
+                        '<button class="table-action" type="button" data-action="edit" data-id="' + escapeAttribute(booking.id) + '" title="Edit booking" aria-label="Edit booking ' + escapeAttribute(displayId) + '"><i class="bi bi-pencil-square"></i></button>' +
+                        '<button class="table-action delete-action" type="button" data-action="delete" data-id="' + escapeAttribute(booking.id) + '" title="Delete booking" aria-label="Delete booking ' + escapeAttribute(displayId) + '"><i class="bi bi-trash"></i></button>' +
                     '</div>' +
                 '</td>' +
             '</tr>';
@@ -289,18 +438,19 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function getFilteredBookings() {
-        const searchTerm = (elements.searchInput.value || '').trim().toLowerCase();
-        const bookingStatus = elements.statusFilter.value;
-        const paymentStatus = elements.paymentFilter.value;
-        const packageFilter = elements.packageFilter.value;
-        const travelDateFilter = elements.travelDateFilter.value;
-        const bookingDateFilter = elements.bookingDateFilter.value;
-        const touristFilter = elements.touristFilter.value;
-        const sortValue = elements.sortSelect.value;
+        const searchTerm = (elements.searchInput ? elements.searchInput.value : '').trim().toLowerCase();
+        const bookingStatus = elements.statusFilter ? elements.statusFilter.value : '';
+        const paymentStatus = elements.paymentFilter ? elements.paymentFilter.value : '';
+        const packageFilter = elements.packageFilter ? elements.packageFilter.value : '';
+        const travelDateFilter = elements.travelDateFilter ? elements.travelDateFilter.value : '';
+        const bookingDateFilter = elements.bookingDateFilter ? elements.bookingDateFilter.value : '';
+        const touristFilter = elements.touristFilter ? elements.touristFilter.value : '';
+        const sortValue = elements.sortSelect ? elements.sortSelect.value : 'bookingDateDesc';
 
         let filtered = bookings.filter(function (booking) {
             const matchesSearch = !searchTerm || [
                 booking.id,
+                booking.bookingReference,
                 booking.touristName,
                 booking.touristId,
                 booking.packageName,
@@ -309,12 +459,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 return (value || '').toLowerCase().includes(searchTerm);
             });
 
-            const matchesBookingStatus = !bookingStatus || booking.bookingStatus === bookingStatus;
-            const matchesPaymentStatus = !paymentStatus || booking.paymentStatus === paymentStatus;
-            const matchesPackage = !packageFilter || booking.packageId === packageFilter;
-            const matchesTravelDate = !travelDateFilter || booking.travelDate === travelDateFilter;
-            const matchesBookingDate = !bookingDateFilter || booking.bookingDate === bookingDateFilter;
-            const matchesTourist = !touristFilter || booking.touristId === touristFilter;
+            const matchesBookingStatus = !bookingStatus ||
+                (booking.bookingStatus || '').toLowerCase() === bookingStatus.toLowerCase();
+            const matchesPaymentStatus = !paymentStatus ||
+                (booking.paymentStatus || '').toLowerCase() === paymentStatus.toLowerCase();
+            const matchesPackage = !packageFilter || String(booking.packageId) === String(packageFilter);
+            const matchesTravelDate = !travelDateFilter ||
+                (booking.travelDate ? String(booking.travelDate).split('T')[0] : '') === travelDateFilter;
+            const matchesBookingDate = !bookingDateFilter ||
+                (booking.bookingDate ? String(booking.bookingDate).split('T')[0] : '') === bookingDateFilter;
+            const matchesTourist = !touristFilter || String(booking.touristId) === String(touristFilter);
 
             return matchesSearch && matchesBookingStatus && matchesPaymentStatus && matchesPackage && matchesTravelDate && matchesBookingDate && matchesTourist;
         });
@@ -346,7 +500,10 @@ document.addEventListener('DOMContentLoaded', function () {
             case 'paid':
                 return 'paid';
             case 'partially paid':
+            case 'partially_paid':
                 return 'partially-paid';
+            case 'refunded':
+                return 'refunded';
             default:
                 return 'unpaid';
         }
@@ -367,20 +524,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function handleTableAction(event) {
         const button = event.target.closest('[data-action]');
-        if (!button) {
-            return;
-        }
+        if (!button) return;
 
         const bookingId = button.getAttribute('data-id');
         const action = button.getAttribute('data-action');
 
         if (action === 'view') {
             openBookingDetails(bookingId);
-        }
-        if (action === 'edit') {
+        } else if (action === 'edit') {
             openEditBookingModal(bookingId);
-        }
-        if (action === 'delete') {
+        } else if (action === 'delete') {
             openDeleteConfirm(bookingId);
         }
     }
@@ -389,7 +542,7 @@ document.addEventListener('DOMContentLoaded', function () {
         editingBookingId = null;
         elements.bookingForm.reset();
         elements.bookingFormTitle.textContent = 'Add New Booking';
-        elements.bookingId.value = generateNextBookingId(bookings);
+        elements.bookingId.value = 'Auto-generated on save';
         elements.bookingDate.value = getTodayString();
         elements.paymentStatus.value = 'Unpaid';
         elements.bookingStatus.value = 'Pending';
@@ -399,32 +552,57 @@ document.addEventListener('DOMContentLoaded', function () {
         elements.subtotal.value = '0';
         elements.finalTotal.value = '0';
         elements.balanceDue.value = '0';
+
+        if (elements.bookingFormError) {
+            elements.bookingFormError.classList.add('d-none');
+            elements.bookingFormError.textContent = '';
+        }
+
+        clearAllFieldErrors();
         bookingFormModal.show();
     }
 
     function openEditBookingModal(bookingId) {
-        const targetBooking = bookings.find(function (item) { return item.id === bookingId; });
+        const targetBooking = bookings.find(function (item) {
+            return String(item.id) === String(bookingId);
+        });
+
         if (!targetBooking) {
             showToast('Selected booking could not be found.');
             return;
         }
 
-        editingBookingId = bookingId;
+        editingBookingId = String(targetBooking.id);
         elements.bookingFormTitle.textContent = 'Edit Booking';
-        elements.bookingId.value = targetBooking.id;
-        elements.touristSelect.value = targetBooking.touristId || '';
-        elements.packageSelect.value = targetBooking.packageId || '';
-        elements.bookingDate.value = targetBooking.bookingDate || getTodayString();
-        elements.travelDate.value = targetBooking.travelDate || '';
+        elements.bookingId.value = targetBooking.bookingReference || targetBooking.id;
+        elements.touristSelect.value = String(targetBooking.touristId || '');
+        elements.packageSelect.value = String(targetBooking.packageId || '');
+        elements.bookingDate.value = targetBooking.bookingDate ? String(targetBooking.bookingDate).split('T')[0] : getTodayString();
+        elements.travelDate.value = targetBooking.travelDate ? String(targetBooking.travelDate).split('T')[0] : '';
         elements.numberOfTravelers.value = String(targetBooking.numberOfTravelers || 1);
         elements.specialRequests.value = targetBooking.specialRequests || '';
-        elements.pricePerPerson.value = String(targetBooking.pricePerPerson || Number(targetBooking.finalTotal || 0));
+        elements.pricePerPerson.value = String(targetBooking.pricePerPerson || 0);
         elements.discount.value = String(targetBooking.discount || 0);
         elements.paymentStatus.value = targetBooking.paymentStatus || 'Unpaid';
         elements.amountPaid.value = String(targetBooking.amountPaid || 0);
         elements.bookingStatus.value = targetBooking.bookingStatus || 'Pending';
+
+        if (elements.bookingFormError) {
+            elements.bookingFormError.classList.add('d-none');
+            elements.bookingFormError.textContent = '';
+        }
+
+        clearAllFieldErrors();
         recalculateBookingTotals();
         bookingFormModal.show();
+    }
+
+    function clearAllFieldErrors() {
+        Array.prototype.slice.call(document.querySelectorAll('#bookingForm select, #bookingForm input, #bookingForm textarea')).forEach(function (control) {
+            control.classList.remove('is-invalid');
+            const feedback = control.parentElement && control.parentElement.querySelector('.invalid-feedback');
+            if (feedback) feedback.textContent = '';
+        });
     }
 
     async function handleBookingSubmit(event) {
@@ -432,29 +610,53 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const validation = validateBookingForm();
         if (!validation.valid) {
+            if (elements.bookingFormError) {
+                elements.bookingFormError.textContent = validation.message;
+                elements.bookingFormError.classList.remove('d-none');
+            }
             showToast(validation.message);
             return;
         }
 
         const payload = buildBookingPayload();
+        const submitBtn = elements.bookingForm.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn ? submitBtn.innerHTML : '';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+        }
 
         try {
             if (editingBookingId) {
                 const updated = await saveBooking(payload, editingBookingId);
+                const normalized = normalizeBookingRecord(updated);
                 bookings = bookings.map(function (item) {
-                    return item.id === editingBookingId ? normalizeBookingRecord(updated) : item;
+                    return String(item.id) === String(editingBookingId) ? normalized : item;
                 });
-                showToast('Booking updated successfully.');
+                bookingRepository.save(bookings);
+                showToast('Booking ' + (normalized.bookingReference || normalized.id) + ' updated successfully.');
             } else {
                 const created = await saveBooking(payload);
-                bookings = bookings.concat(normalizeBookingRecord(created));
-                showToast('Booking created successfully.');
+                const normalized = normalizeBookingRecord(created);
+                bookings = [normalized].concat(bookings);
+                bookingRepository.save(bookings);
+                showToast('Booking ' + (normalized.bookingReference || normalized.id) + ' created successfully.');
             }
 
             bookingFormModal.hide();
             renderAll();
         } catch (error) {
-            showToast(error.message || 'Booking request failed.');
+            const errorMsg = error.message || 'Booking request failed.';
+            if (elements.bookingFormError) {
+                elements.bookingFormError.textContent = errorMsg;
+                elements.bookingFormError.classList.remove('d-none');
+            }
+            showToast(errorMsg);
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            }
         }
     }
 
@@ -492,7 +694,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return { valid: false, message: 'The selected package is inactive. Choose an active package or reactivate it first.' };
         }
         if (selectedPackage.maxTravelers && travelers > Number(selectedPackage.maxTravelers)) {
-            return { valid: false, message: 'Traveler count exceeds the selected package maximum capacity.' };
+            return { valid: false, message: 'Traveler count exceeds the selected package maximum capacity (' + selectedPackage.maxTravelers + ').' };
         }
         if (pricePerPerson < 0) {
             return { valid: false, message: 'Price per person cannot be negative.' };
@@ -517,16 +719,32 @@ document.addEventListener('DOMContentLoaded', function () {
         const discountValue = Number(elements.discount.value || 0);
         const amountPaidValue = Number(elements.amountPaid.value || 0);
 
+        // Normalize payment status for backend enum (e.g. "Partially Paid" -> "PARTIALLY_PAID")
+        let paymentStatusValue = (elements.paymentStatus.value || 'Unpaid').toUpperCase().replace(/\s+/g, '_');
+        let bookingStatusValue = (elements.bookingStatus.value || 'Pending').toUpperCase();
+
+        let bookingDateVal = (elements.bookingDate.value || '').trim();
+        if (bookingDateVal && bookingDateVal.length === 10) {
+            bookingDateVal = bookingDateVal + 'T00:00:00';
+        } else if (!bookingDateVal) {
+            bookingDateVal = new Date().toISOString().slice(0, 19);
+        }
+
+        let travelDateVal = (elements.travelDate.value || '').trim();
+        if (travelDateVal && travelDateVal.includes('T')) {
+            travelDateVal = travelDateVal.split('T')[0];
+        }
+
         return {
             touristId: Number(selectedTourist.id),
             packageId: Number(selectedPackage.id),
             numberOfPeople: travelers,
-            bookingDate: elements.bookingDate.value,
-            travelDate: elements.travelDate.value,
+            bookingDate: bookingDateVal,
+            travelDate: travelDateVal,
             discount: discountValue,
             amountPaid: amountPaidValue,
-            paymentStatus: elements.paymentStatus.value,
-            bookingStatus: elements.bookingStatus.value,
+            paymentStatus: paymentStatusValue,
+            bookingStatus: bookingStatusValue,
             specialRequests: elements.specialRequests.value.trim()
         };
     }
@@ -534,7 +752,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function recalculateBookingTotals() {
         const selectedPackage = getSelectedPackage();
         const travelers = Number(elements.numberOfTravelers.value || 0);
-        const pricePerPerson = Number(elements.pricePerPerson.value || 0);
+        const pricePerPerson = Number(elements.pricePerPerson.value || (selectedPackage ? selectedPackage.price : 0) || 0);
         const subtotalValue = travelers > 0 ? travelers * pricePerPerson : 0;
 
         let discountValue = Number(elements.discount.value || 0);
@@ -571,25 +789,30 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function openBookingDetails(bookingId) {
-        const booking = bookings.find(function (item) { return item.id === bookingId; });
+        const booking = bookings.find(function (item) {
+            return String(item.id) === String(bookingId);
+        });
+
         if (!booking) {
             showToast('The requested booking could not be found.');
             return;
         }
 
-        detailsBookingId = bookingId;
-        elements.bookingDetailsSummary.textContent = booking.id + ' • ' + (booking.touristName || 'Unknown tourist');
+        detailsBookingId = String(booking.id);
+        const displayId = booking.bookingReference || booking.id;
+        elements.bookingDetailsSummary.textContent = displayId + ' • ' + (booking.touristName || 'Unknown tourist');
         const contactDetails = booking.touristContact || 'Contact details unavailable';
         const packageState = booking.packageName || 'Package information unavailable';
         const specialRequests = booking.specialRequests || 'No special requests';
 
         elements.bookingDetailContent.innerHTML = '' +
-            '<div class="detail-item"><span class="detail-label">Booking ID</span><span class="detail-value">' + escapeHtml(booking.id) + '</span></div>' +
+            '<div class="detail-item"><span class="detail-label">Booking Reference</span><span class="detail-value fw-bold text-emerald">' + escapeHtml(displayId) + '</span></div>' +
+            '<div class="detail-item"><span class="detail-label">System ID</span><span class="detail-value">' + escapeHtml(String(booking.id)) + '</span></div>' +
             '<div class="detail-item"><span class="detail-label">Tourist</span><span class="detail-value">' + escapeHtml(booking.touristName || 'Unknown tourist') + '</span></div>' +
-            '<div class="detail-item"><span class="detail-label">Tourist ID</span><span class="detail-value">' + escapeHtml(booking.touristId || 'Unavailable') + '</span></div>' +
+            '<div class="detail-item"><span class="detail-label">Tourist ID</span><span class="detail-value">' + escapeHtml(String(booking.touristId || 'Unavailable')) + '</span></div>' +
             '<div class="detail-item"><span class="detail-label">Tourist Contact</span><span class="detail-value">' + escapeHtml(contactDetails) + '</span></div>' +
             '<div class="detail-item"><span class="detail-label">Package</span><span class="detail-value">' + escapeHtml(packageState) + '</span></div>' +
-            '<div class="detail-item"><span class="detail-label">Package ID</span><span class="detail-value">' + escapeHtml(booking.packageId || 'Unavailable') + '</span></div>' +
+            '<div class="detail-item"><span class="detail-label">Package ID</span><span class="detail-value">' + escapeHtml(String(booking.packageId || 'Unavailable')) + '</span></div>' +
             '<div class="detail-item"><span class="detail-label">Booking Date</span><span class="detail-value">' + formatDate(booking.bookingDate) + '</span></div>' +
             '<div class="detail-item"><span class="detail-label">Travel Date</span><span class="detail-value">' + formatDate(booking.travelDate) + '</span></div>' +
             '<div class="detail-item"><span class="detail-label">Travelers</span><span class="detail-value">' + escapeHtml(String(booking.numberOfTravelers || 0)) + '</span></div>' +
@@ -599,122 +822,137 @@ document.addEventListener('DOMContentLoaded', function () {
             '<div class="detail-item"><span class="detail-label">Final Total</span><span class="detail-value">' + formatCurrency(Number(booking.finalTotal || 0)) + '</span></div>' +
             '<div class="detail-item"><span class="detail-label">Amount Paid</span><span class="detail-value">' + formatCurrency(Number(booking.amountPaid || 0)) + '</span></div>' +
             '<div class="detail-item"><span class="detail-label">Balance Due</span><span class="detail-value">' + formatCurrency(Number(booking.balanceDue || 0)) + '</span></div>' +
-            '<div class="detail-item"><span class="detail-label">Payment Status</span><span class="detail-value">' + escapeHtml(booking.paymentStatus || 'Unpaid') + '</span></div>' +
-            '<div class="detail-item"><span class="detail-label">Booking Status</span><span class="detail-value">' + escapeHtml(booking.bookingStatus || 'Pending') + '</span></div>' +
+            '<div class="detail-item"><span class="detail-label">Payment Status</span><span class="detail-value"><span class="payment-badge ' + getPaymentBadgeClass(booking.paymentStatus) + '">' + escapeHtml(booking.paymentStatus || 'Unpaid') + '</span></span></div>' +
+            '<div class="detail-item"><span class="detail-label">Booking Status</span><span class="detail-value"><span class="status-badge ' + getStatusBadgeClass(booking.bookingStatus) + '">' + escapeHtml(booking.bookingStatus || 'Pending') + '</span></span></div>' +
             '<div class="detail-item" style="grid-column: 1 / -1"><span class="detail-label">Special Requests</span><span class="detail-value">' + escapeHtml(specialRequests) + '</span></div>';
 
         bookingDetailsModal.show();
     }
 
     function openDeleteConfirm(bookingId) {
-        const booking = bookings.find(function (item) { return item.id === bookingId; });
+        const booking = bookings.find(function (item) {
+            return String(item.id) === String(bookingId);
+        });
+
         if (!booking) {
             showToast('The selected booking is no longer available.');
             return;
         }
 
-        pendingDeleteBookingId = bookingId;
-        elements.deleteBookingIdText.textContent = booking.id;
+        pendingDeleteBookingId = String(booking.id);
+        elements.deleteBookingIdText.textContent = booking.bookingReference || booking.id;
         elements.deleteBookingTouristText.textContent = booking.touristName || 'Unknown tourist';
         deleteBookingModal.show();
     }
 
     async function confirmDeleteBooking() {
-        if (!pendingDeleteBookingId) {
-            return;
+        if (!pendingDeleteBookingId) return;
+
+        const deleteBtn = document.getElementById('confirmDeleteBookingButton');
+        const origText = deleteBtn ? deleteBtn.innerHTML : '';
+        if (deleteBtn) {
+            deleteBtn.disabled = true;
+            deleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Deleting...';
         }
 
         try {
             await deleteBookingById(pendingDeleteBookingId);
-            bookings = bookings.filter(function (booking) { return booking.id !== pendingDeleteBookingId; });
+            bookings = bookings.filter(function (booking) {
+                return String(booking.id) !== String(pendingDeleteBookingId);
+            });
+            bookingRepository.save(bookings);
             deleteBookingModal.hide();
             pendingDeleteBookingId = null;
             renderAll();
             showToast('Booking deleted successfully.');
         } catch (error) {
             showToast(error.message || 'Unable to delete this booking.');
+        } finally {
+            if (deleteBtn) {
+                deleteBtn.disabled = false;
+                deleteBtn.innerHTML = origText;
+            }
         }
     }
 
     function resetFilters() {
-        elements.searchInput.value = '';
-        elements.statusFilter.value = '';
-        elements.paymentFilter.value = '';
-        elements.packageFilter.value = '';
-        elements.travelDateFilter.value = '';
-        elements.bookingDateFilter.value = '';
-        elements.touristFilter.value = '';
-        elements.sortSelect.value = 'bookingDateDesc';
+        if (elements.searchInput) elements.searchInput.value = '';
+        if (elements.statusFilter) elements.statusFilter.value = '';
+        if (elements.paymentFilter) elements.paymentFilter.value = '';
+        if (elements.packageFilter) elements.packageFilter.value = '';
+        if (elements.travelDateFilter) elements.travelDateFilter.value = '';
+        if (elements.bookingDateFilter) elements.bookingDateFilter.value = '';
+        if (elements.touristFilter) elements.touristFilter.value = '';
+        if (elements.sortSelect) elements.sortSelect.value = 'bookingDateDesc';
         renderBookings();
     }
 
     function populateLookupOptions() {
-        elements.packageFilter.innerHTML = '<option value="">All packages</option>' +
-            packageCatalog.map(function (item) {
-                return '<option value="' + escapeAttribute(item.id) + '">' + escapeHtml(item.name) + ' (' + escapeHtml(item.id) + ')</option>';
-            }).join('');
-
-        elements.packageSelect.innerHTML = '<option value="">Select a package</option>' +
-            packageCatalog.map(function (item) {
-                return '<option value="' + escapeAttribute(item.id) + '">' + escapeHtml(item.name) + ' — ' + escapeHtml(item.id) + ' • ' + formatCurrency(Number(item.price || 0)) + '</option>';
-            }).join('');
-
-        elements.touristFilter.innerHTML = '<option value="">All tourists</option>' +
-            touristCatalog.map(function (item) {
-                return '<option value="' + escapeAttribute(item.id) + '">' + escapeHtml(item.name) + ' (' + escapeHtml(item.id) + ')</option>';
-            }).join('');
-
-        elements.touristSelect.innerHTML = '<option value="">Select a tourist</option>' +
-            touristCatalog.map(function (item) {
-                return '<option value="' + escapeAttribute(item.id) + '">' + escapeHtml(item.name) + ' — ' + escapeHtml(item.id) + '</option>';
-            }).join('');
-
-        if (!packageCatalog.length) {
-            elements.packageDataAlert.classList.remove('d-none');
-            elements.packageDataAlert.textContent = 'Tour package records are not available yet. Create at least one package before creating a booking.';
-        } else {
-            elements.packageDataAlert.classList.add('d-none');
+        if (elements.packageFilter) {
+            elements.packageFilter.innerHTML = '<option value="">All packages</option>' +
+                packageCatalog.map(function (item) {
+                    return '<option value="' + escapeAttribute(item.id) + '">' + escapeHtml(item.name) + ' (' + escapeHtml(item.id) + ')</option>';
+                }).join('');
         }
 
-        if (!touristCatalog.length) {
-            elements.touristDataAlert.classList.remove('d-none');
-            elements.touristDataAlert.textContent = 'Tourist records are not available yet. Create tourist profiles before creating a booking.';
-        } else {
-            elements.touristDataAlert.classList.add('d-none');
+        if (elements.packageSelect) {
+            elements.packageSelect.innerHTML = '<option value="">Select a package</option>' +
+                packageCatalog.map(function (item) {
+                    return '<option value="' + escapeAttribute(item.id) + '">' + escapeHtml(item.name) + ' — ID ' + escapeHtml(item.id) + ' • ' + formatCurrency(Number(item.price || 0)) + '</option>';
+                }).join('');
+        }
+
+        if (elements.touristFilter) {
+            elements.touristFilter.innerHTML = '<option value="">All tourists</option>' +
+                touristCatalog.map(function (item) {
+                    return '<option value="' + escapeAttribute(item.id) + '">' + escapeHtml(item.name) + ' (' + escapeHtml(item.id) + ')</option>';
+                }).join('');
+        }
+
+        if (elements.touristSelect) {
+            elements.touristSelect.innerHTML = '<option value="">Select a tourist</option>' +
+                touristCatalog.map(function (item) {
+                    return '<option value="' + escapeAttribute(item.id) + '">' + escapeHtml(item.name) + ' — ID ' + escapeHtml(item.id) + (item.contact ? ' (' + escapeHtml(item.contact) + ')' : '') + '</option>';
+                }).join('');
+        }
+
+        if (elements.packageDataAlert) {
+            if (!packageCatalog.length) {
+                elements.packageDataAlert.classList.remove('d-none');
+                elements.packageDataAlert.textContent = 'Tour package records are not available yet. Create at least one package in Tour Package Management.';
+            } else {
+                elements.packageDataAlert.classList.add('d-none');
+            }
+        }
+
+        if (elements.touristDataAlert) {
+            if (!touristCatalog.length) {
+                elements.touristDataAlert.classList.remove('d-none');
+                elements.touristDataAlert.textContent = 'Tourist records are not available yet. Create tourist profiles in Tourist Management.';
+            } else {
+                elements.touristDataAlert.classList.add('d-none');
+            }
         }
     }
 
     function getSelectedTourist() {
-        const selectedId = elements.touristSelect.value;
-        return touristCatalog.find(function (item) { return item.id === selectedId; }) || null;
+        const selectedId = elements.touristSelect ? elements.touristSelect.value : '';
+        return touristCatalog.find(function (item) { return String(item.id) === String(selectedId); }) || null;
     }
 
     function getSelectedPackage() {
-        const selectedId = elements.packageSelect.value;
-        return packageCatalog.find(function (item) { return item.id === selectedId; }) || null;
+        const selectedId = elements.packageSelect ? elements.packageSelect.value : '';
+        return packageCatalog.find(function (item) { return String(item.id) === String(selectedId); }) || null;
     }
 
     function createBookingRepository() {
         return {
             load: function () {
                 const stored = safeReadStorage(STORAGE_KEY);
-                if (stored === null) {
+                if (stored === null || !Array.isArray(stored) || stored.length === 0) {
                     const sampleBookings = createSampleBookings();
                     safeWriteStorage(STORAGE_KEY, sampleBookings);
                     return sampleBookings;
-                }
-
-                if (!Array.isArray(stored)) {
-                    const corrected = createSampleBookings();
-                    safeWriteStorage(STORAGE_KEY, corrected);
-                    return corrected;
-                }
-
-                const validData = stored.filter(isValidBookingRecord);
-                if (validData.length !== stored.length) {
-                    const corrected = stored.filter(isValidBookingRecord).length ? stored.filter(isValidBookingRecord) : createSampleBookings();
-                    safeWriteStorage(STORAGE_KEY, corrected);
-                    return corrected;
                 }
                 return stored;
             },
@@ -724,44 +962,71 @@ document.addEventListener('DOMContentLoaded', function () {
         };
     }
 
-    async function fetchBackendData(endpoint) {
-        const response = await fetch(API_BASE_URL + endpoint, {
-            method: 'GET',
-            credentials: 'include'
-        });
-
-        if (!response.ok) {
-            throw new Error('Unable to load data from ' + endpoint);
+    async function saveBooking(payload, bookingId) {
+        if (!isConnectedToBackend) {
+            // Local fallback simulation
+            if (bookingId) {
+                const existing = bookings.find(function (b) { return String(b.id) === String(bookingId); });
+                const tourist = touristCatalog.find(function (t) { return String(t.id) === String(payload.touristId); });
+                const pkg = packageCatalog.find(function (p) { return String(p.id) === String(payload.packageId); });
+                return Object.assign({}, existing, payload, {
+                    touristName: tourist ? tourist.name : 'Unknown tourist',
+                    touristContact: tourist ? tourist.contact : '',
+                    packageName: pkg ? pkg.name : 'Unknown package',
+                    packagePrice: pkg ? pkg.price : 0,
+                    totalAmount: (pkg ? pkg.price : 0) * payload.numberOfPeople - (payload.discount || 0)
+                });
+            } else {
+                const tourist = touristCatalog.find(function (t) { return String(t.id) === String(payload.touristId); });
+                const pkg = packageCatalog.find(function (p) { return String(p.id) === String(payload.packageId); });
+                const nextId = 'BK-' + String(Date.now()).slice(-6);
+                return Object.assign({}, payload, {
+                    id: nextId,
+                    bookingReference: nextId,
+                    touristName: tourist ? tourist.name : 'Unknown tourist',
+                    touristContact: tourist ? tourist.contact : '',
+                    packageName: pkg ? pkg.name : 'Unknown package',
+                    packagePrice: pkg ? pkg.price : 0,
+                    totalAmount: (pkg ? pkg.price : 0) * payload.numberOfPeople - (payload.discount || 0),
+                    createdAt: new Date().toISOString()
+                });
+            }
         }
 
-        return await response.json();
-    }
-
-    async function saveBooking(payload, bookingId) {
         const method = bookingId ? 'PUT' : 'POST';
-        const url = bookingId ? '/api/bookings/' + bookingId : '/api/bookings';
+        const url = bookingId ? '/api/bookings/' + encodeURIComponent(bookingId) : '/api/bookings';
+        const csrf = await getCsrfToken();
+
         const response = await fetch(API_BASE_URL + url, {
             method: method,
             credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': await getCsrfToken()
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrf
             },
             body: JSON.stringify(payload)
         });
+
         const json = await response.json().catch(function () { return null; });
         if (!response.ok) {
-            throw new Error(json && json.message ? json.message : 'Booking request failed.');
+            const fieldErrors = json && json.errors ? Object.values(json.errors).join(' ') : '';
+            throw new Error(fieldErrors || (json && json.message) || 'Booking request failed.');
         }
         return json;
     }
 
     async function deleteBookingById(bookingId) {
-        const response = await fetch(API_BASE_URL + '/api/bookings/' + bookingId, {
+        if (!isConnectedToBackend) {
+            return;
+        }
+
+        const csrf = await getCsrfToken();
+        const response = await fetch(API_BASE_URL + '/api/bookings/' + encodeURIComponent(bookingId), {
             method: 'DELETE',
             credentials: 'include',
             headers: {
-                'X-CSRF-TOKEN': await getCsrfToken()
+                'X-CSRF-TOKEN': csrf
             }
         });
 
@@ -771,129 +1036,131 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    async function getCsrfToken() {
-        const tokenResponse = await fetch(API_BASE_URL + '/api/auth/csrf', {
-            method: 'GET',
-            credentials: 'include'
-        });
-        const tokenBody = await tokenResponse.json().catch(function () { return {}; });
-        if (!tokenResponse.ok || !tokenBody.csrfToken) {
-            return '';
-        }
-        return tokenBody.csrfToken;
-    }
-
     function normalizeBookingRecord(booking) {
-        const normalized = {
-            id: booking.id,
-            touristId: String(booking.touristId || ''),
-            touristName: booking.touristName || 'Unknown tourist',
-            touristContact: booking.touristContact || '',
-            packageId: String(booking.packageId || ''),
-            packageName: booking.packageName || 'Unknown package',
-            bookingDate: booking.bookingDate || '',
-            travelDate: booking.travelDate || '',
-            numberOfTravelers: Number(booking.numberOfPeople || 0),
-            pricePerPerson: Number(booking.packagePrice || 0),
-            subtotal: Number(booking.totalAmount || 0) + Number(booking.discount || 0),
-            discount: Number(booking.discount || 0),
-            finalTotal: Number(booking.totalAmount || 0),
-            amountPaid: Number(booking.amountPaid || 0),
-            balanceDue: Math.max(0, Number(booking.totalAmount || 0) - Number(booking.amountPaid || 0)),
-            paymentStatus: booking.paymentStatus || 'UNPAID',
-            bookingStatus: booking.bookingStatus || 'PENDING',
+        let paymentStatus = booking.paymentStatus || 'UNPAID';
+        paymentStatus = paymentStatus.replace(/_/g, ' ').toLowerCase();
+        paymentStatus = paymentStatus.split(' ').map(function (w) {
+            return w.charAt(0).toUpperCase() + w.slice(1);
+        }).join(' ');
+
+        let bookingStatus = booking.bookingStatus || 'PENDING';
+        bookingStatus = bookingStatus.charAt(0).toUpperCase() + bookingStatus.slice(1).toLowerCase();
+
+        const touristIdStr = String(booking.touristId != null ? booking.touristId : '');
+        const packageIdStr = String(booking.packageId != null ? booking.packageId : '');
+
+        // Resolve tourist contact and package price if available in catalogs
+        const matchedTourist = touristCatalog.find(function (t) { return String(t.id) === touristIdStr; });
+        const matchedPackage = packageCatalog.find(function (p) { return String(p.id) === packageIdStr; });
+
+        const pricePerPerson = Number(booking.packagePrice || (matchedPackage ? matchedPackage.price : 0) || 0);
+        const numberOfPeople = Number(booking.numberOfPeople || 0);
+        const discount = Number(booking.discount || 0);
+        const totalAmount = Number(booking.totalAmount != null ? booking.totalAmount : (pricePerPerson * numberOfPeople));
+        const amountPaid = Number(booking.amountPaid || 0);
+
+        return {
+            id: String(booking.id != null ? booking.id : (booking.bookingReference || '')),
+            bookingReference: booking.bookingReference || (booking.id ? 'BK-' + booking.id : ''),
+            touristId: touristIdStr,
+            touristName: booking.touristName || (matchedTourist ? matchedTourist.name : 'Unknown tourist'),
+            touristContact: booking.touristContact || (matchedTourist ? (matchedTourist.contact || matchedTourist.phone || matchedTourist.email) : ''),
+            packageId: packageIdStr,
+            packageName: booking.packageName || (matchedPackage ? matchedPackage.name : 'Unknown package'),
+            bookingDate: booking.bookingDate ? String(booking.bookingDate).split('T')[0] : '',
+            travelDate: booking.travelDate ? String(booking.travelDate).split('T')[0] : '',
+            numberOfTravelers: numberOfPeople,
+            pricePerPerson: pricePerPerson,
+            subtotal: numberOfPeople * pricePerPerson,
+            discount: discount,
+            finalTotal: totalAmount,
+            amountPaid: amountPaid,
+            balanceDue: Math.max(0, totalAmount - amountPaid),
+            paymentStatus: paymentStatus,
+            bookingStatus: bookingStatus,
             specialRequests: booking.specialRequests || '',
             createdAt: booking.createdAt || new Date().toISOString()
         };
-
-        normalized.paymentStatus = normalized.paymentStatus.charAt(0).toUpperCase() + normalized.paymentStatus.slice(1).toLowerCase().replace('_', ' ');
-        normalized.bookingStatus = normalized.bookingStatus.charAt(0).toUpperCase() + normalized.bookingStatus.slice(1).toLowerCase();
-
-        if (normalized.paymentStatus === 'Partially paid') {
-            normalized.paymentStatus = 'Partially Paid';
-        }
-        if (normalized.paymentStatus === 'Unpaid') {
-            normalized.paymentStatus = 'Unpaid';
-        }
-        if (normalized.paymentStatus === 'Paid') {
-            normalized.paymentStatus = 'Paid';
-        }
-
-        return normalized;
     }
 
     function createSampleBookings() {
         const touristSamples = touristCatalog.length ? touristCatalog : [
-            { id: 'TUR-1001', name: 'Nethmi Wijesinghe', email: 'nethmi@gmail.com', phone: '+94 77 111 2222' },
-            { id: 'TUR-1002', name: 'Sajith Perera', email: 'sajith@gmail.com', phone: '+94 71 233 3344' },
-            { id: 'TUR-1003', name: 'Anika Silva', email: 'anika@gmail.com', phone: '+94 76 454 5588' },
-            { id: 'TUR-1004', name: 'Harith Fernando', email: 'harith@gmail.com', phone: '+94 77 889 9900' },
-            { id: 'TUR-1005', name: 'Madhavi Jayawardena', email: 'madhavi@gmail.com', phone: '+94 71 122 3445' },
-            { id: 'TUR-1006', name: 'Lahiru Dissanayake', email: 'lahiru@gmail.com', phone: '+94 76 667 7788' }
+            { id: '1', name: 'Alice Fernando', email: 'alice.fernando@example.com', phone: '+94 77 123 4567' },
+            { id: '2', name: 'Daniel Wijesinghe', email: 'daniel.wijesinghe@example.com', phone: '+94 77 765 4321' },
+            { id: '3', name: 'Nadee Jayawardena', email: 'nadee.jayawardena@example.com', phone: '+94 77 345 1234' }
         ];
 
         const packageSamples = packageCatalog.length ? packageCatalog : [
-            { id: 'PKG-0001', name: 'Cultural Heritage Tour', price: 35000, maxTravelers: 12, status: 'Active' },
-            { id: 'PKG-0002', name: 'Hill Country Escape', price: 48000, maxTravelers: 10, status: 'Active' },
-            { id: 'PKG-0003', name: 'Tropical Beach Holiday', price: 32000, maxTravelers: 16, status: 'Active' },
-            { id: 'PKG-0004', name: 'Wildlife Safari Adventure', price: 28500, maxTravelers: 8, status: 'Active' },
-            { id: 'PKG-0005', name: 'Southern Coast Explorer', price: 42500, maxTravelers: 14, status: 'Active' },
-            { id: 'PKG-0006', name: 'Northern Heritage Journey', price: 39000, maxTravelers: 10, status: 'Inactive' }
+            { id: '1', name: 'Cultural Triangle Escape', price: 32000, maxTravelers: 6, status: 'Active' },
+            { id: '2', name: 'Southern Coast Serenity', price: 42000, maxTravelers: 4, status: 'Active' },
+            { id: '3', name: 'Hill Country Retreat', price: 51000, maxTravelers: 5, status: 'Active' }
         ];
 
-        const sampleBookings = [
-            buildSampleBooking({
-                id: 'BOOK-0001', tourist: touristSamples[0], packageInfo: packageSamples[0], bookingDate: '2026-10-08', travelDate: '2026-10-18', travelers: 2, discount: 0, paymentStatus: 'Paid', bookingStatus: 'Confirmed', amountPaid: 70000, specialRequests: 'Vegetarian meals requested.'
-            }),
-            buildSampleBooking({
-                id: 'BOOK-0002', tourist: touristSamples[1], packageInfo: packageSamples[1], bookingDate: '2026-10-09', travelDate: '2026-10-23', travelers: 2, discount: 2500, paymentStatus: 'Partially Paid', bookingStatus: 'Pending', amountPaid: 38000, specialRequests: 'Need a quieter room.'
-            }),
-            buildSampleBooking({
-                id: 'BOOK-0003', tourist: touristSamples[2], packageInfo: packageSamples[2], bookingDate: '2026-10-12', travelDate: '2026-11-05', travelers: 3, discount: 1000, paymentStatus: 'Paid', bookingStatus: 'Confirmed', amountPaid: 95000, specialRequests: 'Early check-in preferred.'
-            }),
-            buildSampleBooking({
-                id: 'BOOK-0004', tourist: touristSamples[3], packageInfo: packageSamples[3], bookingDate: '2026-10-14', travelDate: '2026-11-10', travelers: 1, discount: 0, paymentStatus: 'Unpaid', bookingStatus: 'Pending', amountPaid: 0, specialRequests: ''
-            }),
-            buildSampleBooking({
-                id: 'BOOK-0005', tourist: touristSamples[4], packageInfo: packageSamples[4], bookingDate: '2026-10-20', travelDate: '2026-11-18', travelers: 4, discount: 3000, paymentStatus: 'Paid', bookingStatus: 'Completed', amountPaid: 150000, specialRequests: 'Family room arrangement.'
-            }),
-            buildSampleBooking({
-                id: 'BOOK-0006', tourist: touristSamples[5], packageInfo: packageSamples[5], bookingDate: '2026-10-27', travelDate: '2026-11-08', travelers: 2, discount: 0, paymentStatus: 'Cancelled', bookingStatus: 'Cancelled', amountPaid: 0, specialRequests: 'Cancelled by customer.'
-            })
+        return [
+            {
+                id: '1',
+                bookingReference: 'BK-2026-1001',
+                touristId: touristSamples[0].id,
+                touristName: touristSamples[0].name,
+                touristContact: touristSamples[0].phone || touristSamples[0].email,
+                packageId: packageSamples[0].id,
+                packageName: packageSamples[0].name,
+                bookingDate: '2026-11-01',
+                travelDate: '2026-11-15',
+                numberOfTravelers: 2,
+                pricePerPerson: 32000,
+                subtotal: 64000,
+                discount: 0,
+                finalTotal: 64000,
+                amountPaid: 64000,
+                balanceDue: 0,
+                paymentStatus: 'Paid',
+                bookingStatus: 'Confirmed',
+                specialRequests: 'Window seat requested on the return flight.'
+            },
+            {
+                id: '2',
+                bookingReference: 'BK-2026-1002',
+                touristId: touristSamples[1].id,
+                touristName: touristSamples[1].name,
+                touristContact: touristSamples[1].phone || touristSamples[1].email,
+                packageId: packageSamples[1].id,
+                packageName: packageSamples[1].name,
+                bookingDate: '2026-11-03',
+                travelDate: '2026-12-02',
+                numberOfTravelers: 3,
+                pricePerPerson: 42000,
+                subtotal: 126000,
+                discount: 8000,
+                finalTotal: 126000,
+                amountPaid: 118000,
+                balanceDue: 0,
+                paymentStatus: 'Paid',
+                bookingStatus: 'Confirmed',
+                specialRequests: 'Please arrange a sunset dinner reservation.'
+            },
+            {
+                id: '3',
+                bookingReference: 'BK-2026-1003',
+                touristId: touristSamples[2].id,
+                touristName: touristSamples[2].name,
+                touristContact: touristSamples[2].phone || touristSamples[2].email,
+                packageId: packageSamples[2].id,
+                packageName: packageSamples[2].name,
+                bookingDate: '2026-11-05',
+                travelDate: '2027-01-10',
+                numberOfTravelers: 2,
+                pricePerPerson: 51000,
+                subtotal: 102000,
+                discount: 0,
+                finalTotal: 102000,
+                amountPaid: 0,
+                balanceDue: 102000,
+                paymentStatus: 'Unpaid',
+                bookingStatus: 'Pending',
+                specialRequests: 'Need a deluxe room upgrade if available.'
+            }
         ];
-
-        return sampleBookings;
-    }
-
-    function buildSampleBooking(config) {
-        const travelers = Number(config.travelers || 1);
-        const pricePerPerson = Number(config.packageInfo.price || 0);
-        const subtotal = travelers * pricePerPerson;
-        const discount = Number(config.discount || 0);
-        const finalTotal = Math.max(0, subtotal - discount);
-        const amountPaid = Number(config.amountPaid || 0);
-        const balanceDue = Math.max(0, finalTotal - amountPaid);
-        return {
-            id: config.id,
-            touristId: config.tourist.id,
-            touristName: config.tourist.name,
-            touristContact: config.tourist.phone || config.tourist.email || '',
-            packageId: config.packageInfo.id,
-            packageName: config.packageInfo.name,
-            bookingDate: config.bookingDate,
-            travelDate: config.travelDate,
-            numberOfTravelers: travelers,
-            pricePerPerson: pricePerPerson,
-            subtotal: subtotal,
-            discount: discount,
-            finalTotal: finalTotal,
-            amountPaid: amountPaid,
-            balanceDue: balanceDue,
-            paymentStatus: config.paymentStatus || 'Unpaid',
-            bookingStatus: config.bookingStatus || 'Pending',
-            specialRequests: config.specialRequests || '',
-            createdAt: new Date().toISOString()
-        };
     }
 
     function getPackageCatalog() {
@@ -905,18 +1172,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const allPackages = catalogs.flat();
         const validPackages = allPackages.filter(function (item) {
-            return !!item && typeof item === 'object' && typeof item.id === 'string' && typeof item.name === 'string';
+            return !!item && typeof item === 'object' && item.id != null && typeof item.name === 'string';
         });
 
         if (!validPackages.length) {
-            return [];
+            return [
+                { id: '1', name: 'Cultural Triangle Escape', price: 32000, maxTravelers: 6, status: 'Active' },
+                { id: '2', name: 'Southern Coast Serenity', price: 42000, maxTravelers: 4, status: 'Active' },
+                { id: '3', name: 'Hill Country Retreat', price: 51000, maxTravelers: 5, status: 'Active' }
+            ];
         }
 
         const uniquePackages = [];
         validPackages.forEach(function (packageItem) {
-            if (!uniquePackages.some(function (entry) { return entry.id === packageItem.id; })) {
+            const pkgId = String(packageItem.id);
+            if (!uniquePackages.some(function (entry) { return entry.id === pkgId; })) {
                 uniquePackages.push({
-                    id: packageItem.id,
+                    id: pkgId,
                     name: packageItem.name,
                     price: Number(packageItem.price || packageItem.packagePrice || packageItem.amount || 0),
                     maxTravelers: Number(packageItem.maxTravelers || packageItem.capacity || 0),
@@ -937,23 +1209,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const allTourists = catalogs.flat();
         const validTourists = allTourists.filter(function (item) {
-            return !!item && typeof item === 'object' && typeof (item.id || item.touristId || item.touristID) === 'string';
+            return !!item && typeof item === 'object' && (item.id != null || item.touristId != null || item.touristID != null);
         });
 
         if (!validTourists.length) {
-            return [];
+            return [
+                { id: '1', name: 'Alice Fernando', email: 'alice.fernando@example.com', phone: '+94 77 123 4567' },
+                { id: '2', name: 'Daniel Wijesinghe', email: 'daniel.wijesinghe@example.com', phone: '+94 77 765 4321' },
+                { id: '3', name: 'Nadee Jayawardena', email: 'nadee.jayawardena@example.com', phone: '+94 77 345 1234' }
+            ];
         }
 
         const uniqueTourists = [];
         validTourists.forEach(function (touristItem) {
-            const touristId = touristItem.id || touristItem.touristId || touristItem.touristID;
+            const touristId = String(touristItem.id || touristItem.touristId || touristItem.touristID);
             if (!uniqueTourists.some(function (entry) { return entry.id === touristId; })) {
                 uniqueTourists.push({
                     id: touristId,
                     name: touristItem.name || touristItem.fullName || 'Unnamed Tourist',
                     phone: touristItem.phone || touristItem.contactNumber || touristItem.mobile || '',
                     email: touristItem.email || touristItem.contactEmail || '',
-                    contact: touristItem.contact || ''
+                    contact: touristItem.phone || touristItem.email || touristItem.contact || ''
                 });
             }
         });
@@ -966,7 +1242,6 @@ document.addEventListener('DOMContentLoaded', function () {
             const value = localStorage.getItem(key);
             return value === null ? null : JSON.parse(value);
         } catch (error) {
-            console.warn('Unable to read localStorage key:', key, error);
             return null;
         }
     }
@@ -976,20 +1251,8 @@ document.addEventListener('DOMContentLoaded', function () {
             localStorage.setItem(key, JSON.stringify(value));
             return true;
         } catch (error) {
-            console.error('Unable to write to localStorage key:', key, error);
             return false;
         }
-    }
-
-    function generateNextBookingId(existingRecords) {
-        const maxId = existingRecords.reduce(function (largest, booking) {
-            const match = /^BOOK-(\d+)$/.exec(booking.id || '');
-            if (!match) {
-                return largest;
-            }
-            return Math.max(largest, Number(match[1]));
-        }, 0);
-        return 'BOOK-' + String(maxId + 1).padStart(4, '0');
     }
 
     function formatCurrency(amount) {
@@ -998,13 +1261,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function formatDate(dateValue) {
-        if (!dateValue) {
-            return '—';
-        }
-        const parsed = new Date(dateValue + 'T00:00:00');
-        if (Number.isNaN(parsed.getTime())) {
-            return dateValue;
-        }
+        if (!dateValue) return '—';
+        const strVal = String(dateValue).split('T')[0];
+        const parsed = new Date(strVal + 'T00:00:00');
+        if (Number.isNaN(parsed.getTime())) return strVal;
         return parsed.toLocaleDateString('en-GB', {
             day: '2-digit',
             month: 'short',
@@ -1013,8 +1273,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function compareDates(firstDate, secondDate) {
-        const first = new Date(firstDate || '1970-01-01').getTime();
-        const second = new Date(secondDate || '1970-01-01').getTime();
+        const first = new Date(firstDate ? String(firstDate).split('T')[0] : '1970-01-01').getTime();
+        const second = new Date(secondDate ? String(secondDate).split('T')[0] : '1970-01-01').getTime();
         return first - second;
     }
 
@@ -1027,23 +1287,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function clearFieldError(event) {
         const target = event.target;
-        if (!target || !target.classList) {
-            return;
-        }
+        if (!target || !target.classList) return;
         target.classList.remove('is-invalid');
         const feedback = target.parentElement && target.parentElement.querySelector('.invalid-feedback');
-        if (feedback) {
-            feedback.textContent = '';
-        }
+        if (feedback) feedback.textContent = '';
     }
 
     function showToast(message) {
-        elements.toastBody.textContent = message;
-        toast.show();
+        if (elements.toastBody) {
+            elements.toastBody.textContent = message;
+            toast.show();
+        }
     }
 
     function escapeHtml(value) {
-        var safeValue = value !== undefined && value !== null ? value : '';
+        const safeValue = value !== undefined && value !== null ? value : '';
         return String(safeValue)
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
